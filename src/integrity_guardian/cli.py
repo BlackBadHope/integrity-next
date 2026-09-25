@@ -15,7 +15,7 @@ from .canonical import canonical_bytes, parse_json_strict
 from .capabilities import integrity_capabilities
 from .collector import load_profile, run_collector, write_collector_result
 from .governance import verify_governance_bundle
-from .hashing import digest_object
+from .hashing import digest_object, validate_domain
 from .local_machine import (
     PRIVATE_DOCUMENT_READ_SCHEMAS,
     PRIVATE_DOCUMENT_SCHEMAS,
@@ -106,6 +106,14 @@ from .windows_install import (
 from .zero_day_seed import build_and_write_fresh_zero_day_seed
 
 
+def _digest_domain(value: str) -> str:
+    try:
+        validate_domain(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
+    return value
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="guardian")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -114,7 +122,7 @@ def build_parser() -> argparse.ArgumentParser:
     canonical.add_argument("file", type=Path)
 
     digest = subparsers.add_parser("digest")
-    digest.add_argument("domain")
+    digest.add_argument("domain", type=_digest_domain)
     digest.add_argument("file", type=Path)
 
     schema = subparsers.add_parser("validate")

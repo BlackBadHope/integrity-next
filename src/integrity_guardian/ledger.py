@@ -5,7 +5,8 @@ from __future__ import annotations
 import hashlib
 import re
 import sqlite3
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
+from contextlib import contextmanager
 from copy import deepcopy
 from datetime import UTC, datetime
 from pathlib import Path
@@ -591,15 +592,33 @@ class LedgerStore:
         )
         return digest
 
+    @contextmanager
+    def _write_transaction(self) -> Iterator[None]:
+        if self._connection.in_transaction:
+            # A caller-owned transaction keeps its historical commit semantics.
+            with self._connection:
+                yield
+            return
+        # Take the write lock before reading the source tip, so a concurrent
+        # writer to the same source fails with a sequence mismatch instead of
+        # racing into the unique constraint.
+        self._connection.execute("BEGIN IMMEDIATE")
+        try:
+            yield
+        except BaseException:
+            self._connection.rollback()
+            raise
+        self._connection.commit()
+
     def append(self, event: dict[str, Any]) -> str:
-        with self._connection:
+        with self._write_transaction():
             return self._append_one(event)
 
     def append_many(self, events: Iterable[dict[str, Any]]) -> list[str]:
         """Append an entire batch atomically."""
 
         digests: list[str] = []
-        with self._connection:
+        with self._write_transaction():
             for event in events:
                 digests.append(self._append_one(event))
         return digests

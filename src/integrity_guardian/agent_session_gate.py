@@ -30,7 +30,7 @@ from .agent_identity import (
     verify_agent_identity,
     verify_session_admission,
 )
-from .hashing import digest_object, sha256_digest
+from .hashing import FRAME_SEPARATOR, digest_object, sha256_digest
 from .schemas import validate
 
 PROTOCOL = "integrity-guardian/agent-session-gate/v1"
@@ -104,7 +104,10 @@ def token_fingerprint(token: str) -> str:
     secret = str(token or "")
     if not secret:
         raise AgentSessionGateError("reader token is empty")
-    return sha256_digest(f"integrity-guardian\\x00seed-reader-token\\x00{secret}".encode())
+    # The fixed prefix uses the frozen guardian-json-v1 frame (ASCII ``\\x00``);
+    # the secret is the final field, so the encoding stays unambiguous.
+    frame = FRAME_SEPARATOR
+    return sha256_digest(f"integrity-guardian{frame}seed-reader-token{frame}{secret}".encode())
 
 
 def bind_reader_principal(*, vendor: str, product: str, token: str) -> dict[str, Any]:

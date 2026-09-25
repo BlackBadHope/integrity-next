@@ -1,7 +1,8 @@
-"""PR #190 catalogue boundary regressions. Graph fixtures here are explicit mocks.
+"""TIME-TO-TASK runbook catalogue boundary regressions.
 
-The retained test_memory_ttt_paths module separately exercises the native graph.
-These cases do not establish authenticated Seed/snapshot or live MCP admission.
+Graph fixtures here are explicit mocks; the native-graph suite is not part of
+the public projection. These cases do not establish authenticated Seed/snapshot
+or live MCP admission.
 """
 from __future__ import annotations
 
