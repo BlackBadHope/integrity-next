@@ -3295,11 +3295,11 @@
       "sha256": "07a29f2f28a318c50b9922dcb94eb1ed4356414f79b99534cfa49092c88f62b1"
     },
     {
-      "bytes": 1649,
+      "bytes": 1641,
       "mode": "0o644",
       "path": "CONTRIBUTING.md",
       "sanitization_edits": 0,
-      "sha256": "dd81135ce1fc923b79eb8022981f3e3da957c8bd9ffac9aef912f0430a13e28e"
+      "sha256": "c240338b877a126aa001e57839eee60168fba7f259e70c4d2590f2406b952cae"
     },
     {
       "bytes": 11359,
@@ -3358,7 +3358,7 @@
       "sha256": "b26f7596d83095ddbee8149f1e3130ee65e3396dacdb483a00bb34157f3786a1"
     }
   ],
-  "projection_digest": "sha256:ec813ead26671fecac31484424ee47067fd8469308b8cfa123b679fab539b0b8",
+  "projection_digest": "sha256:4c61acf93cbbbddf1a3596ccb577457b2f43f16bcd0bbd51375e2b9ea1bb6fd4",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 147,
   "schema": "integrity.public-export-manifest/v3",
