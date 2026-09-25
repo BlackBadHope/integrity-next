@@ -19,13 +19,13 @@ from typing import Any
 import integrity_client_turn_envelope as turn_envelope
 
 BROKER_NAME = "integrity-client-memory"
-BROKER_VERSION = "1.4.0"
+BROKER_VERSION = "1.4.1"
 DEFAULT_MCP_VERSION = "2025-06-18"
 MAX_MESSAGE_BYTES = 4 * 1024 * 1024
 BROKER_TOOL_SURFACE_PROTOCOL = "integrity-client/broker-tool-surface/v1"
-BROKER_TOOL_SURFACE_CAPABILITY = "integrityclientToolSurface"
+BROKER_TOOL_SURFACE_CAPABILITY = "integrityClientToolSurface"
 CONTEXT_ADMISSION_REPLAY_PROTOCOL = "integrity-client/context-admission-replay/v2"
-CONTEXT_ADMISSION_REPLAY_CAPABILITY = "integrityclientContextAdmissionReplay"
+CONTEXT_ADMISSION_REPLAY_CAPABILITY = "integrityClientContextAdmissionReplay"
 CONTEXT_ADMISSION_REPLAY_FIELD = "_integrity_replay_id"
 CONTEXT_ADMISSION_REPLAY_ACK_NOTIFICATION = (
     "notifications/integrity_context_admission_replay_ack"
@@ -541,14 +541,17 @@ class UpstreamFacade:
                 pass
         if process.poll() is None:
             try:
-                process.terminate()
                 process.wait(timeout=2)
             except (OSError, subprocess.TimeoutExpired):
                 try:
-                    process.kill()
+                    process.terminate()
                     process.wait(timeout=2)
                 except (OSError, subprocess.TimeoutExpired):
-                    pass
+                    try:
+                        process.kill()
+                        process.wait(timeout=2)
+                    except (OSError, subprocess.TimeoutExpired):
+                        pass
         for stream in (process.stdin, process.stdout, process.stderr):
             if stream is None or stream.closed:
                 continue
@@ -1216,7 +1219,19 @@ def serve(broker: TurnBroker) -> int:
                         )
                     written_total += written
                 sys.stdout.buffer.flush()
-                broker.confirm_public_response_delivery()
+                try:
+                    broker.confirm_public_response_delivery()
+                except BrokerError:
+                    # The public response is already flushed: do not send a
+                    # second response or retry the admitted operation. Drop only
+                    # that upstream binding; a later intent may admit afresh on
+                    # this same public transport. Keep diagnostics content-free.
+                    broker.close()
+                    print(
+                        "Integrity broker: post-delivery custody failure; binding closed",
+                        file=sys.stderr,
+                        flush=True,
+                    )
         return 0
     finally:
         broker.shutdown()

@@ -72,7 +72,6 @@ ALLOWED_URL_HOSTS = frozenset(
         "registry.npmjs.org",
         "snapshot.ubuntu.com",
         "www.apache.org",
-        "www.w3.org",
         "www.youtube.com",
     }
 )

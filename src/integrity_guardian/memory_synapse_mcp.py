@@ -165,9 +165,9 @@ PRE_TTT_TOOL_CONTRACT_PROFILE = "pre-ttt"
 PRE_V4_TOOL_CONTRACT_PROFILE = "pre-v4"
 LEGACY_TURN_BROKER_TOOL_CONTRACT_PROFILE = "turn-broker-1.2.1"
 BROKER_TOOL_SURFACE_PROTOCOL = "integrity-client/broker-tool-surface/v1"
-BROKER_TOOL_SURFACE_CAPABILITY = "integrityclientToolSurface"
+BROKER_TOOL_SURFACE_CAPABILITY = "integrityClientToolSurface"
 CONTEXT_ADMISSION_REPLAY_PROTOCOL = "integrity-client/context-admission-replay/v2"
-CONTEXT_ADMISSION_REPLAY_CAPABILITY = "integrityclientContextAdmissionReplay"
+CONTEXT_ADMISSION_REPLAY_CAPABILITY = "integrityClientContextAdmissionReplay"
 CONTEXT_ADMISSION_REPLAY_FIELD = "_integrity_replay_id"
 TURN_ENVELOPE_BINDING_FIELD = "_integrity_turn_binding"
 TURN_ENVELOPE_PROTOCOL = "integrity-client/turn-envelope/v1"
@@ -271,6 +271,91 @@ class WritePlaneRuntime:
     turn_memory: TurnMemoryStore | None
     status: dict[str, str]
     failure_reason_digests: dict[str, str]
+
+
+SEED_SNAPSHOT_SESSION_PREFIX = ".seed-session-"
+SEED_SNAPSHOT_OWNER_LOCK = "owner.lock"
+# A session copy without an owner lock can only come from a crash between the
+# private directory creation and the lock. Keep it long enough to never race a
+# starting session, then treat it as abandoned.
+SEED_SNAPSHOT_UNLOCKED_GRACE_SECONDS = 3600
+
+
+def _lock_seed_snapshot_owner(directory: Path) -> int | None:
+    """Hold an exclusive lock that proves this process owns the session copy."""
+    if _fcntl is None:
+        return None
+    descriptor = os.open(
+        directory / SEED_SNAPSHOT_OWNER_LOCK,
+        os.O_CREAT | os.O_RDWR | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+        0o600,
+    )
+    try:
+        _fcntl.flock(descriptor, _fcntl.LOCK_EX | _fcntl.LOCK_NB)
+    except OSError:
+        os.close(descriptor)
+        raise
+    return descriptor
+
+
+def _remove_seed_snapshot_directory(directory: Path) -> None:
+    for entry in os.scandir(directory):
+        if entry.is_dir(follow_symlinks=False):
+            raise McpFacadeError("Seed session copy contains an unexpected directory")
+        os.unlink(entry.path)
+    os.rmdir(directory)
+
+
+def sweep_orphaned_seed_snapshots(root: Path, *, now: float | None = None) -> int:
+    """Remove private Seed session copies whose owning process is gone.
+
+    A process killed by the kernel (for example by a memory-cgroup OOM) never
+    runs its cleanup, and its tmpfs copy keeps charging the cgroup. The owner
+    lock is released by the kernel with the process, so an acquirable lock is
+    proof of abandonment. Only this principal's own private root is touched.
+    """
+    if _fcntl is None:
+        return 0
+    try:
+        details = root.lstat()
+    except FileNotFoundError:
+        return 0
+    if (
+        not stat.S_ISDIR(details.st_mode)
+        or details.st_uid != os.geteuid()
+        or stat.S_IMODE(details.st_mode) & 0o077
+    ):
+        raise McpFacadeError("Seed snapshot root custody is unsafe")
+    current = time.time() if now is None else now
+    removed = 0
+    for entry in os.scandir(root):
+        if not entry.name.startswith(SEED_SNAPSHOT_SESSION_PREFIX):
+            continue
+        entry_details = entry.stat(follow_symlinks=False)
+        if not stat.S_ISDIR(entry_details.st_mode) or entry_details.st_uid != os.geteuid():
+            continue
+        directory = Path(entry.path)
+        try:
+            descriptor = os.open(
+                directory / SEED_SNAPSHOT_OWNER_LOCK,
+                os.O_RDWR | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            )
+        except FileNotFoundError:
+            if current - entry_details.st_mtime >= SEED_SNAPSHOT_UNLOCKED_GRACE_SECONDS:
+                _remove_seed_snapshot_directory(directory)
+                removed += 1
+            continue
+        try:
+            try:
+                _fcntl.flock(descriptor, _fcntl.LOCK_EX | _fcntl.LOCK_NB)
+            except BlockingIOError:
+                continue
+            # Delete while holding the lock so a racing sweeper cannot also act.
+            _remove_seed_snapshot_directory(directory)
+            removed += 1
+        finally:
+            os.close(descriptor)
+    return removed
 
 
 class FrozenSeedCatalogSnapshot:
@@ -394,8 +479,9 @@ class FrozenSeedCatalogSnapshot:
             )
         try:
             self._temporary = tempfile.TemporaryDirectory(
-                prefix=".seed-session-", dir=destination_root
+                prefix=SEED_SNAPSHOT_SESSION_PREFIX, dir=destination_root
             )
+            self._owner_lock = _lock_seed_snapshot_owner(Path(self._temporary.name))
             self.path = Path(self._temporary.name) / "catalog.sqlite3"
             quoted = urllib.parse.quote(source.as_posix(), safe="/")
             with (
@@ -514,9 +600,15 @@ class FrozenSeedCatalogSnapshot:
     def close(self) -> None:
         self._close_sidecar_descriptors()
         temporary = getattr(self, "_temporary", None)
-        if temporary is not None:
-            self._temporary = None
-            temporary.cleanup()
+        owner_lock = getattr(self, "_owner_lock", None)
+        self._owner_lock = None
+        try:
+            if temporary is not None:
+                self._temporary = None
+                temporary.cleanup()
+        finally:
+            if owner_lock is not None:
+                os.close(owner_lock)
 
 
 class RetainedSeedCatalogSnapshot:
@@ -1592,6 +1684,13 @@ class MemorySynapseMcp:
             raise McpFacadeError("Seed snapshot source and root must be configured together")
         self._snapshot_source = snapshot_source
         self._snapshot_root = snapshot_root
+        if snapshot_root is not None:
+            try:
+                sweep_orphaned_seed_snapshots(snapshot_root)
+            except (OSError, McpFacadeError):
+                # Custody is re-checked on every freeze; a failed sweep only
+                # leaves abandoned bytes and must not block the read plane.
+                pass
         self._frozen_catalog: FrozenSeedCatalogSnapshot | RetainedSeedCatalogSnapshot | None = None
         self._session_capabilities: dict[str, Any] | None = None
         self._session_snapshot: dict[str, Any] | None = None
@@ -3291,6 +3390,24 @@ class MemorySynapseMcp:
                     os.close(parent_descriptor)
                 if anchor_descriptor is not None:
                     os.close(anchor_descriptor)
+
+    def release_idle_context(self) -> bool:
+        """Release the frozen Seed copy and derived projections of an idle intent.
+
+        The stdio transport stays open: a client that returns starts its next
+        owner intent with a fresh admission, exactly as after any rotation.
+        Nothing is released while a context replay is being admitted.
+        """
+        if self._closed or self._active_context_replay_id is not None:
+            return False
+        if (
+            self._frozen_catalog is None
+            and self._session_snapshot is None
+            and self._session_mind is None
+        ):
+            return False
+        self._clear_intent_context()
+        return True
 
     def _clear_intent_context(self) -> None:
         """Destroy logical owner-intent state while retaining shared services."""

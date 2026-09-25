@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import datetime as dt
 import hashlib
 import json
@@ -56,13 +57,13 @@ LEGACY_EXPECTED_TOOLS = [
     if name not in {"integrity_memory_entity_brief", "integrity_memory_link_audit"}
 ]
 SERVER_NAME = "integrity-client-memory"
-BROKER_SERVER_VERSION = "1.4.0"
+BROKER_SERVER_VERSION = "1.4.1"
 SERVER_VERSION = "2.10.0"
 PREVIOUS_SERVER_VERSION = "2.9.0"
 OLDER_SERVER_VERSION = "2.8.0"
 LEGACY_SERVER_VERSION = "2.7.0"
 ROLLOUT_LEGACY_SERVER_VERSION = "2.6.0"
-HOOK_VERSION = "1.7.1"
+HOOK_VERSION = "1.7.2"
 LIFECYCLE_BUDGET_SECONDS = 45
 LIFECYCLE_DEADLINE: float | None = None
 SEMANTIC_CADENCE_MAX_AGE_SECONDS = 3600
@@ -460,6 +461,58 @@ def state_path(identity: str) -> Path:
     return state_root() / f"{sha256_text(identity)}.json"
 
 
+@contextlib.contextmanager
+def session_state_lock(identity: str):
+    """Serialize hook state transactions, never the model-owned MCP request."""
+    path = state_path(identity)
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.CreateMutexW.argtypes = [ctypes.c_void_p, wintypes.BOOL, wintypes.LPCWSTR]
+        kernel.CreateMutexW.restype = wintypes.HANDLE
+        kernel.WaitForSingleObject.argtypes = [wintypes.HANDLE, wintypes.DWORD]
+        kernel.WaitForSingleObject.restype = wintypes.DWORD
+        kernel.ReleaseMutex.argtypes = [wintypes.HANDLE]
+        kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+        name = "Local\\IntegrityClientState-" + sha256_text(str(path.absolute()).lower())
+        handle = kernel.CreateMutexW(None, False, name)
+        if not handle:
+            raise HookError("session_state_lock_unavailable")
+        acquired = False
+        try:
+            acquired = kernel.WaitForSingleObject(handle, 10000) in (0, 0x80)
+            if not acquired:
+                raise HookError("session_state_lock_timeout")
+            yield
+        finally:
+            if acquired:
+                kernel.ReleaseMutex(handle)
+            kernel.CloseHandle(handle)
+    else:
+        import fcntl
+
+        descriptor = os.open(
+            path.with_suffix(".lock"),
+            os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0),
+            0o600,
+        )
+        deadline = time.monotonic() + 10
+        try:
+            while True:
+                try:
+                    fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    break
+                except BlockingIOError:
+                    if time.monotonic() >= deadline:
+                        raise HookError("session_state_lock_timeout")
+                    time.sleep(0.02)
+            yield
+        finally:
+            os.close(descriptor)
+
+
 def load_state(identity: str) -> dict[str, Any]:
     path = state_path(identity)
     if not path.exists():
@@ -553,6 +606,7 @@ class McpClient:
             or server.get("version")
             not in {
                 BROKER_SERVER_VERSION,
+                "1.4.0",
                 ROLLOUT_LEGACY_SERVER_VERSION,
                 LEGACY_SERVER_VERSION,
                 OLDER_SERVER_VERSION,
@@ -568,7 +622,7 @@ class McpClient:
         server_version = server.get("version")
         expected_tools = (
             EXPECTED_TOOLS
-            if server_version == BROKER_SERVER_VERSION
+            if server_version in {BROKER_SERVER_VERSION, "1.4.0"}
             else LEGACY_EXPECTED_TOOLS
             if server_version in {ROLLOUT_LEGACY_SERVER_VERSION, LEGACY_SERVER_VERSION}
             else PREVIOUS_EXPECTED_TOOLS
@@ -1114,7 +1168,7 @@ def handle_prompt(event: str, payload: dict[str, Any], identity: str) -> None:
     prior_turn_ref = state.get("turn_ref")
     if isinstance(prior_turn_ref, str):
         try:
-            turn_envelope.retire(prior_turn_ref)
+            turn_envelope.retire(prior_turn_ref, preserve_claimed=True)
         except (OSError, turn_envelope.TurnEnvelopeError):
             pass
     envelope = turn_envelope.stage(
@@ -1274,6 +1328,22 @@ def handle_post_tool(
     name = tool_name(payload)
     response = payload.get("tool_response", {})
     if CONTEXT_TOOL_RE.search(name):
+        completed = tool_input(payload)
+        if CURRENT_CONTEXT_TOOL_RE.search(name):
+            superseded = bool(completed.get("turn_ref")) and (
+                completed["turn_ref"] != state.get("turn_ref")
+            )
+        else:
+            superseded = bool(completed.get("intent")) and (
+                sha256_text(str(completed["intent"])) != state.get("prompt_sha256")
+            )
+        if superseded:
+            output_context(
+                event,
+                "INTEGRITY SUPERSEDED ADMISSION: late response belongs to an earlier intent; "
+                "current admission state is unchanged. Do not bind that receipt to the current intent.",
+            )
+            return
         context = find_document(
             response,
             lambda item: any(
@@ -1530,7 +1600,7 @@ def handle_stop(event: str, identity: str, state: dict[str, Any]) -> None:
     current_turn_ref = state.get("turn_ref")
     if isinstance(current_turn_ref, str):
         try:
-            turn_envelope.retire(current_turn_ref)
+            turn_envelope.retire(current_turn_ref, preserve_claimed=True)
         except (OSError, turn_envelope.TurnEnvelopeError):
             pass
     registration = state.get("turn_memory_registration_id")
@@ -1654,16 +1724,17 @@ def main() -> int:
             "INTEGRITY client SESSION PENDING INTENT ADMISSION. No Seed snapshot was opened at startup.",
         )
         return 0
-    if args.event in {"UserPromptSubmit", "SubagentStart"}:
-        handle_prompt(args.event, payload, identity)
-        return 0
-    state = load_state(identity)
-    if args.event == "PreToolUse":
-        handle_pre_tool(payload, identity, state)
-    elif args.event == "PostToolUse":
-        handle_post_tool(args.event, payload, identity, state)
-    else:
-        handle_stop(args.event, identity, state)
+    with session_state_lock(identity):
+        if args.event in {"UserPromptSubmit", "SubagentStart"}:
+            handle_prompt(args.event, payload, identity)
+            return 0
+        state = load_state(identity)
+        if args.event == "PreToolUse":
+            handle_pre_tool(payload, identity, state)
+        elif args.event == "PostToolUse":
+            handle_post_tool(args.event, payload, identity, state)
+        else:
+            handle_stop(args.event, identity, state)
     return 0
 
 
