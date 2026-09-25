@@ -19,6 +19,7 @@ from typing import Any
 AGENT_PROTOCOL = "integrity-guardian/agent-identity/v1"
 ADMISSION_PROTOCOL = "integrity-guardian/agent-session-admission/v1"
 PROFILE = "guardian-json-v1"
+FRAME_SEPARATOR = "\\x00"
 CAPABILITY_CLASSES = frozenset(
     {
         "read-memory",
@@ -103,11 +104,16 @@ def canonical_bytes(value: Any) -> bytes:
 
 
 def digest_object(value: Any, *, domain: str) -> str:
-    if not domain or any(char.isspace() for char in domain):
+    if not domain or any(
+        char.isspace() or not char.isprintable() or char == "\\" for char in domain
+    ):
         raise SessionAdmissionError(
-            "domain must be a non-empty token without whitespace"
+            "domain must be a non-empty printable token without whitespace or backslash"
         )
-    prefix = f"integrity-guardian\\x00{PROFILE}\\x00{domain}\\x00".encode()
+    # Frozen guardian-json-v1 frame: the four ASCII characters ``\\x00``, not
+    # a NUL byte. It must stay byte-identical to integrity_guardian.hashing.
+    frame = FRAME_SEPARATOR
+    prefix = f"integrity-guardian{frame}{PROFILE}{frame}{domain}{frame}".encode()
     return "sha256:" + hashlib.sha256(prefix + canonical_bytes(value)).hexdigest()
 
 

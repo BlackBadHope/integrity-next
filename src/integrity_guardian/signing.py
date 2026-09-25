@@ -94,6 +94,19 @@ def verify_signature(document: dict[str, Any], public_key: Ed25519PublicKey) -> 
         return False
 
 
+def verify_trusted_signature(document: dict[str, Any], trusted_key: TrustedKey) -> bool:
+    """Verify a signature that must also name the trusted key's identity.
+
+    ``key_id`` is not covered by the signed bytes, so a verifier that selects
+    keys by identity must compare it explicitly; this helper does both.
+    """
+
+    signature = document.get("signature")
+    if not isinstance(signature, dict) or signature.get("key_id") != trusted_key.key_id:
+        return False
+    return verify_signature(document, trusted_key.public_key)
+
+
 def public_key_value(public_key: Ed25519PublicKey) -> str:
     """Return the canonical base64url form of an Ed25519 public key."""
 
