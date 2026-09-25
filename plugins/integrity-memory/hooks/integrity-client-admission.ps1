@@ -43,7 +43,7 @@ $LegacyExpectedTools = @($PreviousExpectedTools | Where-Object {
     $_ -notin @('integrity_memory_entity_brief','integrity_memory_link_audit')
 })
 $script:Connector = $null
-$script:HookVersion = '1.7.1'
+$script:HookVersion = '1.7.2'
 $script:LifecycleDeadline = [DateTimeOffset]::UtcNow.AddSeconds(45)
 $script:SemanticCadenceMaxAgeSeconds = 3600L
 $script:SemanticCadenceMaxActions = 24L
@@ -601,7 +601,7 @@ function Arm-TurnEnvelope {
 function Retire-TurnEnvelope {
     param([string]$TurnRef)
     if ([string]::IsNullOrWhiteSpace($TurnRef)) { return }
-    try { [void](Invoke-TurnEnvelopeHelper -Command 'retire' -Arguments @('--turn-ref',$TurnRef)) }
+    try { [void](Invoke-TurnEnvelopeHelper -Command 'retire' -Arguments @('--turn-ref',$TurnRef,'--preserve-claimed')) }
     catch { }
 }
 
@@ -776,12 +776,12 @@ function Open-ConnectorSession {
         $initialize = Receive-Rpc -Process $process -Id 1
         $server = Require-Value -Object (Require-Value -Object $initialize -Name 'result') -Name 'serverInfo'
         Assert-Equal -Actual $server.name -Expected 'integrity-client-memory' -Name 'server_name'
-        if ([string]$server.version -notin @('1.4.0','2.6.0','2.7.0','2.8.0','2.9.0','2.10.0')) { throw 'mismatch_server_version' }
+        if ([string]$server.version -notin @('1.4.1','1.4.0','2.6.0','2.7.0','2.8.0','2.9.0','2.10.0')) { throw 'mismatch_server_version' }
         Send-Rpc -Process $process -Request @{ jsonrpc = '2.0'; method = 'notifications/initialized'; params = @{} }
         Send-Rpc -Process $process -Request @{ jsonrpc = '2.0'; id = 2; method = 'tools/list'; params = @{} }
         $listed = Receive-Rpc -Process $process -Id 2
         $names = @((Require-Value -Object (Require-Value -Object $listed -Name 'result') -Name 'tools') | ForEach-Object { [string]$_.name })
-        $expected = if ([string]$server.version -eq '1.4.0') {
+        $expected = if ([string]$server.version -in @('1.4.1','1.4.0')) {
             $ExpectedTools
         } elseif ([string]$server.version -in @('2.6.0','2.7.0')) {
             $LegacyExpectedTools
@@ -1369,6 +1369,16 @@ if ($Event -eq 'SessionStart') {
     exit 0
 }
 
+# Serialize read/modify/write across hook processes for this session. The MCP
+# request itself runs outside this lock. Python's Windows hook uses the same name.
+$stateLockKey = Get-Sha256 -Text ([IO.Path]::GetFullPath((Get-StatePath -SessionId $sessionId)).ToLowerInvariant())
+$stateMutex = [Threading.Mutex]::new($false, ('Local\IntegrityClientState-' + $stateLockKey))
+$stateLocked = $false
+try {
+try { $stateLocked = $stateMutex.WaitOne(10000) }
+catch [Threading.AbandonedMutexException] { $stateLocked = $true }
+if (-not $stateLocked) { throw 'session_state_lock_timeout' }
+
 if ($Event -in @('UserPromptSubmit', 'SubagentStart')) {
     try {
         $intent = if ($Event -eq 'UserPromptSubmit') { Get-Prompt -Payload $payload } else { 'Initialize this fresh subagent with current canonical project coordination and safety context.' }
@@ -1521,6 +1531,20 @@ if ($Event -eq 'PreToolUse') {
 
 if ($Event -eq 'PostToolUse') {
     if (Is-ContextAdmissionTool -Payload $payload) {
+        $completedInput = Get-ToolInput -Payload $payload
+        $completedRef = [string](Get-Value -Object $completedInput -Name 'turn_ref' -Default '')
+        $completedIntent = [string](Get-Value -Object $completedInput -Name 'intent' -Default '')
+        $superseded = if (Is-CurrentContextAdmissionTool -Payload $payload) {
+            -not [string]::IsNullOrWhiteSpace($completedRef) -and
+            $completedRef -ne [string](Get-Value -Object $state -Name 'turn_ref' -Default '')
+        } else {
+            -not [string]::IsNullOrWhiteSpace($completedIntent) -and
+            (Get-Sha256 -Text $completedIntent) -ne [string](Get-Value -Object $state -Name 'prompt_sha256' -Default '')
+        }
+        if ($superseded) {
+            Write-AdditionalContext -HookEvent $Event -Context 'INTEGRITY SUPERSEDED ADMISSION: late response belongs to an earlier intent; current admission state is unchanged. Do not bind that receipt to the current intent.'
+            exit 0
+        }
         try {
             if (-not [bool](Get-Value -Object $state -Name 'model_mcp_admission_attempted' -Default $false)) {
                 throw 'model_mcp_context_admission_not_started'
@@ -1834,3 +1858,8 @@ if ($Event -in @('Stop', 'SubagentStop')) {
 }
 
 exit 0
+}
+finally {
+    if ($stateLocked) { $stateMutex.ReleaseMutex() }
+    $stateMutex.Dispose()
+}

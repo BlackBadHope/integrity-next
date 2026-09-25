@@ -7,6 +7,7 @@ or live MCP admission.
 from __future__ import annotations
 
 import copy
+import os
 from dataclasses import FrozenInstanceError
 from pathlib import Path
 from unittest.mock import patch
@@ -92,9 +93,9 @@ def test_portable_module_has_no_target_operational_definitions() -> None:
     import json
 
     source = Path(ttt.__file__).read_text(encoding="utf-8")
-    repository = Path(__file__).resolve().parents[1]
-    profile_path = repository / "private" / "publication" / "owner-profile.json"
-    if not profile_path.is_file():
+    configured = os.environ.get("INTEGRITY_PUBLICATION_OWNER_PROFILE", "").strip()
+    profile_path = Path(configured) if configured else None
+    if profile_path is None or not profile_path.is_file():
         pytest.skip("the private literal corpus is not part of the public export")
     profile = json.loads(profile_path.read_text(encoding="utf-8"))
     for record in profile["private_literals"]:

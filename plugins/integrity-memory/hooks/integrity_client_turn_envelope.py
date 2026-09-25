@@ -112,7 +112,7 @@ def _absolute_path(path: Path, label: str) -> Path:
 
 
 def _default_root() -> Path:
-    override = os.environ.get("integrity_client_ENVELOPE_ROOT")
+    override = os.environ.get("INTEGRITY_CLIENT_ENVELOPE_ROOT")
     if override:
         return _absolute_path(Path(override), "turn envelope root")
     codex_root = _absolute_path(
@@ -923,6 +923,12 @@ def release_claim(
         if value.get("status") != "claimed":
             raise TurnEnvelopeError("turn envelope is not claimed")
         _require_claim(value, claim_id)
+        if value.get("retire_after_claim") is True:
+            # A newer owner intent superseded this in-flight admission. Never
+            # re-arm the old prompt when an upstream pre-send retry releases it.
+            path.unlink()
+            _fsync_directory(target)
+            return {"retired": True, "status": "retired"}
         value["status"] = "armed"
         value.pop("claim_id_sha256", None)
         value.pop("claimed_utc", None)
@@ -984,7 +990,9 @@ def commit(
         return _public(tombstone, turn_ref)
 
 
-def retire(turn_ref: str, *, root: Path | None = None) -> bool:
+def retire(
+    turn_ref: str, *, root: Path | None = None, preserve_claimed: bool = False
+) -> bool:
     target = _ensure_root(root)
     path = _path(target, turn_ref)
     with _exclusive_root_lock(target):
@@ -992,7 +1000,13 @@ def retire(turn_ref: str, *, root: Path | None = None) -> bool:
             path.lstat()
         except FileNotFoundError:
             return False
-        _read(path)
+        value = _read(path)
+        if preserve_claimed and value.get("status") == "claimed":
+            # Custody stays with the in-flight broker until commit/release/TTL.
+            # The same root lock serializes this decision with claim acquisition.
+            value["retire_after_claim"] = True
+            _write_atomic(path, value)
+            return False
         path.unlink()
         _fsync_directory(target)
         return True
@@ -1027,6 +1041,7 @@ def main(argv: list[str] | None = None) -> int:
     commit_parser.add_argument("--claim-id", required=True)
     retire_parser = subparsers.add_parser("retire")
     retire_parser.add_argument("--turn-ref", required=True)
+    retire_parser.add_argument("--preserve-claimed", action="store_true")
     subparsers.add_parser("gc")
     args = parser.parse_args(argv)
     try:
@@ -1057,7 +1072,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "commit":
             value = commit(args.turn_ref, args.claim_id)
         elif args.command == "retire":
-            value = {"retired": retire(args.turn_ref)}
+            value = {"retired": retire(args.turn_ref, preserve_claimed=args.preserve_claimed)}
         else:
             value = {"removed": gc()}
     except (OSError, TurnEnvelopeError) as exc:
