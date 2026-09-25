@@ -1,7 +1,7 @@
 """Bounded lifecycle operations. Provider state never becomes canonical truth."""
 from __future__ import annotations
 
-from .contracts import (MAX_BYTES, SCHEMA, Rejected, Unknown, aggregate_usage, decode, digest,
+from .contracts import (MAX_BYTES, SCHEMA, Unknown, aggregate_usage, decode, digest,
                         encode, frozen, identifier, keys, need, number, sha, validate_arguments)
 from .journal import Journal
 from .transport import GuardianGate, Request
