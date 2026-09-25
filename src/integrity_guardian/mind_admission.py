@@ -31,6 +31,14 @@ COORDINATION_PROTOCOL = "integrity.action-log.coordination-projection/v1"
 SEGMENT_COVERAGE_PROTOCOL = "integrity.action-log.segmented-query-coverage/v1"
 ADMISSION_PROTOCOL = BRIDGE_PROTOCOL + "/mind-admission-receipt"
 MEMORY_SOURCE = "canonical-seed-action-log"
+# Action Log 2.9.0 serves byte-identical projections under its pre-universal
+# protocol names. Accept exactly that predecessor dialect so a 6.0 facade can
+# run beside the installed Action Log; one response must use one dialect.
+PREDECESSOR_ACTION_LOG_DIALECT = {
+    MIND_PROJECTION_PROTOCOL: "legacy.action-log.mind-projection/v1",
+    CONCEPT_PROTOCOL: "legacy.action-log.concept-recovery/v1",
+    COORDINATION_PROTOCOL: "legacy.action-log.coordination-projection/v1",
+}
 _DIGEST_RE = re.compile(r"^sha256:[a-f0-9]{64}$")
 _INTENT_RE = re.compile(r"^[a-f0-9]{12}$")
 
@@ -128,8 +136,15 @@ def verify_mind_companion(
                 "segment_coverage_digest": receipt_segment_digest,
             }
         )
+    predecessor = receipt.get("protocol") == PREDECESSOR_ACTION_LOG_DIALECT[
+        MIND_PROJECTION_PROTOCOL
+    ]
+
+    def dialect(protocol: str) -> str:
+        return PREDECESSOR_ACTION_LOG_DIALECT[protocol] if predecessor else protocol
+
     if (
-        receipt.get("protocol") != MIND_PROJECTION_PROTOCOL
+        receipt.get("protocol") != dialect(MIND_PROJECTION_PROTOCOL)
         or receipt.get("event_cursor") != snapshot_event_id
         or receipt.get("event_count") != snapshot_event_count
         or receipt.get("projection_digest") != projection_digest
@@ -145,7 +160,7 @@ def verify_mind_companion(
     recovery_core = dict(concept_recovery)
     recovery_digest = recovery_core.pop("recovery_digest", None)
     if (
-        concept_recovery.get("protocol") != CONCEPT_PROTOCOL
+        concept_recovery.get("protocol") != dialect(CONCEPT_PROTOCOL)
         or concept_recovery.get("memory_source") != MEMORY_SOURCE
         or concept_recovery.get("intent_fingerprint") != receipt.get("intent_fingerprint")
         or recovery_digest != canonical_mind_digest(recovery_core)
@@ -154,7 +169,7 @@ def verify_mind_companion(
     coordination_core = dict(coordination)
     coordination_digest = coordination_core.pop("coordination_digest", None)
     if (
-        coordination.get("protocol") != COORDINATION_PROTOCOL
+        coordination.get("protocol") != dialect(COORDINATION_PROTOCOL)
         or coordination_digest != canonical_mind_digest(coordination_core)
         or not isinstance(coordination.get("stop_required"), bool)
         or not isinstance(coordination.get("owner_go_required"), bool)

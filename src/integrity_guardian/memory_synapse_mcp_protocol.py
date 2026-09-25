@@ -11,9 +11,13 @@ from __future__ import annotations
 
 import argparse
 import atexit
+import ctypes
+import gc
 import json
 import math
 import sys
+import threading
+import time
 from copy import deepcopy
 from typing import Any, BinaryIO
 
@@ -379,47 +383,140 @@ def _reject_json_constant(_text: str) -> None:
     raise ValueError("non-finite JSON constant")
 
 
+DEFAULT_IDLE_RELEASE_SECONDS = 3600
+MIN_IDLE_RELEASE_SECONDS = 60
+MAX_IDLE_RELEASE_SECONDS = 86_400
+
+
+def _return_freed_heap() -> None:
+    gc.collect()
+    if sys.platform.startswith("linux"):
+        try:
+            ctypes.CDLL("libc.so.6").malloc_trim(0)
+        except (OSError, AttributeError):
+            pass
+
+
+class _IdleReleaseWatchdog:
+    """Release an idle session's Seed copy without closing its transport.
+
+    Requests run under ``lock``; the watchdog acts only when it can take the
+    same lock, so a release never interleaves with a request.
+    """
+
+    def __init__(
+        self,
+        server: legacy.MemorySynapseMcp,
+        lock: threading.Lock,
+        idle_seconds: float,
+        *,
+        clock=time.monotonic,
+    ) -> None:
+        self._server = server
+        self._lock = lock
+        self._idle_seconds = idle_seconds
+        self._clock = clock
+        self._last_activity = clock()
+        self._released = False
+        self._stop = threading.Event()
+        self._thread = threading.Thread(
+            target=self._run, name="integrity-idle-release", daemon=True
+        )
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    def touch(self) -> None:
+        self._last_activity = self._clock()
+        self._released = False
+
+    def check(self) -> bool:
+        if self._released or self._clock() - self._last_activity < self._idle_seconds:
+            return False
+        if not self._lock.acquire(blocking=False):
+            return False
+        try:
+            if self._clock() - self._last_activity < self._idle_seconds:
+                return False
+            self._released = True
+            released = self._server.release_idle_context()
+        except Exception:  # noqa: BLE001 - the watchdog must never kill the host
+            return False
+        finally:
+            self._lock.release()
+        if released:
+            _return_freed_heap()
+        return released
+
+    def _run(self) -> None:
+        interval = max(1.0, min(60.0, self._idle_seconds / 4))
+        while not self._stop.wait(interval):
+            self.check()
+
+
+def _handle_frame(
+    server: legacy.MemorySynapseMcp,
+    raw: bytes,
+    oversized: bool,
+) -> dict[str, Any] | None:
+    if oversized:
+        return _error(None, -32700, "parse error: stdio frame exceeds limit")
+    try:
+        message = json.loads(
+            raw,
+            parse_float=_finite_json_float,
+            parse_constant=_reject_json_constant,
+        )
+        # JSON escapes may decode to lone surrogates. Validate the
+        # complete frame before domain execution: the legacy denial
+        # path also hashes arguments as canonical UTF-8 JSON.
+        legacy.canonical_json(message)
+    except (ValueError, RecursionError):
+        # ValueError includes decoding failures and Python's integer
+        # digit limit. Reject non-finite values anywhere, before any
+        # modern or legacy domain tool can observe the request.
+        return _error(None, -32700, "parse error")
+    if not isinstance(message, dict):
+        return _error(None, -32600, "invalid request")
+    return dispatch(server, message)
+
+
 def serve(
     server: legacy.MemorySynapseMcp,
     *,
     stdin: BinaryIO | None = None,
     stdout: BinaryIO | None = None,
+    idle_release_seconds: float | None = None,
 ) -> int:
     input_stream = stdin or sys.stdin.buffer
     output_stream = stdout or sys.stdout.buffer
+    lock = threading.Lock()
+    watchdog = (
+        _IdleReleaseWatchdog(server, lock, idle_release_seconds)
+        if idle_release_seconds
+        else None
+    )
+    if watchdog is not None:
+        watchdog.start()
     try:
         while True:
             raw, oversized = _read_frame(input_stream)
             if raw is None:
                 break
-            if oversized:
-                response = _error(None, -32700, "parse error: stdio frame exceeds limit")
-            else:
-                try:
-                    message = json.loads(
-                        raw,
-                        parse_float=_finite_json_float,
-                        parse_constant=_reject_json_constant,
-                    )
-                    # JSON escapes may decode to lone surrogates. Validate the
-                    # complete frame before domain execution: the legacy denial
-                    # path also hashes arguments as canonical UTF-8 JSON.
-                    legacy.canonical_json(message)
-                except (ValueError, RecursionError):
-                    # ValueError includes decoding failures and Python's integer
-                    # digit limit. Reject non-finite values anywhere, before any
-                    # modern or legacy domain tool can observe the request.
-                    response = _error(None, -32700, "parse error")
-                else:
-                    if not isinstance(message, dict):
-                        response = _error(None, -32600, "invalid request")
-                    else:
-                        response = dispatch(server, message)
+            with lock:
+                if watchdog is not None:
+                    watchdog.touch()
+                response = _handle_frame(server, raw, oversized)
             if response is not None:
                 output_stream.write(_encode_response(response))
                 output_stream.flush()
         return 0
     finally:
+        if watchdog is not None:
+            watchdog.stop()
         server.close()
 
 
@@ -446,8 +543,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--native-state-root", type=legacy.Path)
     parser.add_argument("--native-instance-id")
     parser.add_argument("--native-device-id")
+    parser.add_argument(
+        "--idle-release-seconds",
+        type=int,
+        default=DEFAULT_IDLE_RELEASE_SECONDS,
+        help="release an idle session's Seed copy after this many seconds; 0 disables",
+    )
     parser.add_argument("--version", action="store_true")
     args = parser.parse_args(argv)
+    if args.idle_release_seconds and not (
+        MIN_IDLE_RELEASE_SECONDS <= args.idle_release_seconds <= MAX_IDLE_RELEASE_SECONDS
+    ):
+        parser.error("--idle-release-seconds must be 0 or within 60..86400")
     if args.version:
         print(f"{legacy.SERVER_NAME} {legacy.SERVER_VERSION}")
         return 0
@@ -524,7 +631,7 @@ def main(argv: list[str] | None = None) -> int:
         ),
     )
     atexit.register(server.close)
-    return serve(server)
+    return serve(server, idle_release_seconds=args.idle_release_seconds)
 
 
 if __name__ == "__main__":
