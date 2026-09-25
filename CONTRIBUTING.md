@@ -20,15 +20,15 @@ python -m ruff check path/to/changed.py
 ```
 
 The public surface check compares a tree with `PUBLIC-EXPORT-MANIFEST.json`
-file by file, so caches or a `.venv` inside your checkout make it fail. Refresh
-the manifest for your change, commit, and check a clean worktree of the commit:
+file by file, including file modes, so caches or a `.venv` inside your
+checkout make it fail. Refresh the manifest for your change, commit, and check
+a fresh clone of the commit, as CI does:
 
 ```bash
 python .github/scripts/update_manifest.py            # refresh listed files
 python .github/scripts/update_manifest.py --add path/to/new_module.py
-git worktree add ../surface-check HEAD
+git clone --quiet . ../surface-check
 python .github/scripts/public_surface_check.py --root ../surface-check
-git worktree remove ../surface-check
 ```
 
 New files are never picked up implicitly: name each one with `--add` (source)
