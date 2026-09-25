@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/windows-asset-manifest.schema.json",
+  "title": "Integrity Windows asset manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "assets",
+    "add_type_required",
+    "console_persistence",
+    "production_authority",
+    "manifest_digest"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/windows-asset-manifest/v1" },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "sha256", "size"],
+        "properties": {
+          "name": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$" },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "size": { "type": "integer", "minimum": 1, "maximum": 16777216 }
+        }
+      }
+    },
+    "add_type_required": { "const": false },
+    "console_persistence": { "const": false },
+    "production_authority": { "const": false },
+    "manifest_digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

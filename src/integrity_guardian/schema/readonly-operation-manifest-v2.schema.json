@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/readonly-operation-manifest.schema.json",
+  "title": "Windows bounded-process operation manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "manifest_id", "tenant_id", "adapter_id", "target_node_id",
+    "created_at", "operations", "controls", "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/readonly-operation-manifest/v2" },
+    "manifest_id": { "type": "string", "pattern": "^operation-manifest:[a-f0-9]{64}$" },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "adapter_id": { "$ref": "#/$defs/id" },
+    "target_node_id": { "$ref": "#/$defs/id" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation_id", "purpose", "executable", "executable_digest", "argv",
+          "argv_digest", "argument_count", "credential_reference", "timeout_seconds",
+          "max_output_bytes", "execution_context"
+        ],
+        "properties": {
+          "operation_id": { "$ref": "#/$defs/id" },
+          "purpose": { "type": "string", "minLength": 1, "maxLength": 512 },
+          "executable": { "type": "string", "minLength": 1, "maxLength": 4096 },
+          "executable_digest": { "$ref": "#/$defs/digest" },
+          "argv": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": { "type": "string", "minLength": 1, "maxLength": 4096 }
+          },
+          "argv_digest": { "$ref": "#/$defs/digest" },
+          "argument_count": { "type": "integer", "minimum": 1, "maximum": 64 },
+          "credential_reference": {
+            "oneOf": [
+              { "type": "null" },
+              { "type": "string", "pattern": "^credential:[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" }
+            ]
+          },
+          "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 300 },
+          "max_output_bytes": { "type": "integer", "minimum": 1024, "maximum": 4194304 },
+          "execution_context": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "platform_family", "working_directory", "environment",
+              "environment_digest", "containment"
+            ],
+            "properties": {
+              "platform_family": { "const": "Windows" },
+              "working_directory": { "type": "string", "minLength": 3, "maxLength": 4096 },
+              "environment": {
+                "type": "object",
+                "maxProperties": 32,
+                "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,127}$" },
+                "additionalProperties": { "type": "string", "maxLength": 4096 }
+              },
+              "environment_digest": { "$ref": "#/$defs/digest" },
+              "containment": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind", "process_creation", "inherited_handles", "kill_on_job_close",
+                  "active_process_limit", "process_memory_bytes", "timeout_enforced",
+                  "output_bound_enforced", "executable_identity_held",
+                  "application_dependency_closure", "network", "host_filesystem_write",
+                  "host_filesystem_visibility", "home_visible", "production_mutation",
+                  "contract_digest"
+                ],
+                "properties": {
+                  "kind": { "const": "windows-job-process-boundary-v1" },
+                  "process_creation": { "const": "suspended-before-job-assignment" },
+                  "inherited_handles": {
+                    "type": "array",
+                    "prefixItems": [
+                      { "const": "stdin" }, { "const": "stdout" }, { "const": "stderr" }
+                    ],
+                    "items": false,
+                    "minItems": 3,
+                    "maxItems": 3
+                  },
+                  "kill_on_job_close": { "const": true },
+                  "active_process_limit": { "const": 32 },
+                  "process_memory_bytes": { "const": 268435456 },
+                  "timeout_enforced": { "const": true },
+                  "output_bound_enforced": { "const": true },
+                  "executable_identity_held": { "const": true },
+                  "application_dependency_closure": { "const": "not-bound" },
+                  "network": { "const": "not-enforced" },
+                  "host_filesystem_write": { "const": "not-enforced" },
+                  "host_filesystem_visibility": { "const": "host-visible-under-executor-identity" },
+                  "home_visible": { "const": "not-enforced" },
+                  "production_mutation": { "const": "UNKNOWN" },
+                  "contract_digest": { "$ref": "#/$defs/digest" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "read_only_intent", "shell", "raw_argv_retained", "executable_digest_required",
+        "credential_values_in_argv_prohibited",
+        "credential_values_in_argv_preexecution_proven",
+        "final_credential_custody_audit_required", "credentials_by_reference",
+        "environment_policy", "exact_working_directory", "os_readonly_containment",
+        "process_tree_contained", "network_blocked", "host_filesystem_write_blocked",
+        "home_hidden", "mutation_observation", "automatic_retry_after_unknown"
+      ],
+      "properties": {
+        "read_only_intent": { "const": true },
+        "shell": { "const": false },
+        "raw_argv_retained": { "const": true },
+        "executable_digest_required": { "const": true },
+        "credential_values_in_argv_prohibited": { "const": true },
+        "credential_values_in_argv_preexecution_proven": { "const": false },
+        "final_credential_custody_audit_required": { "const": true },
+        "credentials_by_reference": { "const": true },
+        "environment_policy": { "const": "per-operation-exact" },
+        "exact_working_directory": { "const": true },
+        "os_readonly_containment": { "const": false },
+        "process_tree_contained": { "const": true },
+        "network_blocked": { "const": false },
+        "host_filesystem_write_blocked": { "const": false },
+        "home_hidden": { "const": false },
+        "mutation_observation": { "const": "not-observed-by-guardian" },
+        "automatic_retry_after_unknown": { "const": false }
+      }
+    },
+    "production_authority": { "const": false }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

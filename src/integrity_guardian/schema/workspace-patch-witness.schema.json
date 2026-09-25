@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/workspace-patch-witness.schema.json",
+  "title": "Integrity Workspace Patch independent witness v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["witness_id", "protocol", "sdk_version", "operation", "observer", "observed", "blast_radius", "result", "observed_at", "signer_id", "signature"],
+  "properties": {
+    "witness_id": { "type": "string", "pattern": "^workspace-patch-witness:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/workspace-patch-witness/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target_operation_id", "target_operation_digest", "patch_id", "patch_manifest_digest"],
+      "properties": {
+        "target_operation_id": { "type": "string", "pattern": "^adapter-target-operation:[a-f0-9]{64}$" },
+        "target_operation_digest": { "$ref": "#/$defs/digest" },
+        "patch_id": { "type": "string", "pattern": "^workspace-patch:[a-f0-9]{64}$" },
+        "patch_manifest_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "observer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["observer_id", "observer_artifact_digest", "key_id"],
+      "properties": {
+        "observer_id": { "$ref": "#/$defs/id" },
+        "observer_artifact_digest": { "$ref": "#/$defs/digest" },
+        "key_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "observed": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository_id", "worktree_id", "environment_digest", "head_oid", "tree_oid", "state_digest"],
+      "properties": {
+        "repository_id": { "$ref": "#/$defs/id" }, "worktree_id": { "$ref": "#/$defs/id" },
+        "environment_digest": { "$ref": "#/$defs/digest" }, "head_oid": { "$ref": "#/$defs/oid" },
+        "tree_oid": { "$ref": "#/$defs/oid" }, "state_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "blast_radius": {
+      "type": "object", "additionalProperties": false,
+      "required": ["allowed_paths_digest", "observed_paths_digest", "observed_path_count", "outside_allowed_count"],
+      "properties": {
+        "allowed_paths_digest": { "$ref": "#/$defs/digest" },
+        "observed_paths_digest": { "$ref": "#/$defs/digest" },
+        "observed_path_count": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "outside_allowed_count": { "const": 0 }
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["expected_tree_observed", "blast_radius_clean", "executor_claim_trusted", "external_causality_proven"],
+      "properties": {
+        "expected_tree_observed": { "type": "boolean" },
+        "blast_radius_clean": { "type": "boolean" },
+        "executor_claim_trusted": { "const": false },
+        "external_causality_proven": { "const": false }
+      }
+    },
+    "observed_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "oid": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" }, "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

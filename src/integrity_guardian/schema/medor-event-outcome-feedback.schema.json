@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/medor-event-outcome-feedback.schema.json",
+  "title": "Medor passive event outcome and feedback custody v1",
+  "type": "object", "additionalProperties": false,
+  "required": [
+    "receipt_id", "protocol", "grant_id", "request_digest", "outcome",
+    "witness_digest", "automatic_retry_allowed", "production_authority",
+    "outcome_event", "checkpoint", "inclusion_proof", "open_status", "write_status"
+  ],
+  "properties": {
+    "receipt_id": {"$ref": "#/$defs/digest"},
+    "protocol": {"const": "integrity-guardian/medor-event-outcome-feedback/v1"},
+    "grant_id": {"$ref": "#/$defs/digest"},
+    "request_digest": {"$ref": "#/$defs/digest"},
+    "outcome": {"enum": ["confirmed-success", "confirmed-failure", "unknown-outcome"]},
+    "witness_digest": {"$ref": "#/$defs/digest"},
+    "automatic_retry_allowed": {"const": false},
+    "production_authority": {"const": false},
+    "outcome_event": {"type": "object"},
+    "checkpoint": {"type": "object"},
+    "inclusion_proof": {"type": "object"},
+    "open_status": {"enum": ["empty", "retained-head", "recovered-immediate-child"]},
+    "write_status": {"enum": ["recorded", "already-recorded"]}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}
+}

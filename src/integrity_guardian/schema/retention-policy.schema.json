@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/retention-policy.schema.json",
+  "title": "Integrity Guardian Retention Policy v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "policy_id",
+    "tenant_id",
+    "classes",
+    "controls",
+    "created_at",
+    "valid_from",
+    "valid_until",
+    "authorization"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/retention-policy/v1"
+    },
+    "policy_id": {
+      "type": "string",
+      "pattern": "^retention-policy:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "classes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observations",
+        "ledger-events",
+        "checkpoints",
+        "findings",
+        "receipts",
+        "reports"
+      ],
+      "properties": {
+        "observations": {
+          "$ref": "#/$defs/days"
+        },
+        "ledger-events": {
+          "$ref": "#/$defs/days"
+        },
+        "checkpoints": {
+          "$ref": "#/$defs/days"
+        },
+        "findings": {
+          "$ref": "#/$defs/days"
+        },
+        "receipts": {
+          "$ref": "#/$defs/days"
+        },
+        "reports": {
+          "$ref": "#/$defs/days"
+        }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guardian_deletes",
+        "deletion_executor",
+        "legal_hold_preserves",
+        "unknown_timestamp_action"
+      ],
+      "properties": {
+        "guardian_deletes": {
+          "const": false
+        },
+        "deletion_executor": {
+          "const": "external-customer-local"
+        },
+        "legal_hold_preserves": {
+          "const": true
+        },
+        "unknown_timestamp_action": {
+          "const": "retain"
+        }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_id",
+        "decision",
+        "signature"
+      ],
+      "properties": {
+        "authority_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "decision": {
+          "const": "approved"
+        },
+        "signature": {
+          "$ref": "#/$defs/signature"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "days": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3650
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-synapse-mind-admission.schema.json",
+  "title": "Memory and Synapse Mind admission receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "memory_source",
+    "snapshot_event_id",
+    "snapshot_event_count",
+    "intent_fingerprint",
+    "projection_digest",
+    "mind_receipt_id",
+    "concept_recovery_digest",
+    "coordination_digest",
+    "coordination_stop_required",
+    "home_record_count",
+    "production_authority",
+    "seed_snapshot_id",
+    "seed_source_digest",
+    "seed_catalog_digest",
+    "receipt_id"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-client-memory-mcp/v3/mind-admission-receipt"},
+    "memory_source": {"const": "canonical-seed-action-log"},
+    "snapshot_event_id": {"type": "integer", "minimum": 1},
+    "snapshot_event_count": {"type": "integer", "minimum": 1},
+    "intent_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{12}$"},
+    "projection_digest": {"$ref": "#/$defs/digest"},
+    "mind_receipt_id": {"$ref": "#/$defs/digest"},
+    "concept_recovery_digest": {"$ref": "#/$defs/digest"},
+    "coordination_digest": {"$ref": "#/$defs/digest"},
+    "coordination_stop_required": {"type": "boolean"},
+    "home_record_count": {"const": 0},
+    "production_authority": {"const": false},
+    "seed_snapshot_id": {"$ref": "#/$defs/digest"},
+    "seed_source_digest": {"$ref": "#/$defs/digest"},
+    "seed_catalog_digest": {"$ref": "#/$defs/digest"},
+    "receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

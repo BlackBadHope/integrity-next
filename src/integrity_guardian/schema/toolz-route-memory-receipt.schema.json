@@ -1,0 +1,408 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-route-memory-receipt.schema.json",
+  "title": "Integrity Uroboros Toolzs Route Memory Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "tool_context",
+    "fog_route",
+    "cyber_admission",
+    "observation",
+    "created_at",
+    "expires_at",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-route-memory-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^toolz-route-memory-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "tool_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_digest",
+        "environment_profile_id",
+        "environment_fingerprint_digest",
+        "ui_context_digest"
+      ],
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "environment_profile_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "environment_fingerprint_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "ui_context_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "fog_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_kind",
+        "proposal_id",
+        "route_digest",
+        "snapshot_id",
+        "snapshot_digest",
+        "route_created_at",
+        "route_status",
+        "invalidation_zone_ids",
+        "feedback_overlay_id",
+        "feedback_overlay_digest"
+      ],
+      "properties": {
+        "route_kind": {
+          "enum": [
+            "theory",
+            "feedback-ranked"
+          ]
+        },
+        "proposal_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^discovery-theory-route:[a-f0-9]{64}$"
+            },
+            {
+              "type": "string",
+              "pattern": "^discovery-feedback-ranked-route:[a-f0-9]{64}$"
+            }
+          ]
+        },
+        "route_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^discovery-index-snapshot:[a-f0-9]{64}$"
+        },
+        "snapshot_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "route_created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "route_status": {
+          "enum": [
+            "candidate",
+            "unresolved"
+          ]
+        },
+        "invalidation_zone_ids": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "feedback_overlay_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^discovery-feedback-overlay:[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "feedback_overlay_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "route_kind": {
+                "const": "theory"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "pattern": "^discovery-theory-route:[a-f0-9]{64}$"
+              },
+              "feedback_overlay_id": {
+                "type": "null"
+              },
+              "feedback_overlay_digest": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "proposal_id": {
+                "type": "string",
+                "pattern": "^discovery-feedback-ranked-route:[a-f0-9]{64}$"
+              },
+              "feedback_overlay_id": {
+                "type": "string",
+                "pattern": "^discovery-feedback-overlay:[a-f0-9]{64}$"
+              },
+              "feedback_overlay_digest": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "cyber_admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_receipt_id",
+        "decision_receipt_digest",
+        "policy_id",
+        "policy_digest",
+        "requested_channel",
+        "decision",
+        "evaluated_at",
+        "expires_at"
+      ],
+      "properties": {
+        "decision_receipt_id": {
+          "type": "string",
+          "pattern": "^promotion-decision-receipt:[a-f0-9]{64}$"
+        },
+        "decision_receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "requested_channel": {
+          "enum": [
+            "rc",
+            "stable"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "ineligible",
+            "rc-eligible",
+            "stable-eligible"
+          ]
+        },
+        "evaluated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "outcome",
+        "observed_at",
+        "evidence_digest"
+      ],
+      "properties": {
+        "outcome": {
+          "enum": [
+            "theoretical",
+            "observed-success",
+            "observed-failure",
+            "stale",
+            "invalidated"
+          ]
+        },
+        "observed_at": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/timestamp"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "theoretical"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "observed_at": {
+                "type": "null"
+              },
+              "evidence_digest": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "observed_at": {
+                "$ref": "#/$defs/timestamp"
+              },
+              "evidence_digest": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "expires_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "browser_control",
+        "credentials",
+        "execution",
+        "global_publish",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "storage",
+        "tool_invocation"
+      ],
+      "properties": {
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution": {
+          "const": false
+        },
+        "global_publish": {
+          "const": false
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "storage": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

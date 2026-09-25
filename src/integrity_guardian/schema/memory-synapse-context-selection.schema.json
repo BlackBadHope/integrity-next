@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-synapse-context-selection.schema.json",
+  "title": "Memory and Synapse adaptive context selection receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "mode",
+    "policy_version",
+    "intent_fingerprint",
+    "source_projection_digest",
+    "capsule_digest",
+    "max_context_bytes",
+    "max_candidates",
+    "transport_candidate_cap",
+    "intent_term_count",
+    "broad_scope",
+    "implementation_scope",
+    "source_projection_bytes",
+    "capsule_bytes",
+    "available_candidates",
+    "selected_candidates",
+    "truncated",
+    "candidates_truncated",
+    "stop_reason",
+    "home_record_count",
+    "production_authority",
+    "receipt_id"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-client-memory-mcp/v3/adaptive-context-selection/v1"
+    },
+    "mode": {"const": "adaptive"},
+    "policy_version": {"const": "adaptive-context-v1"},
+    "intent_fingerprint": {"type": "string", "pattern": "^[a-f0-9]{12}$"},
+    "source_projection_digest": {"$ref": "#/$defs/digest"},
+    "capsule_digest": {"$ref": "#/$defs/digest"},
+    "max_context_bytes": {"type": "integer", "minimum": 8192, "maximum": 262144},
+    "max_candidates": {"type": "integer", "minimum": 1, "maximum": 50},
+    "transport_candidate_cap": {"type": "integer", "minimum": 1, "maximum": 50},
+    "intent_term_count": {"type": "integer", "minimum": 0},
+    "broad_scope": {"type": "boolean"},
+    "implementation_scope": {"type": "boolean"},
+    "source_projection_bytes": {"type": "integer", "minimum": 1},
+    "capsule_bytes": {"type": "integer", "minimum": 1, "maximum": 262144},
+    "available_candidates": {"$ref": "#/$defs/candidateCounts"},
+    "selected_candidates": {"$ref": "#/$defs/candidateCounts"},
+    "truncated": {"const": true},
+    "candidates_truncated": {"type": "boolean"},
+    "stop_reason": {
+      "enum": [
+        "bounded-projection-complete",
+        "candidate-cap-reached",
+        "byte-budget-exhausted"
+      ]
+    },
+    "home_record_count": {"const": 0},
+    "production_authority": {"const": false},
+    "receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "candidateCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coordination_conflicts",
+        "active_locks",
+        "contradictions",
+        "invariants",
+        "plan_items",
+        "recall_hits",
+        "concept_tasks",
+        "attention_items",
+        "logical_chains",
+        "hierarchy_focus"
+      ],
+      "properties": {
+        "coordination_conflicts": {"type": "integer", "minimum": 0},
+        "active_locks": {"type": "integer", "minimum": 0},
+        "contradictions": {"type": "integer", "minimum": 0},
+        "invariants": {"type": "integer", "minimum": 0},
+        "plan_items": {"type": "integer", "minimum": 0},
+        "recall_hits": {"type": "integer", "minimum": 0},
+        "concept_tasks": {"type": "integer", "minimum": 0},
+        "attention_items": {"type": "integer", "minimum": 0},
+        "logical_chains": {"type": "integer", "minimum": 0},
+        "hierarchy_focus": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

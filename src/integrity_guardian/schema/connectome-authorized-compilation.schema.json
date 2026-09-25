@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/connectome-authorized-compilation.schema.json",
+  "title": "Integrity Connectome Authorized Compilation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "authorized_compilation_id",
+    "tenant_id",
+    "manifest_id",
+    "authorization_id",
+    "compilation_context_id",
+    "compilation_id",
+    "graph_id",
+    "authorization",
+    "compilation",
+    "control_plane_calls",
+    "invariants"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/connectome-authorized-compilation/v1"
+    },
+    "authorized_compilation_id": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "manifest_id": { "$ref": "#/$defs/digest" },
+    "authorization_id": {
+      "type": "string",
+      "pattern": "^connectome-authorization:[a-f0-9]{64}$"
+    },
+    "compilation_context_id": {
+      "type": "string",
+      "pattern": "^context:[A-Za-z0-9][A-Za-z0-9._:/-]{0,247}$"
+    },
+    "compilation_id": { "$ref": "#/$defs/digest" },
+    "graph_id": { "$ref": "#/$defs/digest" },
+    "authorization": { "$ref": "#/$defs/authorization" },
+    "compilation": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "compilation_id",
+        "tenant_id",
+        "manifest_id",
+        "graph_id"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/connectome-compilation/v1"
+        },
+        "compilation_id": { "$ref": "#/$defs/digest" },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "manifest_id": { "$ref": "#/$defs/digest" },
+        "graph_id": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "control_plane_calls": { "$ref": "#/$defs/zero_calls" },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_verified",
+        "execution_performed",
+        "manifest_authority_bound",
+        "model_calls",
+        "production_authority",
+        "replay_context_bound",
+        "tenant_bound",
+        "tool_calls"
+      ],
+      "properties": {
+        "authorization_verified": { "const": true },
+        "execution_performed": { "const": false },
+        "manifest_authority_bound": { "const": true },
+        "model_calls": { "const": 0 },
+        "production_authority": { "const": false },
+        "replay_context_bound": { "const": true },
+        "tenant_bound": { "const": true },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "authorization_id",
+        "tenant_id",
+        "manifest_id",
+        "compilation_context_id",
+        "authority_role",
+        "authority_id",
+        "authority_key_fingerprint",
+        "allowed_subsystems",
+        "allow_disposable_mutation",
+        "valid_from",
+        "valid_until",
+        "production_authority",
+        "signature"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/connectome-authorization/v1"
+        },
+        "authorization_id": {
+          "type": "string",
+          "pattern": "^connectome-authorization:[a-f0-9]{64}$"
+        },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "manifest_id": { "$ref": "#/$defs/digest" },
+        "compilation_context_id": {
+          "type": "string",
+          "pattern": "^context:[A-Za-z0-9][A-Za-z0-9._:/-]{0,247}$"
+        },
+        "authority_role": { "const": "connectome-publisher" },
+        "authority_id": { "$ref": "#/$defs/id" },
+        "authority_key_fingerprint": { "$ref": "#/$defs/digest" },
+        "allowed_subsystems": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "allow_disposable_mutation": { "type": "boolean" },
+        "valid_from": { "type": "string", "format": "date-time" },
+        "valid_until": { "type": "string", "format": "date-time" },
+        "production_authority": { "const": false },
+        "signature": { "$ref": "#/$defs/signature" }
+      }
+    },
+    "zero_calls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "tool_calls"],
+      "properties": {
+        "model_calls": { "const": 0 },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  }
+}

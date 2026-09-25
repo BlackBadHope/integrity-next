@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/native-database-enrollment.schema.json",
+  "title": "Integrity native database enrollment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "instance_id", "tenant_id", "ledger_id", "database_id",
+    "source_key", "checkpoint_key", "created_at", "enrollment_id", "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/native-database-enrollment/v1" },
+    "instance_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "tenant_id": { "type": "string", "pattern": "^tenant:[A-Za-z0-9._-]+$" },
+    "ledger_id": { "type": "string", "pattern": "^ledger:[A-Za-z0-9._:-]+$" },
+    "database_id": { "type": "string", "pattern": "^database:[a-f0-9]{64}$" },
+    "source_key": { "$ref": "#/$defs/key" },
+    "checkpoint_key": { "$ref": "#/$defs/key" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "enrollment_id": { "$ref": "#/$defs/digest" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "key": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "role", "algorithm", "public_key", "fingerprint"],
+      "properties": {
+        "key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "role": { "enum": ["database-source", "database-checkpoint"] },
+        "algorithm": { "const": "ed25519" },
+        "public_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+        "fingerprint": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+      }
+    }
+  }
+}

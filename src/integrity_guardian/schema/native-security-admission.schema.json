@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/native-security-admission.schema.json",
+  "title": "Integrity personal-native exact-artifact security admission",
+  "type": "object", "additionalProperties": false,
+  "required": [
+    "protocol", "instance_id", "artifact_digest", "profile", "scopes",
+    "authority_boundary", "issued_at", "expires_at", "issuer_key_fingerprint",
+    "admission_id", "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/native-security-admission/v2" },
+    "instance_id": { "type": "string", "pattern": "^instance:[a-z0-9][a-z0-9._-]{0,127}$" },
+    "artifact_digest": { "$ref": "#/$defs/digest" },
+    "profile": { "const": "personal-native" },
+    "scopes": {
+      "type": "array", "uniqueItems": true,
+      "items": { "enum": ["canonical-memory-read", "single-canonical-seed-append"] },
+      "minItems": 2, "maxItems": 2
+    },
+    "authority_boundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["credentials", "generic_execution", "external_systems", "production", "winops"],
+      "properties": {
+        "credentials": { "const": false },
+        "generic_execution": { "const": false },
+        "external_systems": { "const": false },
+        "production": { "const": false },
+        "winops": { "const": false }
+      }
+    },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "issuer_key_fingerprint": { "$ref": "#/$defs/digest" },
+    "admission_id": { "$ref": "#/$defs/digest" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+      }
+    }
+  }
+}

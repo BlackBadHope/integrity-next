@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/passive-discovery-cohort-receipt.schema.json",
+  "title": "Integrity Passive Discovery Cohort Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "capture_id",
+    "capture_started_at",
+    "capture_completed_at",
+    "capture_duration_seconds",
+    "observation_skew_seconds",
+    "policy_digest",
+    "trusted_source_set_digest",
+    "input_cursor_set_digest",
+    "records_digest",
+    "cohort_digest",
+    "source_count",
+    "record_count",
+    "source_windows",
+    "output_cursors",
+    "boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/passive-discovery-cohort-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^passive-cohort-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "capture_id": { "$ref": "#/$defs/id" },
+    "capture_started_at": { "type": "string", "format": "date-time" },
+    "capture_completed_at": { "type": "string", "format": "date-time" },
+    "capture_duration_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 86400
+    },
+    "observation_skew_seconds": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 86400
+    },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "trusted_source_set_digest": { "$ref": "#/$defs/digest" },
+    "input_cursor_set_digest": { "$ref": "#/$defs/digest" },
+    "records_digest": { "$ref": "#/$defs/digest" },
+    "cohort_digest": { "$ref": "#/$defs/digest" },
+    "source_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 64
+    },
+    "record_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10000
+    },
+    "source_windows": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/source_window" }
+    },
+    "output_cursors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/cursor" }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "active_probe",
+        "atlas_admission",
+        "cursor_commit",
+        "execution",
+        "memory_admission",
+        "model_calls",
+        "mutation",
+        "network",
+        "priority_is_authority",
+        "production_authority",
+        "theory_is_observation"
+      ],
+      "properties": {
+        "active_probe": { "const": false },
+        "atlas_admission": { "const": false },
+        "cursor_commit": { "const": false },
+        "execution": { "const": false },
+        "memory_admission": { "const": false },
+        "model_calls": { "const": 0 },
+        "mutation": { "const": false },
+        "network": { "const": false },
+        "priority_is_authority": { "const": false },
+        "production_authority": { "const": false },
+        "theory_is_observation": { "const": false }
+      }
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "cursor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_epoch",
+        "next_sequence",
+        "previous_record_digest"
+      ],
+      "properties": {
+        "source_id": { "$ref": "#/$defs/id" },
+        "source_epoch": { "$ref": "#/$defs/id" },
+        "next_sequence": { "type": "integer", "minimum": 0 },
+        "previous_record_digest": {
+          "oneOf": [
+            { "$ref": "#/$defs/digest" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "source_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_epoch",
+        "source_key_fingerprint",
+        "source_artifact_digest",
+        "record_count",
+        "first_sequence",
+        "last_sequence",
+        "first_record_digest",
+        "last_record_digest",
+        "observed_from",
+        "observed_through",
+        "coverage_digests",
+        "coverage_set_digest",
+        "input_cursor",
+        "output_cursor"
+      ],
+      "properties": {
+        "source_id": { "$ref": "#/$defs/id" },
+        "source_epoch": { "$ref": "#/$defs/id" },
+        "source_key_fingerprint": { "$ref": "#/$defs/digest" },
+        "source_artifact_digest": { "$ref": "#/$defs/digest" },
+        "record_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        },
+        "first_sequence": { "type": "integer", "minimum": 0 },
+        "last_sequence": { "type": "integer", "minimum": 0 },
+        "first_record_digest": { "$ref": "#/$defs/digest" },
+        "last_record_digest": { "$ref": "#/$defs/digest" },
+        "observed_from": { "type": "string", "format": "date-time" },
+        "observed_through": { "type": "string", "format": "date-time" },
+        "coverage_digests": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10000,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/digest" }
+        },
+        "coverage_set_digest": { "$ref": "#/$defs/digest" },
+        "input_cursor": { "$ref": "#/$defs/cursor" },
+        "output_cursor": { "$ref": "#/$defs/cursor" }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

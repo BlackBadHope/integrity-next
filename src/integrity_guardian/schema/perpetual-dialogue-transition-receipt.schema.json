@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/perpetual-dialogue-transition-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "tenant_id",
+    "conversation_id",
+    "sequence",
+    "transition_kind",
+    "subject_id",
+    "request_digest",
+    "prior_state_digest",
+    "next_state_digest",
+    "recorded_at",
+    "production_authority",
+    "receipt_id",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/perpetual-dialogue-transition-receipt/v1"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/\\-]{0,248}$"
+    },
+    "conversation_id": {"$ref": "#/$defs/id"},
+    "sequence": {"type": "integer", "minimum": 1},
+    "transition_kind": {
+      "enum": [
+        "conversation-opened",
+        "work-opened",
+        "baton-issued",
+        "baton-closed",
+        "wake-admitted",
+        "wake-claimed",
+        "wake-consumed",
+        "conversation-control",
+        "turn-exit-sealed"
+      ]
+    },
+    "subject_id": {"$ref": "#/$defs/id"},
+    "request_digest": {"$ref": "#/$defs/digest"},
+    "prior_state_digest": {"$ref": "#/$defs/digest"},
+    "next_state_digest": {"$ref": "#/$defs/digest"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "production_authority": {"const": false},
+    "receipt_id": {"$ref": "#/$defs/digest"},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

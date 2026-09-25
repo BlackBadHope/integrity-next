@@ -1,0 +1,252 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-start-state-witness.schema.json",
+  "title": "Integrity Uroboros Toolzs Passive Start-State Witness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "witness_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "tool_context",
+    "observer",
+    "observation",
+    "created_at",
+    "privacy_boundary",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-start-state-witness/v1"
+    },
+    "witness_id": {
+      "type": "string",
+      "pattern": "^toolz-start-state-witness:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "tool_context": {
+      "$ref": "#/$defs/tool_context"
+    },
+    "observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observer_id",
+        "observer_artifact_digest"
+      ],
+      "properties": {
+        "observer_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "observer_artifact_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_digest",
+        "zone_id",
+        "state_entity_id",
+        "evidence_digest",
+        "observed_at"
+      ],
+      "properties": {
+        "state_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "zone_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "state_entity_id": {
+          "type": "string",
+          "pattern": "^entity:synthetic-toolz-state-[a-f0-9]{64}$"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "privacy_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cookies",
+        "credentials",
+        "dom",
+        "form_values",
+        "free_text",
+        "screenshots",
+        "selectors",
+        "urls"
+      ],
+      "properties": {
+        "cookies": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "dom": {
+          "const": false
+        },
+        "form_values": {
+          "const": false
+        },
+        "free_text": {
+          "const": false
+        },
+        "screenshots": {
+          "const": false
+        },
+        "selectors": {
+          "const": false
+        },
+        "urls": {
+          "const": false
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "browser_control",
+        "credentials",
+        "execution",
+        "external_observer_attestation",
+        "global_publish",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "storage",
+        "tool_invocation"
+      ],
+      "properties": {
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution": {
+          "const": false
+        },
+        "external_observer_attestation": {
+          "const": true
+        },
+        "global_publish": {
+          "const": false
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "storage": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "tool_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_digest",
+        "environment_profile_id",
+        "environment_fingerprint_digest",
+        "ui_context_digest"
+      ],
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "environment_profile_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "environment_fingerprint_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "ui_context_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

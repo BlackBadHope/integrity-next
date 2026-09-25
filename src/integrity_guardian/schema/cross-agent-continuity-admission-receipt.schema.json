@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/cross-agent-continuity-admission-receipt.schema.json",
+  "title": "Cross-Agent Continuity Admission Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "receipt_id", "package_id", "package_digest",
+    "context_digest", "task_id", "successor_agent_id", "successor_key_id",
+    "successor_generation", "accepted_at", "expires_at", "context_admitted",
+    "continuation_scope", "read_authority", "append_authority",
+    "production_authority", "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/cross-agent-continuity-admission-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^continuity-admission:[a-f0-9]{64}$"
+    },
+    "package_id": { "$ref": "#/$defs/id" },
+    "package_digest": { "$ref": "#/$defs/digest" },
+    "context_digest": { "$ref": "#/$defs/digest" },
+    "task_id": { "$ref": "#/$defs/id" },
+    "successor_agent_id": { "$ref": "#/$defs/id" },
+    "successor_key_id": { "$ref": "#/$defs/id" },
+    "successor_generation": { "type": "integer", "minimum": 1 },
+    "accepted_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "context_admitted": { "const": true },
+    "continuation_scope": { "const": "context-only" },
+    "read_authority": { "const": false },
+    "append_authority": { "const": false },
+    "production_authority": { "const": false },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

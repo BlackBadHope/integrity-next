@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools==82.0.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "integrity-active-inquiry"
+version = "0.1.0rc2"
+description = "Offline goal-directed inquiry planning and development contracts for Integrity"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE"}
+dependencies = []
+
+[project.scripts]
+integrity-inquiry = "integrity_active_inquiry.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+integrity_active_inquiry = ["schemas/*.json"]

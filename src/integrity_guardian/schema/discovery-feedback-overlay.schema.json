@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/discovery-feedback-overlay.schema.json",
+  "title": "Integrity Fog of War Feedback Overlay v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "overlay_id",
+    "tenant_id",
+    "snapshot_id",
+    "snapshot_digest",
+    "theory_policy_id",
+    "theory_policy_digest",
+    "feedback_policy_id",
+    "feedback_policy_digest",
+    "created_at",
+    "feedback_receipt_ids",
+    "record_effects",
+    "zone_effects",
+    "excluded_record_ids",
+    "record_feedback_scores",
+    "invalidated_zone_ids",
+    "dependency_invalidations",
+    "overlay_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/discovery-feedback-overlay/v1"
+    },
+    "overlay_id": {
+      "type": "string",
+      "pattern": "^discovery-feedback-overlay:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^discovery-index-snapshot:[a-f0-9]{64}$"
+    },
+    "snapshot_digest": { "$ref": "#/$defs/digest" },
+    "theory_policy_id": { "$ref": "#/$defs/id" },
+    "theory_policy_digest": { "$ref": "#/$defs/digest" },
+    "feedback_policy_id": { "$ref": "#/$defs/id" },
+    "feedback_policy_digest": { "$ref": "#/$defs/digest" },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "feedback_receipt_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1000,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^discovery-theory-feedback:[a-f0-9]{64}$"
+      }
+    },
+    "record_effects": {
+      "type": "array",
+      "maxItems": 25000,
+      "items": { "$ref": "#/$defs/record_effect" }
+    },
+    "zone_effects": {
+      "type": "array",
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/zone_effect" }
+    },
+    "excluded_record_ids": {
+      "type": "array",
+      "maxItems": 25000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/record_id" }
+    },
+    "record_feedback_scores": {
+      "type": "array",
+      "maxItems": 25000,
+      "items": { "$ref": "#/$defs/record_score" }
+    },
+    "invalidated_zone_ids": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "dependency_invalidations": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/dependency_invalidation" }
+    },
+    "overlay_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credentials",
+        "execution",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "source_evidence_mutated",
+        "synapse_authority"
+      ],
+      "properties": {
+        "credentials": { "const": false },
+        "execution": { "const": false },
+        "model_sdk": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "source_evidence_mutated": { "const": false },
+        "synapse_authority": { "const": false }
+      }
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "record_id": {
+      "type": "string",
+      "pattern": "^discovery-record:[a-f0-9]{64}$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "record_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "confirmation_observer_count",
+        "refutation_observer_count",
+        "inconclusive_observer_count",
+        "conflicted_observer_count",
+        "preference_score",
+        "excluded",
+        "invalidated_by_zone_ids"
+      ],
+      "properties": {
+        "record_id": { "$ref": "#/$defs/record_id" },
+        "confirmation_observer_count": { "$ref": "#/$defs/count" },
+        "refutation_observer_count": { "$ref": "#/$defs/count" },
+        "inconclusive_observer_count": { "$ref": "#/$defs/count" },
+        "conflicted_observer_count": { "$ref": "#/$defs/count" },
+        "preference_score": { "$ref": "#/$defs/count" },
+        "excluded": { "type": "boolean" },
+        "invalidated_by_zone_ids": {
+          "type": "array",
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "zone_effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "zone_id",
+        "refutation_observer_count",
+        "stale_observer_count",
+        "invalidated"
+      ],
+      "properties": {
+        "zone_id": { "$ref": "#/$defs/id" },
+        "refutation_observer_count": { "$ref": "#/$defs/count" },
+        "stale_observer_count": { "$ref": "#/$defs/count" },
+        "invalidated": { "type": "boolean" }
+      }
+    },
+    "record_score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_id", "score"],
+      "properties": {
+        "record_id": { "$ref": "#/$defs/record_id" },
+        "score": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        }
+      }
+    },
+    "dependency_invalidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposal_id", "proposal_digest", "record_ids", "zone_ids"],
+      "properties": {
+        "proposal_id": {
+          "type": "string",
+          "pattern": "^discovery-theory-route:[a-f0-9]{64}$"
+        },
+        "proposal_digest": { "$ref": "#/$defs/digest" },
+        "record_ids": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/record_id" }
+        },
+        "zone_ids": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

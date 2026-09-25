@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools==82.0.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "integrity-agents-api"
+version = "0.1.0rc2"
+description = "Optional SDK-guarded Agents API lifecycle and recovery adapter"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = []
+
+[project.scripts]
+integrity-agents = "integrity_agents_api.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["integrity_agents_api*"]

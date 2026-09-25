@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/agent-session-admission.schema.json",
+  "title": "Integrity agent session admission v1",
+  "description": "The first Word: a session does not exist as a named Integrity speaker until this object is bound. It is not mutation authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "admission_id",
+    "agent",
+    "session_id",
+    "host_id",
+    "capability_class",
+    "production_authority",
+    "declared_at",
+    "task_id"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/agent-session-admission/v1" },
+    "admission_id": {
+      "type": "string",
+      "pattern": "^admission:[a-f0-9]{64}$"
+    },
+    "agent": { "$ref": "#/$defs/agent" },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "host_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$"
+    },
+    "capability_class": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "read-memory",
+          "append-memory",
+          "adapter-observe",
+          "adapter-mutate"
+        ]
+      }
+    },
+    "production_authority": { "const": false },
+    "declared_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "task_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    }
+  },
+  "$defs": {
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "agent_id",
+        "kind",
+        "vendor",
+        "product",
+        "runtime",
+        "instance_id"
+      ],
+      "properties": {
+        "protocol": { "const": "integrity-guardian/agent-identity/v1" },
+        "agent_id": {
+          "type": "string",
+          "pattern": "^agent:[a-f0-9]{64}$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["coding-agent", "human", "automation", "unknown"]
+        },
+        "vendor": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+        },
+        "product": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+        },
+        "runtime": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+        },
+        "instance_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        }
+      }
+    }
+  }
+}

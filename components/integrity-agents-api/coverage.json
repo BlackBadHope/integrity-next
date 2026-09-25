@@ -1,0 +1,174 @@
+{
+  "schema": "integrity-agents-coverage/v1",
+  "version": "0.1.0rc2",
+  "change_intent": 199,
+  "base_commit": "e40b9973fb8864fed29297a8dc61ba41111f5dbf",
+  "all_recommendations_traced": true,
+  "live_acceptance_complete": false,
+  "independent_review_performed": false,
+  "features": [
+    {
+      "id": "managed-executor",
+      "api": "contracts.compile_session",
+      "test": "test_session_secure_defaults",
+      "remaining_acceptance": "optional managed executor; Core unchanged"
+    },
+    {
+      "id": "sessions-and-steering",
+      "api": "lifecycle.Sessions.message",
+      "test": "test_message_steer_wire",
+      "remaining_acceptance": "live provider session acceptance"
+    },
+    {
+      "id": "environment-lifecycle",
+      "api": "lifecycle.Sessions.environment_state",
+      "test": "test_environment_separate_from_session",
+      "remaining_acceptance": "real executor/filesystem custody not observed"
+    },
+    {
+      "id": "tool-search",
+      "api": "contracts.compile_session",
+      "test": "test_ptc_read_and_search",
+      "remaining_acceptance": "provider catalog discovery not live-tested"
+    },
+    {
+      "id": "programmatic-tools",
+      "api": "contracts.compile_session",
+      "test": "test_ptc_write_rejected",
+      "remaining_acceptance": "remote V8 runtime not independently certified"
+    },
+    {
+      "id": "self-hosted",
+      "api": "contracts.compile_session",
+      "test": "test_environment_requires_exact_review",
+      "remaining_acceptance": "no automatic exec-server launcher; host must admit runtime"
+    },
+    {
+      "id": "private-mcp",
+      "api": "contracts.compile_session",
+      "test": "test_private_mcp_origin",
+      "remaining_acceptance": "read-only HTTPS gateway only; stdio/MCP writes unadmitted"
+    },
+    {
+      "id": "subagent-inheritance",
+      "api": "contracts.compile_session",
+      "test": "test_function_subagents_rejected",
+      "remaining_acceptance": "inherited access requires external custody; no live delegation test"
+    },
+    {
+      "id": "independent-observer",
+      "api": "contracts.observer_separation",
+      "test": "test_observer_shared_credential",
+      "remaining_acceptance": "actual authenticated a14 verification external"
+    },
+    {
+      "id": "event-recovery",
+      "api": "lifecycle.reconcile",
+      "test": "test_persisted_terminal_not_downgraded",
+      "remaining_acceptance": "provider snapshots non-atomic; live reconnection untested"
+    },
+    {
+      "id": "no-replay",
+      "api": "journal.Journal.run_once",
+      "test": "test_failure_never_replayed",
+      "remaining_acceptance": "existing signed durable SDK permit required"
+    },
+    {
+      "id": "retained-function-results",
+      "api": "lifecycle.Sessions.submit_retained_result",
+      "test": "test_submission_loss_only_resends_retained_result",
+      "remaining_acceptance": "fresh host authorization per submission"
+    },
+    {
+      "id": "no-trace-export",
+      "api": "transport.Request.descriptor",
+      "test": "test_no_unlisted_endpoints",
+      "remaining_acceptance": "no public trace API or trace export assumed"
+    },
+    {
+      "id": "hosted-network",
+      "api": "contracts.compile_session",
+      "test": "test_broad_network_not_admitted",
+      "remaining_acceptance": "real egress containment not tested"
+    },
+    {
+      "id": "retention-residency",
+      "api": "contracts.ExportPolicy.check",
+      "test": "test_export_zdr_requirement_denies",
+      "remaining_acceptance": "US/non-ZDR consent cannot satisfy ZDR requirement"
+    },
+    {
+      "id": "minimal-context",
+      "api": "contracts.context_capsule",
+      "test": "test_context_private_rejected",
+      "remaining_acceptance": "host reviews actual content; no automatic PII guarantee"
+    },
+    {
+      "id": "budget-and-subscription",
+      "api": "journal.Journal.run_once",
+      "test": "test_budget_never_refunded",
+      "remaining_acceptance": "client reservations are not provider hard spend caps"
+    },
+    {
+      "id": "unknown-usage",
+      "api": "contracts.aggregate_usage",
+      "test": "test_usage_null_is_unknown",
+      "remaining_acceptance": "telemetry not a final bill or permission to resume"
+    },
+    {
+      "id": "none-environment",
+      "api": "contracts.compile_session",
+      "test": "test_session_secure_defaults",
+      "remaining_acceptance": "default functions-only sandbox-free path"
+    },
+    {
+      "id": "sdk-authority",
+      "api": "transport.GuardianGate.invoke",
+      "test": "test_sdk_exact_payload",
+      "remaining_acceptance": "genuine signed SDK lifecycle not exercised"
+    },
+    {
+      "id": "provider-handoff",
+      "api": "lifecycle.Sessions.handoff_candidate",
+      "test": "test_handoff_uses_canonical_snapshot",
+      "remaining_acceptance": "candidate only; existing owner guard and observer required"
+    },
+    {
+      "id": "read-only-pilot",
+      "api": "audit.audit_snapshot",
+      "test": "test_offline_audit_finds_drift",
+      "remaining_acceptance": "synthetic deterministic audit, not live model/verified Git"
+    },
+    {
+      "id": "cancel-watchdog",
+      "api": "lifecycle.Sessions.watchdog_tick",
+      "test": "test_watchdog_explicit_tick",
+      "remaining_acceptance": "explicit tick; cancellation acknowledgement not stop proof"
+    },
+    {
+      "id": "retention-delete",
+      "api": "lifecycle.Sessions.delete",
+      "test": "test_delete_needs_retained_evidence",
+      "remaining_acceptance": "no canonical evidence deletion"
+    }
+  ],
+  "official_sources_reviewed_on": "2026-09-11",
+  "sources": [
+    "https://openai.com/index/introducing-the-agents-api/",
+    "https://developers.openai.com/api/docs/guides/agents-api/overview",
+    "https://developers.openai.com/api/docs/guides/agents-api/quickstart",
+    "https://developers.openai.com/api/docs/guides/agents-api/sessions",
+    "https://developers.openai.com/api/docs/guides/agents-api/sessions/events",
+    "https://developers.openai.com/api/docs/guides/agents-api/tools/functions",
+    "https://developers.openai.com/api/docs/guides/agents-api/tools/mcp",
+    "https://developers.openai.com/api/docs/guides/agents-api/environments/self-hosted",
+    "https://developers.openai.com/api/docs/guides/agents-api/environments/openai-hosted",
+    "https://developers.openai.com/api/docs/guides/agents-api/observability",
+    "https://developers.openai.com/api/docs/guides/agents-api/multi-agent",
+    "https://developers.openai.com/api/docs/guides/tools-programmatic-tool-calling",
+    "https://developers.openai.com/api/docs/guides/tools-tool-search"
+  ],
+  "integration_change_intent": 201,
+  "integration_base_commit": "e40b9973fb8864fed29297a8dc61ba41111f5dbf",
+  "audit_update": "../../docs/updates/2026-09-11-rc1/AUDIT.md"
+}

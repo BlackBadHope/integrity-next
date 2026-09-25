@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/discovery-appliance-manifest.schema.json",
+  "title": "Integrity Guardian Discovery Appliance Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "manifest_id",
+    "policy_id",
+    "policy_digest",
+    "tenant_id",
+    "appliance_id",
+    "appliance_version",
+    "appliance_class",
+    "source",
+    "taxonomy",
+    "limits",
+    "conformance",
+    "boundary",
+    "created_at",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/discovery-appliance-manifest/v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^discovery-appliance-manifest:[a-f0-9]{64}$"
+    },
+    "policy_id": { "$ref": "#/$defs/synthetic_id" },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "const": "tenant:public-6e3cdbebaafc8efa" },
+    "appliance_id": { "$ref": "#/$defs/synthetic_id" },
+    "appliance_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[.-][A-Za-z0-9.]+)?$"
+    },
+    "appliance_class": { "const": "synthetic-fixture-compiler" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "source_id",
+        "artifact_digest",
+        "input_schema_digest"
+      ],
+      "properties": {
+        "protocol": {
+          "type": "string",
+          "pattern": "^integrity-guardian/[A-Za-z0-9._/-]+/v1$"
+        },
+        "source_id": { "$ref": "#/$defs/synthetic_id" },
+        "artifact_digest": { "$ref": "#/$defs/digest" },
+        "input_schema_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "taxonomy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_kinds", "assertion_kinds", "gap_classes"],
+      "properties": {
+        "event_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,63}$"
+          }
+        },
+        "assertion_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["entity", "gap", "relation"] }
+        },
+        "gap_classes": {
+          "type": "array",
+          "maxItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "conflicting-identity",
+              "denied-coverage",
+              "unknown-entity",
+              "unknown-relation",
+              "unsupported-evidence"
+            ]
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_events", "max_records"],
+      "properties": {
+        "max_events": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "max_records": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      }
+    },
+    "conformance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile_digest",
+        "require_cross_zone_relation",
+        "require_tombstone"
+      ],
+      "properties": {
+        "profile_digest": { "$ref": "#/$defs/digest" },
+        "require_cross_zone_relation": { "type": "boolean" },
+        "require_tombstone": { "type": "boolean" }
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "active_capture",
+        "credentials",
+        "execution",
+        "filesystem_write",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_addresses"
+      ],
+      "properties": {
+        "active_capture": { "const": false },
+        "credentials": { "const": false },
+        "execution": { "const": false },
+        "filesystem_write": { "const": false },
+        "model_sdk": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "raw_addresses": { "const": false }
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

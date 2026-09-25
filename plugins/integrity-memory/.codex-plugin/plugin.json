@@ -1,0 +1,33 @@
+{
+  "name": "integrity-memory",
+  "version": "1.7.1",
+  "description": "Mandatory client-only Integrity admission, coordination and closure hooks for Codex.",
+  "author": {
+    "name": "Integrity Project"
+  },
+  "license": "Proprietary",
+  "keywords": [
+    "integrity",
+    "memory",
+    "mind-graph",
+    "coordination",
+    "client"
+  ],
+  "interface": {
+    "displayName": "Integrity client Mind",
+    "shortDescription": "Mandatory receipt-bound memory admission for client Codex",
+    "longDescription": "Binds each client Codex intent to exactly one model-owned canonical Integrity admission; keeps prompt state local and provisional until that admission validates, then registers the admitted machine/thread/turn in a signed coverage ledger, requires one terminal Seed-events or no-event receipt, archives never-admitted provisional generations without creating coverage debt, preserves cross-turn semantic checkpoint debt until a verified canonical event, preflights append arguments before consuming the one-shot attempt, keeps read-only memory usable when Seed append admission is unavailable, and keeps Memory provider authority separate from target-specific action authority.",
+    "developerName": "Integrity Project",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write",
+      "Safety"
+    ],
+    "defaultPrompt": [
+      "Recover the relevant Integrity project concept and current evidence.",
+      "Check ownership and blast radius before continuing this task.",
+      "Show the current receipt-bound Integrity admission status."
+    ]
+  }
+}

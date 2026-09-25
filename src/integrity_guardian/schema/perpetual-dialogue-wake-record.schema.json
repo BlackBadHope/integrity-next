@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/perpetual-dialogue-wake-record.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "tenant_id",
+    "conversation_id",
+    "wake_id",
+    "work_item_id",
+    "source_baton_id",
+    "checkpoint_id",
+    "target_agent_id",
+    "wake_state",
+    "trigger_digest",
+    "admitted_event_digest",
+    "next_baton_id",
+    "wake_budget_remaining",
+    "lease_holder",
+    "lease_fence",
+    "lease_expires_at",
+    "authority_inherited",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/perpetual-dialogue-wake-record/v1"},
+    "tenant_id": {"$ref": "#/$defs/tenant"},
+    "conversation_id": {"$ref": "#/$defs/id"},
+    "wake_id": {"$ref": "#/$defs/id"},
+    "work_item_id": {"$ref": "#/$defs/id"},
+    "source_baton_id": {"$ref": "#/$defs/id"},
+    "checkpoint_id": {"$ref": "#/$defs/id"},
+    "target_agent_id": {"$ref": "#/$defs/id"},
+    "wake_state": {
+      "enum": ["PENDING", "WAITING", "LEASED", "CONSUMED", "CANCELLED"]
+    },
+    "trigger_digest": {"$ref": "#/$defs/nullable_digest"},
+    "admitted_event_digest": {"$ref": "#/$defs/nullable_digest"},
+    "next_baton_id": {"$ref": "#/$defs/nullable_id"},
+    "wake_budget_remaining": {"type": "integer", "minimum": 0, "maximum": 1024},
+    "lease_holder": {"$ref": "#/$defs/nullable_id"},
+    "lease_fence": {
+      "oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]
+    },
+    "lease_expires_at": {
+      "oneOf": [{"type": "string", "format": "date-time"}, {"type": "null"}]
+    },
+    "authority_inherited": {"const": false},
+    "production_authority": {"const": false}
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"
+    },
+    "nullable_id": {
+      "oneOf": [{"$ref": "#/$defs/id"}, {"type": "null"}]
+    },
+    "tenant": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/\\-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "nullable_digest": {
+      "oneOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]
+    }
+  }
+}

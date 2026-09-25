@@ -1,0 +1,179 @@
+{
+  "protocol": "integrity-guardian/lts-support-contracts/v1",
+  "status": "lts-candidate",
+  "activation_rule": "first-signed-non-prerelease-release-per-track",
+  "policy": {
+    "minimum_support_months": 24,
+    "minimum_deprecation_months": 12,
+    "supported_stable_minors": 2,
+    "security_backports": true,
+    "schema_breaks_require_new_major": true,
+    "unknown_evidence_fails_closed": true,
+    "production_authority": false,
+    "memory_grants_authority": false
+  },
+  "tracks": [
+    {
+      "track_id": "guardian-core-lts",
+      "component": "integrity-guardian-core",
+      "contract_version": "1.0.0-candidate.3",
+      "support_window_months": 24,
+      "stable_python_exports": [
+        "LedgerStore",
+        "ExternalSignerBackend",
+        "FileSignerBackend",
+        "NativeDatabaseKeys",
+        "NativeReleaseAuthority",
+        "NativeTrustStore",
+        "SignerBackend",
+        "TrustedKey",
+        "build_operational_tenant_profile",
+        "canonical_bytes",
+        "initialize_native_device_request",
+        "parse_json_strict",
+        "verify_ledger_event",
+        "verify_readonly_operation_authorization",
+        "verify_signature",
+        "verify_native_release_authority_enrollment",
+        "verify_native_device_request"
+      ],
+      "stable_schemas": [
+        "checkpoint",
+        "key-transition",
+        "ledger-event",
+        "native-database-enrollment",
+        "native-database-migration-receipt",
+        "native-device-enrollment",
+        "native-device-enrollment-request",
+        "native-module-enrollment",
+        "native-release-authority-enrollment",
+        "native-security-admission",
+        "native-session-lease",
+        "native-trust-genesis",
+        "observation",
+        "readonly-operation-authorization",
+        "readonly-operation-manifest",
+        "readonly-operation-receipt",
+        "retention-policy",
+        "tenant-profile"
+      ],
+      "stable_commands": [
+        "capabilities",
+        "governance-verify",
+        "native-trust-bootstrap",
+        "native-device-enroll",
+        "native-device-request",
+        "native-module-enroll",
+        "native-release-authority-init",
+        "platform-profile",
+        "status",
+        "version"
+      ],
+      "invariants": [
+        "manifest-is-not-authority",
+        "verified-trust-root-required",
+        "personal-native-first-initialization-requires-no-external-key-input",
+        "private-signing-material-is-never-stored-in-integrity-databases",
+        "signer-backend-is-replaceable-without-protocol-change",
+        "release-authority-is-root-signed-durable-and-replaceable",
+        "legacy-history-is-verified-and-never-rewritten-during-migration",
+        "unknown-is-never-pass",
+        "ledger-is-append-only",
+        "production-authority-is-absent"
+      ],
+      "excluded_modules": ["fgd", "integrity-home"]
+    },
+    {
+      "track_id": "seed-synapse-lts",
+      "component": "integrity-seed-synapse",
+      "contract_version": "1.0.0-candidate.7",
+      "support_window_months": 24,
+      "stable_python_exports": [
+        "SeedCatalog",
+        "SeedRelationshipIndex",
+        "SynapseContext",
+        "SynapseKernel",
+        "SynapsePolicy",
+        "build_connectome_manifest",
+        "compile_connectome_manifest",
+        "explain_seed_event_connections"
+      ],
+      "stable_schemas": [
+        "connectome-compilation",
+        "connectome-manifest",
+        "lts-track-activation-receipt",
+        "seed-connections-receipt",
+        "seed-event-uid-lookup",
+        "seed-direct-link-verification",
+        "seed-relationship-replay",
+        "seed-task-inventory-receipt",
+        "synapse-graph",
+        "synapse-route",
+        "synapse-simulation"
+      ],
+      "stable_commands": [
+        "lts-activation-build",
+        "lts-activation-verify",
+        "seed-capsule",
+        "seed-catalog-build",
+        "seed-catalog-verify",
+        "seed-connections",
+        "seed-search",
+        "seed-status",
+        "seed-sync"
+      ],
+      "invariants": [
+        "action-log-is-canonical-project-memory",
+        "one-long-lived-client-task-uses-one-fresh-upstream-facade-per-intent",
+        "local-mcp-startup-does-not-depend-on-upstream-config-or-write-plane",
+        "semantic-candidate-source-resolution-is-linear-in-new-postings",
+        "semantic-candidate-ranking-state-is-bounded-by-limit",
+        "semantic-vector-rerank-cannot-expand-lexical-candidate-set",
+        "catalog-random-access-is-block-authenticated-without-full-run-rehash",
+        "catalog-integrity-migration-binds-prior-generation-and-preserves-run-digests",
+        "lts-activation-contract-digest-is-track-scoped",
+        "snapshot-cursor-is-immutable",
+        "direct-links-are-independently-verifiable",
+        "memory-never-grants-authority",
+        "integrity-home-is-not-seed"
+      ],
+      "excluded_modules": ["fgd", "integrity-home", "production-executor"]
+    },
+    {
+      "track_id": "adapter-observer-sdk-lts",
+      "component": "integrity-adapter-observer-sdk",
+      "contract_version": "1.0.0-candidate.1",
+      "support_window_months": 24,
+      "stable_python_exports": [
+        "ObserverAnchorCursor",
+        "ObserverAnchorRecovery",
+        "ObserverAnchorStore",
+        "ObserverAnchorSubjectKind",
+        "Platform",
+        "SnapshotAdapter",
+        "SnapshotFact"
+      ],
+      "stable_schemas": [
+        "native-passive-capture-envelope",
+        "observation",
+        "observer-anchor-record",
+        "passive-controller-checkpoint",
+        "passive-source-snapshot",
+        "toolz-action-outcome-observation"
+      ],
+      "stable_commands": [
+        "observer-anchor-advance",
+        "observer-anchor-init",
+        "observer-anchor-verify"
+      ],
+      "invariants": [
+        "adapters-consume-sanitized-facts-only",
+        "observer-is-independent-from-subject-store",
+        "platform-gaps-remain-typed-unknowns",
+        "sdk-has-no-transport-or-remediation",
+        "production-authority-is-absent"
+      ],
+      "excluded_modules": ["fgd", "credentials", "production-executor"]
+    }
+  ]
+}

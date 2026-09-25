@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/browser-action-manifest.schema.json",
+  "title": "Integrity Browser action manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action_id", "protocol", "sdk_version", "tenant_id", "manifest", "intent_operation_digest", "target", "browser", "context", "action", "transport", "limits", "controls", "created_at", "signer_id", "signature"],
+  "properties": {
+    "action_id": { "type": "string", "pattern": "^browser-action:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/browser-action-manifest/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_id", "manifest_digest", "adapter_id", "adapter_artifact_digest"],
+      "properties": {
+        "manifest_id": { "type": "string", "pattern": "^manifest:[a-f0-9]{64}$" },
+        "manifest_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "intent_operation_digest": { "$ref": "#/$defs/digest" },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "zone_id", "environment_digest", "origin", "start_url", "expected_url"],
+      "properties": {
+        "node_id": { "$ref": "#/$defs/id" },
+        "zone_id": { "$ref": "#/$defs/id" },
+        "environment_digest": { "$ref": "#/$defs/digest" },
+        "origin": { "type": "string", "pattern": "^http://[A-Za-z0-9.-]+\\.invalid$", "maxLength": 255 },
+        "start_url": { "type": "string", "pattern": "^http://[A-Za-z0-9.-]+\\.invalid/$", "maxLength": 256 },
+        "expected_url": { "type": "string", "pattern": "^http://[A-Za-z0-9.-]+\\.invalid/result$", "maxLength": 262 }
+      }
+    },
+    "browser": {
+      "type": "object", "additionalProperties": false,
+      "required": ["name", "version", "firefox_executable_digest", "webdriver_name", "geckodriver_executable_digest"],
+      "properties": {
+        "name": { "const": "firefox" },
+        "version": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "firefox_executable_digest": { "$ref": "#/$defs/digest" },
+        "webdriver_name": { "const": "geckodriver" },
+        "geckodriver_executable_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "context": {
+      "type": "object", "additionalProperties": false,
+      "required": ["context_id", "profile_policy", "headless", "viewport", "locale"],
+      "properties": {
+        "context_id": { "$ref": "#/$defs/id" },
+        "profile_policy": { "const": "fresh-ephemeral" },
+        "headless": { "const": true },
+        "viewport": {
+          "type": "object", "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 320, "maximum": 3840 },
+            "height": { "type": "integer", "minimum": 240, "maximum": 2160 }
+          }
+        },
+        "locale": { "type": "string", "minLength": 1, "maxLength": 32 }
+      }
+    },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "selector_kind", "selector", "selector_digest", "maximum_matches", "expected_selector", "expected_selector_digest", "expected_text_digest"],
+      "properties": {
+        "kind": { "const": "click" },
+        "selector_kind": { "const": "css" },
+        "selector": { "$ref": "#/$defs/selector" },
+        "selector_digest": { "$ref": "#/$defs/digest" },
+        "maximum_matches": { "const": 1 },
+        "expected_selector": { "$ref": "#/$defs/selector" },
+        "expected_selector_digest": { "$ref": "#/$defs/digest" },
+        "expected_text_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "transport": {
+      "type": "object", "additionalProperties": false,
+      "required": ["webdriver_host", "webdriver_port_policy", "proxy_host", "proxy_port", "proxy_policy"],
+      "properties": {
+        "webdriver_host": { "const": "127.0.0.1" },
+        "webdriver_port_policy": { "const": "ephemeral-loopback" },
+        "proxy_host": { "const": "127.0.0.1" },
+        "proxy_port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "proxy_policy": { "const": "all-browser-traffic" }
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["timeout_seconds", "maximum_navigation_count", "maximum_click_count", "maximum_response_bytes"],
+      "properties": {
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 120 },
+        "maximum_navigation_count": { "const": 2 },
+        "maximum_click_count": { "const": 1 },
+        "maximum_response_bytes": { "const": 2097152 }
+      }
+    },
+    "controls": {
+      "type": "object", "additionalProperties": false,
+      "required": ["external_egress", "credential_reference", "home_profile", "raw_page_content_retained", "downloads", "browser_extensions", "production_authority", "max_invocations", "automatic_retry_after_unknown"],
+      "properties": {
+        "external_egress": { "const": false },
+        "credential_reference": { "type": "null" },
+        "home_profile": { "const": false },
+        "raw_page_content_retained": { "const": false },
+        "downloads": { "const": false },
+        "browser_extensions": { "const": false },
+        "production_authority": { "const": false },
+        "max_invocations": { "const": 1 },
+        "automatic_retry_after_unknown": { "const": false }
+      }
+    },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "selector": { "type": "string", "pattern": "^#[A-Za-z][A-Za-z0-9_-]{0,127}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

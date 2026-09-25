@@ -1,0 +1,680 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-synapse-capabilities.schema.json",
+  "title": "Memory and Synapse LTS capabilities v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "contract_version",
+    "artifact_digest",
+    "seed_relationship_protocol",
+    "seed_catalog_protocol",
+    "seed_catalog_schema_version",
+    "source_mapping",
+    "operations",
+    "authority",
+    "authority_contract",
+    "processing",
+    "mutation",
+    "facade",
+    "lifecycle",
+    "health",
+    "capabilities_digest"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/memory-synapse-lts/v1"
+    },
+    "contract_version": {
+      "const": "1.9.0"
+    },
+    "artifact_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "seed_relationship_protocol": {
+      "const": "integrity-guardian/seed-event-connections/v1"
+    },
+    "seed_catalog_protocol": {
+      "const": "integrity-guardian/seed-catalog/v1"
+    },
+    "seed_catalog_schema_version": {
+      "const": 1
+    },
+    "source_mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_seed",
+        "action_log_alias",
+        "integrity_home",
+        "seed_equals_action_log",
+        "home_separate"
+      ],
+      "properties": {
+        "canonical_seed": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^seed://project/[a-z0-9][a-z0-9._-]{0,127}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "action_log_alias": {
+          "const": "actionlog://global"
+        },
+        "integrity_home": {
+          "const": "home://owner"
+        },
+        "seed_equals_action_log": {
+          "const": true
+        },
+        "home_separate": {
+          "const": true
+        }
+      }
+    },
+    "operations": {
+      "$ref": "#/$defs/read_operations"
+    },
+    "authority": {
+      "$ref": "#/$defs/authority"
+    },
+    "authority_contract": {
+      "$ref": "#/$defs/authority_contract"
+    },
+    "processing": {
+      "$ref": "#/$defs/processing"
+    },
+    "mutation": {
+      "$ref": "#/$defs/mutation"
+    },
+    "facade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "server_name",
+        "server_version",
+        "transport",
+        "listener",
+        "authentication_enforcement",
+        "allowed_consumer",
+        "winops_authorized",
+        "startup_admission",
+        "session_admission",
+        "compatible_tools",
+        "turn_memory_tools",
+        "lts_tools"
+      ],
+      "properties": {
+        "server_name": {
+          "const": "integrity-client-memory"
+        },
+        "server_version": {
+          "const": "2.10.0"
+        },
+        "transport": {
+          "const": "openssh-forced-command-stdio"
+        },
+        "listener": {
+          "const": false
+        },
+        "authentication_enforcement": {
+          "const": "external-existing-client-key"
+        },
+        "allowed_consumer": {
+          "const": "client-workstation"
+        },
+        "winops_authorized": {
+          "const": false
+        },
+        "startup_admission": {
+          "const": "exact-artifact-security-harness-bundle"
+        },
+        "session_admission": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "preferred_tool",
+            "home_binding",
+            "required_sequence",
+            "seed_snapshot_activation",
+            "seed_snapshot_binding",
+            "mind_graph_binding",
+            "architecture_binding",
+            "client_cursor_policy",
+            "duplicate_page_policy",
+            "context_presentation",
+            "action_contract"
+          ],
+          "properties": {
+            "preferred_tool": {
+              "const": "integrity_context_admission"
+            },
+            "home_binding": {
+              "const": "capabilities-required-source-separated"
+            },
+            "required_sequence": {
+              "const": [
+                "integrity_memory_capabilities",
+                "integrity_seed_snapshot",
+                "integrity_mind_graph",
+                "integrity_architecture_admission"
+              ]
+            },
+            "seed_snapshot_activation": {
+              "const": "lazy-on-first-seed-tool"
+            },
+            "seed_snapshot_binding": {
+              "const": "server-fixed-per-logical-context"
+            },
+            "mind_graph_binding": {
+              "const": "same-snapshot-required-before-seed-read-or-append"
+            },
+            "architecture_binding": {
+              "const": "same-mind-receipt-required-before-seed-read-or-append"
+            },
+            "client_cursor_policy": {
+              "const": "omit-or-exact-session-match"
+            },
+            "duplicate_page_policy": {
+              "const": "deny-after-success-in-session"
+            },
+            "context_presentation": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "default_protocol",
+                "supported_protocols",
+                "legacy_fixed_selector"
+              ],
+              "properties": {
+                "default_protocol": {
+                  "const": "integrity-client-memory-mcp/v3/context-admission/v2"
+                },
+                "supported_protocols": {
+                  "const": [
+                    "integrity-client-memory-mcp/v3/context-admission/v2",
+                    "integrity-client-memory-mcp/v3/context-admission/v1"
+                  ]
+                },
+                "legacy_fixed_selector": {
+                  "const": "explicit-limit"
+                }
+              }
+            },
+            "action_contract": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "route",
+                "scope",
+                "grant",
+                "context_binding",
+                "authority_binding",
+                "passive_witness",
+                "outcomes",
+                "automatic_retry"
+              ],
+              "properties": {
+                "route": {
+                  "const": "request-bound-connectome-synapse"
+                },
+                "scope": {
+                  "const": "single-canonical-seed-append"
+                },
+                "grant": {
+                  "const": "consumed-once-before-action"
+                },
+                "context_binding": {
+                  "const": "exact-current-context-admission-id-before-side-effects"
+                },
+                "authority_binding": {
+                  "const": "signed-context-decision-and-ledger-grant-v2"
+                },
+                "passive_witness": {
+                  "const": "restricted-owner-one-shot-read-only-sqlite"
+                },
+                "outcomes": {
+                  "const": [
+                    "confirmed-success",
+                    "confirmed-failure",
+                    "unknown-outcome"
+                  ]
+                },
+                "automatic_retry": {
+                  "const": false
+                }
+              }
+            }
+          }
+        },
+        "compatible_tools": {
+          "const": [
+            "integrity_read_events",
+            "integrity_append_event",
+            "integrity_home_search",
+            "integrity_home_fetch"
+          ]
+        },
+        "turn_memory_tools": {
+          "const": [
+            "integrity_turn_memory_open",
+            "integrity_turn_memory_close",
+            "integrity_turn_memory_gap",
+            "integrity_turn_memory_coverage"
+          ]
+        },
+        "lts_tools": {
+          "const": [
+            "integrity_context_admission",
+            "integrity_memory_capabilities",
+            "integrity_seed_snapshot",
+            "integrity_mind_graph",
+            "integrity_architecture_admission",
+            "integrity_seed_tasks",
+            "integrity_seed_event_uid",
+            "integrity_seed_connections",
+            "integrity_memory_entity_brief",
+            "integrity_memory_link_audit",
+            "integrity_seed_replay"
+          ]
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "persistent_derived_state",
+        "persistent_architecture_custody",
+        "persistent_turn_memory_coverage",
+        "snapshot_storage",
+        "startup_seed_copy",
+        "migration",
+        "upgrade",
+        "recovery",
+        "read_audit",
+        "key_rotation",
+        "installed_runtime_verification"
+      ],
+      "properties": {
+        "persistent_derived_state": {
+          "const": false
+        },
+        "persistent_architecture_custody": {
+          "const": true
+        },
+        "persistent_turn_memory_coverage": {
+          "const": true
+        },
+        "snapshot_storage": {
+          "const": "private-tmpfs-session-copy"
+        },
+        "startup_seed_copy": {
+          "const": false
+        },
+        "migration": {
+          "const": "verify-schema-and-rebuild-from-canonical-seed"
+        },
+        "upgrade": {
+          "const": "parallel-successor-acceptance-before-forced-command-switch"
+        },
+        "recovery": {
+          "const": "identical-snapshot-plus-exact-single-guardian-child-only"
+        },
+        "read_audit": {
+          "const": "content-free-receipts"
+        },
+        "key_rotation": {
+          "const": "external-forced-command-dual-admission-then-revoke-old"
+        },
+        "installed_runtime_verification": {
+          "const": "canonical-complete-release-inventory-before-exec"
+        }
+      }
+    },
+    "health": {
+      "enum": [
+        "ready",
+        "unavailable"
+      ]
+    },
+    "capabilities_digest": {
+      "$ref": "#/$defs/digest"
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "read_operations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_admission",
+        "seed_snapshot",
+        "seed_mind_graph",
+        "architecture_admission",
+        "event_append",
+        "turn_memory_open",
+        "turn_memory_close",
+        "turn_memory_gap",
+        "turn_memory_coverage",
+        "seed_tasks",
+        "seed_event_uid",
+        "memory_entity_brief",
+        "memory_link_audit",
+        "seed_connections",
+        "seed_direct_verification",
+        "seed_replay"
+      ],
+      "properties": {
+        "context_admission": {
+          "const": "one-call-per-owner-intent-server-rotated-context"
+        },
+        "seed_snapshot": {
+          "const": "read-only"
+        },
+        "seed_mind_graph": {
+          "const": "read-only-mandatory-admission"
+        },
+        "architecture_admission": {
+          "const": "persistent-content-free-evidence"
+        },
+        "event_append": {
+          "const": "append-only-one-use-witnessed-action"
+        },
+        "turn_memory_open": {
+          "const": "signed-global-registration"
+        },
+        "turn_memory_close": {
+          "const": "signed-terminal-events-or-no-event"
+        },
+        "turn_memory_gap": {
+          "const": "signed-nonterminal-coverage-debt"
+        },
+        "turn_memory_coverage": {
+          "const": "read-only"
+        },
+        "seed_tasks": {
+          "const": "read-only-canonical-projection"
+        },
+        "seed_event_uid": {
+          "const": "read-only-snapshot-wide-unique-lookup"
+        },
+        "memory_entity_brief": {
+          "const": "read-only-optional-bounded-projection"
+        },
+        "memory_link_audit": {
+          "const": "read-only-unadmitted-curation-debt"
+        },
+        "seed_connections": {
+          "const": "read-only"
+        },
+        "seed_direct_verification": {
+          "const": "read-only"
+        },
+        "seed_replay": {
+          "const": "read-only"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution",
+        "production",
+        "route",
+        "atlas_planning",
+        "uroboros_reuse",
+        "canonical_seed_append_one_use"
+      ],
+      "properties": {
+        "execution": {
+          "const": false
+        },
+        "production": {
+          "const": false
+        },
+        "route": {
+          "const": false
+        },
+        "atlas_planning": {
+          "const": false
+        },
+        "uroboros_reuse": {
+          "const": false
+        },
+        "canonical_seed_append_one_use": {
+          "const": true
+        }
+      }
+    },
+    "authority_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "provider_authority",
+        "target_action_authority",
+        "coordination",
+        "legacy_projection"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/authority-separation/v1"
+        },
+        "provider_authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "provider",
+            "scope",
+            "execution",
+            "production",
+            "route",
+            "canonical_seed_append"
+          ],
+          "properties": {
+            "provider": {
+              "const": "integrity-client-memory"
+            },
+            "scope": {
+              "const": "canonical-seed-memory"
+            },
+            "execution": {
+              "const": "absent"
+            },
+            "production": {
+              "const": "absent"
+            },
+            "route": {
+              "const": "absent"
+            },
+            "canonical_seed_append": {
+              "const": "one-use-only"
+            }
+          }
+        },
+        "target_action_authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "decision",
+            "authoritative_source",
+            "provider_boundary_is_target_denial"
+          ],
+          "properties": {
+            "decision": {
+              "const": "not-evaluated"
+            },
+            "authoritative_source": {
+              "const": "target-specific-action-guard"
+            },
+            "provider_boundary_is_target_denial": {
+              "const": false
+            }
+          }
+        },
+        "coordination": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "scope",
+            "status",
+            "canonical_seed_append_affected",
+            "external_target_actions_affected"
+          ],
+          "properties": {
+            "scope": {
+              "const": "integrity-memory-route"
+            },
+            "status": {
+              "const": "not-evaluated"
+            },
+            "canonical_seed_append_affected": {
+              "const": false
+            },
+            "external_target_actions_affected": {
+              "const": false
+            }
+          }
+        },
+        "legacy_projection": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "production_authority",
+            "semantics",
+            "deprecated",
+            "replacement"
+          ],
+          "properties": {
+            "production_authority": {
+              "const": false
+            },
+            "semantics": {
+              "const": "memory-provider-does-not-grant-production-authority"
+            },
+            "deprecated": {
+              "const": true
+            },
+            "replacement": {
+              "const": "authority_contract.provider_authority.production"
+            }
+          }
+        }
+      }
+    },
+    "processing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guardian_ledger",
+        "signed_checkpoint",
+        "atlas_projection",
+        "connectome_compilation",
+        "synapse_route_planning",
+        "ownership_blast_coordination",
+        "deep_mind_graph",
+        "concept_recovery",
+        "security_harness_admission",
+        "uroboros_exact_route_reuse",
+        "one_use_authority",
+        "passive_outcome_witness",
+        "immutable_outcome_feedback",
+        "turn_memory_registration",
+        "turn_memory_terminal_receipt",
+        "turn_memory_coverage_gap",
+        "model_side_route_invention"
+      ],
+      "properties": {
+        "guardian_ledger": {
+          "const": true
+        },
+        "signed_checkpoint": {
+          "const": true
+        },
+        "atlas_projection": {
+          "const": true
+        },
+        "connectome_compilation": {
+          "const": true
+        },
+        "synapse_route_planning": {
+          "const": true
+        },
+        "ownership_blast_coordination": {
+          "const": true
+        },
+        "deep_mind_graph": {
+          "const": true
+        },
+        "concept_recovery": {
+          "const": true
+        },
+        "security_harness_admission": {
+          "const": true
+        },
+        "uroboros_exact_route_reuse": {
+          "const": true
+        },
+        "one_use_authority": {
+          "const": true
+        },
+        "passive_outcome_witness": {
+          "const": true
+        },
+        "immutable_outcome_feedback": {
+          "const": true
+        },
+        "turn_memory_registration": {
+          "const": true
+        },
+        "turn_memory_terminal_receipt": {
+          "const": true
+        },
+        "turn_memory_coverage_gap": {
+          "const": true
+        },
+        "model_side_route_invention": {
+          "const": false
+        }
+      }
+    },
+    "mutation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "update",
+        "delete",
+        "import",
+        "overwrite",
+        "bulk_write"
+      ],
+      "properties": {
+        "update": {
+          "const": false
+        },
+        "delete": {
+          "const": false
+        },
+        "import": {
+          "const": false
+        },
+        "overwrite": {
+          "const": false
+        },
+        "bulk_write": {
+          "const": false
+        }
+      }
+    }
+  }
+}

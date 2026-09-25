@@ -1,0 +1,403 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-trace-admission-receipt.schema.json",
+  "title": "Integrity Uroboros Toolzs Trace Admission Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "trace",
+    "fog_route",
+    "memory",
+    "decision",
+    "causality",
+    "created_at",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-trace-admission-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^toolz-trace-admission-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trace_id",
+        "trace_digest",
+        "projection_digest",
+        "completed_at",
+        "from_entity_id",
+        "to_entity_id",
+        "entity_ids",
+        "relation_ids",
+        "hops",
+        "invalidation_zone_ids"
+      ],
+      "properties": {
+        "trace_id": {
+          "type": "string",
+          "pattern": "^toolz-action-trace:[a-f0-9]{64}$"
+        },
+        "trace_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "projection_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "completed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "from_entity_id": {
+          "$ref": "#/$defs/synthetic_entity"
+        },
+        "to_entity_id": {
+          "$ref": "#/$defs/synthetic_entity"
+        },
+        "entity_ids": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 33,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/synthetic_entity"
+          }
+        },
+        "relation_ids": {
+          "$ref": "#/$defs/relation_ids"
+        },
+        "hops": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/trace_hop"
+          }
+        },
+        "invalidation_zone_ids": {
+          "$ref": "#/$defs/zone_ids"
+        }
+      }
+    },
+    "fog_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "proposal_id",
+        "route_digest",
+        "snapshot_id",
+        "snapshot_digest",
+        "route_created_at",
+        "from_entity_id",
+        "to_entity_id",
+        "hop_record_ids",
+        "hop_relation_ids",
+        "invalidation_zone_ids"
+      ],
+      "properties": {
+        "proposal_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^discovery-theory-route:[a-f0-9]{64}$"
+            },
+            {
+              "type": "string",
+              "pattern": "^discovery-feedback-ranked-route:[a-f0-9]{64}$"
+            }
+          ]
+        },
+        "route_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^discovery-index-snapshot:[a-f0-9]{64}$"
+        },
+        "snapshot_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "route_created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "from_entity_id": {
+          "$ref": "#/$defs/synthetic_entity"
+        },
+        "to_entity_id": {
+          "$ref": "#/$defs/synthetic_entity"
+        },
+        "hop_record_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^discovery-record:[a-f0-9]{64}$"
+          }
+        },
+        "hop_relation_ids": {
+          "$ref": "#/$defs/relation_ids"
+        },
+        "invalidation_zone_ids": {
+          "$ref": "#/$defs/zone_ids"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_digest",
+        "policy_id",
+        "policy_digest",
+        "outcome",
+        "created_at",
+        "expires_at"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^toolz-route-memory-receipt:[a-f0-9]{64}$"
+        },
+        "receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "outcome": {
+          "const": "theoretical"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "decision": {
+      "const": "admit-theoretical"
+    },
+    "causality": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trace_completed_at",
+        "snapshot_created_at",
+        "route_created_at",
+        "memory_created_at",
+        "admission_created_at",
+        "ordering"
+      ],
+      "properties": {
+        "trace_completed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "snapshot_created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "route_created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "memory_created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "admission_created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "ordering": {
+          "const": "trace-before-or-at-snapshot-before-or-at-route-before-or-at-memory-before-or-at-admission"
+        }
+      }
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "browser_control",
+        "credentials",
+        "execution",
+        "global_publish",
+        "local_storage",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "retroactive_success",
+        "tool_invocation"
+      ],
+      "properties": {
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution": {
+          "const": false
+        },
+        "global_publish": {
+          "const": false
+        },
+        "local_storage": {
+          "const": false
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "retroactive_success": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "synthetic_entity": {
+      "type": "string",
+      "pattern": "^entity:synthetic-toolz-state-[a-f0-9]{64}$"
+    },
+    "relation_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/relation_id"
+      }
+    },
+    "relation_id": {
+      "type": "string",
+      "pattern": "^relation:synthetic-toolz-transition-[a-f0-9]{64}$"
+    },
+    "trace_hop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation_id",
+        "from_entity_id",
+        "to_entity_id",
+        "from_zone_id",
+        "to_zone_id",
+        "observed_at",
+        "evidence_digest",
+        "confidence_ppm"
+      ],
+      "properties": {
+        "relation_id": {
+          "$ref": "#/$defs/relation_id"
+        },
+        "from_entity_id": {
+          "$ref": "#/$defs/synthetic_entity"
+        },
+        "to_entity_id": {
+          "$ref": "#/$defs/synthetic_entity"
+        },
+        "from_zone_id": {
+          "$ref": "#/$defs/zone_id"
+        },
+        "to_zone_id": {
+          "$ref": "#/$defs/zone_id"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "confidence_ppm": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      }
+    },
+    "zone_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "zone_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/zone_id"
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

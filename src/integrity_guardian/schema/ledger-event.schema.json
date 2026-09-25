@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/ledger-event.schema.json",
+  "title": "Guardian LedgerEvent v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "event_id",
+    "tenant_id",
+    "source_id",
+    "source_sequence",
+    "event_type",
+    "recorded_at",
+    "payload_digest",
+    "previous_event_digest",
+    "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/ledger-event/v1" },
+    "event_id": { "$ref": "#/$defs/id" },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "source_id": { "$ref": "#/$defs/id" },
+    "source_sequence": { "type": "integer", "minimum": 0 },
+    "event_type": {
+      "enum": [
+        "observation",
+        "change-intent",
+        "baseline-approval",
+        "reconciliation",
+        "sensor-gap",
+        "key-event",
+        "discovery-index-snapshot",
+        "toolz-authorization-decision",
+        "toolz-authorization-consumption",
+        "adapter-attempt-prepared",
+        "adapter-attempt-dispatching",
+        "adapter-attempt-executor-returned",
+        "adapter-attempt-witnessed"
+      ]
+    },
+    "recorded_at": { "$ref": "#/$defs/timestamp" },
+    "payload_digest": { "$ref": "#/$defs/digest" },
+    "previous_event_digest": {
+      "oneOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "null" }
+      ]
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

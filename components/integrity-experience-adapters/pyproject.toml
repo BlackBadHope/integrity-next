@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools==82.0.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "integrity-experience-adapters"
+version = "0.1.0rc3"
+description = "Optional Integrity experience contracts and host-admitted backends"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+dependencies = []
+
+[project.scripts]
+integrity-experience = "integrity_experience_adapters.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["integrity_experience_adapters*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+# Extras are opt-in package families, NOT a complete hashed runtime admission lock.
+[project.optional-dependencies]
+images = ["Pillow==12.3.0"]
+asr = ["faster-whisper==1.2.1"]
+browser-tests = ["Pillow==12.3.0", "playwright==1.57.0"]
+
+[tool.setuptools.package-data]
+integrity_experience_adapters = ["static/*.mjs"]

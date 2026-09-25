@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity-guardian.invalid/schema/v1/memory-link-audit.schema.json",
+  "title": "Integrity Memory Link Audit",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "graph_digest", "source_namespace", "scope", "coverage",
+    "findings", "returned_count", "omitted_count", "pagination",
+    "truncated_by", "limits", "canonical_write_required", "auto_apply",
+    "persistent_derived_state", "production_authority", "route_authority",
+    "receipt_id"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/memory-link-audit/v1"},
+    "graph_digest": {"$ref": "#/$defs/digest"},
+    "source_namespace": {"type": "string", "pattern": "^seed://project/"},
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kinds", "all_kinds"],
+      "properties": {
+        "kinds": {
+          "type": "array", "maxItems": 13, "uniqueItems": true,
+          "items": {"$ref": "#/$defs/kind"}
+        },
+        "all_kinds": {"type": "boolean"}
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["audited_count", "freshness_eligible_count", "freshness_not_applicable_count", "finding_count", "clean_count", "issue_counts"],
+      "properties": {
+        "audited_count": {"type": "integer", "minimum": 0},
+        "freshness_eligible_count": {"type": "integer", "minimum": 0},
+        "freshness_not_applicable_count": {"type": "integer", "minimum": 0},
+        "finding_count": {"type": "integer", "minimum": 0},
+        "clean_count": {"type": "integer", "minimum": 0},
+        "issue_counts": {"$ref": "#/$defs/issue_counts"}
+      }
+    },
+    "findings": {
+      "type": "array", "maxItems": 100,
+      "items": {"$ref": "#/$defs/finding"}
+    },
+    "returned_count": {"type": "integer", "minimum": 0, "maximum": 100},
+    "omitted_count": {"type": "integer", "minimum": 0},
+    "pagination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["offset", "next_cursor", "has_more"],
+      "properties": {
+        "offset": {"type": "integer", "minimum": 0},
+        "next_cursor": {"type": "string", "maxLength": 4096},
+        "has_more": {"type": "boolean"}
+      }
+    },
+    "truncated_by": {"enum": ["none", "limit", "context-bytes"]},
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["limit", "max_context_bytes"],
+      "properties": {
+        "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+        "max_context_bytes": {"type": "integer", "minimum": 8192, "maximum": 262144}
+      }
+    },
+    "canonical_write_required": {"type": "boolean"},
+    "auto_apply": {"const": false},
+    "persistent_derived_state": {"const": false},
+    "production_authority": {"const": false},
+    "route_authority": {"const": false},
+    "receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "uri": {"type": "string", "pattern": "^integrity://seed/project/"},
+    "kind": {
+      "enum": [
+        "artifact", "component", "concept", "decision", "event", "evidence",
+        "location", "release", "subsystem", "system", "task", "term"
+      ]
+    },
+    "issue": {
+      "enum": [
+        "alias-ambiguous", "canonical-task-card-missing",
+        "definition-contradicted", "definition-unknown",
+        "freshness-policy-absent", "freshness-policy-partial",
+        "legacy-self-link-ignored", "whereabouts-unknown"
+      ]
+    },
+    "issue_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "alias-ambiguous", "canonical-task-card-missing",
+        "definition-contradicted", "definition-unknown",
+        "freshness-policy-absent", "freshness-policy-partial",
+        "legacy-self-link-ignored", "whereabouts-unknown"
+      ],
+      "properties": {
+        "alias-ambiguous": {"type": "integer", "minimum": 0},
+        "canonical-task-card-missing": {"type": "integer", "minimum": 0},
+        "definition-contradicted": {"type": "integer", "minimum": 0},
+        "definition-unknown": {"type": "integer", "minimum": 0},
+        "freshness-policy-absent": {"type": "integer", "minimum": 0},
+        "freshness-policy-partial": {"type": "integer", "minimum": 0},
+        "legacy-self-link-ignored": {"type": "integer", "minimum": 0},
+        "whereabouts-unknown": {"type": "integer", "minimum": 0}
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uri", "kind", "key", "title", "aliases", "alias_count",
+        "omitted_alias_count", "source_event_ids", "source_event_count",
+        "omitted_source_event_count"
+      ],
+      "properties": {
+        "uri": {"$ref": "#/$defs/uri"},
+        "kind": {"$ref": "#/$defs/kind"},
+        "key": {"type": "string", "minLength": 1, "maxLength": 512},
+        "title": {"type": "string", "minLength": 1, "maxLength": 512},
+        "aliases": {"type": "array", "maxItems": 16, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
+        "alias_count": {"type": "integer", "minimum": 1, "maximum": 64},
+        "omitted_alias_count": {"type": "integer", "minimum": 0},
+        "source_event_ids": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "source_event_count": {"type": "integer", "minimum": 1},
+        "omitted_source_event_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "identity", "issues", "definition_status", "whereabouts_count",
+        "direct_link_count", "freshness_policy_status",
+        "canonical_task_card_status", "ambiguous_aliases",
+        "omitted_ambiguous_alias_count", "admission_status",
+        "canonical_write_required", "auto_apply"
+      ],
+      "properties": {
+        "identity": {"$ref": "#/$defs/node"},
+        "issues": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/issue"}},
+        "definition_status": {"enum": ["DECLARED", "UNKNOWN", "CONTRADICTED"]},
+        "whereabouts_count": {"type": "integer", "minimum": 0},
+        "direct_link_count": {"type": "integer", "minimum": 0},
+        "freshness_policy_status": {"enum": ["EXPLICIT", "PARTIAL", "ABSENT", "NOT_APPLICABLE"]},
+        "canonical_task_card_status": {"enum": ["PRESENT", "MISSING", "NOT_APPLICABLE"]},
+        "ambiguous_aliases": {"type": "array", "maxItems": 8, "uniqueItems": true, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
+        "omitted_ambiguous_alias_count": {"type": "integer", "minimum": 0},
+        "admission_status": {"const": "UNADMITTED"},
+        "canonical_write_required": {"const": true},
+        "auto_apply": {"const": false}
+      }
+    }
+  }
+}

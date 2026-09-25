@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/uroboros-winops-zero-day-reset-reservation.schema.json",
+  "title": "Uroboros WinOps zero-day reset reservation v2",
+  "description": "Durable pre-mutation reservation that keeps a reset attempt unknown and forbids replay until a terminal receipt or reconciliation is committed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "outcome",
+    "receipt_state",
+    "started_at",
+    "attempt_uid",
+    "plan_digest",
+    "final_receipt_name",
+    "archive_receipt_name",
+    "reconciliation_required",
+    "automatic_retry_allowed",
+    "action_replayed",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/uroboros-winops-zero-day-reset-reservation/v2"
+    },
+    "outcome": {"const": "unknown-outcome"},
+    "receipt_state": {"const": "reserved-before-mutation"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "attempt_uid": {"$ref": "#/$defs/attempt_uid"},
+    "plan_digest": {"$ref": "#/$defs/digest"},
+    "final_receipt_name": {
+      "type": "string",
+      "pattern": "^uroboros-winops-zero-day-reset-[a-f0-9]{32}[.]json$"
+    },
+    "archive_receipt_name": {
+      "type": "string",
+      "pattern": "^uroboros-winops-zero-day-reset-reservation-[a-f0-9]{32}[.]json$"
+    },
+    "reconciliation_required": {"const": true},
+    "automatic_retry_allowed": {"const": false},
+    "action_replayed": {"const": false},
+    "production_authority": {"const": false}
+  },
+  "$defs": {
+    "attempt_uid": {"type": "string", "pattern": "^[a-f0-9]{32}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

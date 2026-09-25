@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/module-agent-handoff-commit-receipt.schema.json",
+  "title": "Module Agent Handoff Commit Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "receipt_id", "transaction_id", "request_digest", "store_id", "tenant_id", "module_id", "signer_policy_digest", "predecessor_head_id", "predecessor_head_digest", "predecessor_fence_token", "successor_head_id", "successor_head_digest", "successor_lease_id", "successor_agent_id", "successor_generation", "fence_token", "committed_at", "status", "production_authority", "signature"],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/module-agent-handoff-commit-receipt/v1" },
+    "receipt_id": { "type": "string", "pattern": "^handoff-commit:[a-f0-9]{64}$" },
+    "transaction_id": { "type": "string", "pattern": "^handoff-tx:[a-f0-9]{64}$" },
+    "request_digest": { "$ref": "#/$defs/digest" },
+    "store_id": { "$ref": "#/$defs/id" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "module_id": { "$ref": "#/$defs/id" },
+    "signer_policy_digest": { "$ref": "#/$defs/digest" },
+    "predecessor_head_id": { "$ref": "#/$defs/id" },
+    "predecessor_head_digest": { "$ref": "#/$defs/digest" },
+    "predecessor_fence_token": { "type": "integer", "minimum": 0 },
+    "successor_head_id": { "$ref": "#/$defs/id" },
+    "successor_head_digest": { "$ref": "#/$defs/digest" },
+    "successor_lease_id": { "$ref": "#/$defs/id" },
+    "successor_agent_id": { "$ref": "#/$defs/id" },
+    "successor_generation": { "type": "integer", "minimum": 1 },
+    "fence_token": { "type": "integer", "minimum": 1 },
+    "committed_at": { "type": "string", "format": "date-time" },
+    "status": { "const": "COMMITTED" },
+    "production_authority": { "const": false },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "tenant_id": { "type": "string", "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "signature": { "type": "object", "additionalProperties": false, "required": ["algorithm", "key_id", "value"], "properties": { "algorithm": { "const": "ed25519" }, "key_id": { "$ref": "#/$defs/id" }, "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" } } }
+  }
+}

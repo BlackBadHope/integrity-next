@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/browser-page-witness.schema.json",
+  "title": "Integrity Browser page witness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["witness_id", "protocol", "sdk_version", "action", "target", "executor", "observer", "observed", "result", "controls", "observed_at", "signer_id", "signature"],
+  "properties": {
+    "witness_id": { "type": "string", "pattern": "^browser-page-witness:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/browser-page-witness/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_id", "action_manifest_digest"],
+      "properties": {
+        "action_id": { "type": "string", "pattern": "^browser-action:[a-f0-9]{64}$" },
+        "action_manifest_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "zone_id", "environment_digest", "origin"],
+      "properties": {
+        "node_id": { "$ref": "#/$defs/id" },
+        "zone_id": { "$ref": "#/$defs/id" },
+        "environment_digest": { "$ref": "#/$defs/digest" },
+        "origin": { "type": "string", "pattern": "^http://[A-Za-z0-9.-]+\\.invalid$", "maxLength": 255 }
+      }
+    },
+    "executor": { "$ref": "#/$defs/actor" },
+    "observer": { "$ref": "#/$defs/actor" },
+    "observed": {
+      "type": "object", "additionalProperties": false,
+      "required": ["url", "selector_digest", "match_count", "text_digest", "browser_version", "temporary_profile", "webdriver_request_count", "raw_page_content_retained"],
+      "properties": {
+        "url": { "type": "string", "maxLength": 512 },
+        "selector_digest": { "$ref": "#/$defs/digest" },
+        "match_count": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "text_digest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+        "browser_version": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "temporary_profile": { "type": "boolean" },
+        "webdriver_request_count": { "type": "integer", "minimum": 0, "maximum": 1024 },
+        "raw_page_content_retained": { "const": false }
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["expected_url_observed", "expected_selector_observed", "expected_text_observed", "executor_claim_trusted", "external_causality_proven"],
+      "properties": {
+        "expected_url_observed": { "type": "boolean" },
+        "expected_selector_observed": { "type": "boolean" },
+        "expected_text_observed": { "type": "boolean" },
+        "executor_claim_trusted": { "const": false },
+        "external_causality_proven": { "const": false }
+      }
+    },
+    "controls": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_invocations", "read_only", "loopback_webdriver", "external_egress", "credentials", "home_profile", "production_authority"],
+      "properties": {
+        "action_invocations": { "const": 0 },
+        "read_only": { "const": true },
+        "loopback_webdriver": { "const": true },
+        "external_egress": { "const": false },
+        "credentials": { "const": false },
+        "home_profile": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "observed_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "actor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actor_id", "artifact_digest", "key_id"],
+      "properties": {
+        "actor_id": { "$ref": "#/$defs/id" },
+        "artifact_digest": { "$ref": "#/$defs/digest" },
+        "key_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

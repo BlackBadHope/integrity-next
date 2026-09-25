@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/retention-decision.schema.json",
+  "title": "Integrity Guardian Retention Decision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "artifact_class",
+    "decision",
+    "reason",
+    "eligible_at",
+    "evaluated_at",
+    "guardian_deleted",
+    "requires_external_authorization",
+    "decision_digest"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/retention-decision/v1"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "policy_id": {
+      "type": "string",
+      "pattern": "^retention-policy:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "policy_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "artifact_class": {
+      "enum": [
+        "observations",
+        "ledger-events",
+        "checkpoints",
+        "findings",
+        "receipts",
+        "reports"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "retain",
+        "eligible-for-external-prune"
+      ]
+    },
+    "reason": {
+      "enum": [
+        "within-retention-window",
+        "retention-window-expired",
+        "legal-hold",
+        "unknown-timestamp",
+        "future-timestamp"
+      ]
+    },
+    "eligible_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "evaluated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "guardian_deleted": {
+      "const": false
+    },
+    "requires_external_authorization": {
+      "type": "boolean"
+    },
+    "decision_digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

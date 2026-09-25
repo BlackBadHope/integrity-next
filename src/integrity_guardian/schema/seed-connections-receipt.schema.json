@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/seed-connections-receipt.schema.json",
+  "title": "Seed relationship answer receipt v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol", "snapshot_id", "artifact_digest", "source_namespace", "selected_event_id", "selection", "limit", "include_contextual", "relationship_protocol", "explanation_digest", "link_counts", "direct_verification_receipt_id", "home_record_count", "production_authority", "route_authority", "receipt_id"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/seed-connections-receipt/v1"}, "snapshot_id": {"$ref": "#/$defs/digest"},
+    "artifact_digest": {"$ref": "#/$defs/digest"}, "source_namespace": {"type": "string", "pattern": "^seed://project/[a-z0-9][a-z0-9._-]{0,127}$"},
+    "selected_event_id": {"type": "integer", "minimum": 1},
+    "selection": {
+      "type": "object",
+      "oneOf": [
+        {"additionalProperties": false, "required": ["mode", "reroll_count"], "properties": {"mode": {"const": "explicit-event-id"}, "reroll_count": {"const": 0}}},
+        {"additionalProperties": false, "required": ["mode", "seed", "eligible_count", "eligible_digest", "selected_index", "rejection_counter", "reroll_count"], "properties": {"mode": {"const": "recorded-random-seed"}, "seed": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "eligible_count": {"type": "integer", "minimum": 1}, "eligible_digest": {"$ref": "#/$defs/digest"}, "selected_index": {"type": "integer", "minimum": 0}, "rejection_counter": {"type": "integer", "minimum": 0}, "reroll_count": {"const": 0}}}
+      ]
+    },
+    "limit": {"type": "integer", "minimum": 1, "maximum": 200}, "include_contextual": {"type": "boolean"},
+    "relationship_protocol": {"const": "integrity-guardian/seed-event-connections/v1"}, "explanation_digest": {"$ref": "#/$defs/digest"},
+    "link_counts": {"type": "object", "additionalProperties": false, "required": ["direct", "supported", "contextual", "returned", "before_limit"], "properties": {"direct": {"type": "integer", "minimum": 0}, "supported": {"type": "integer", "minimum": 0}, "contextual": {"type": "integer", "minimum": 0}, "returned": {"type": "integer", "minimum": 0}, "before_limit": {"type": "integer", "minimum": 0}}},
+    "direct_verification_receipt_id": {"$ref": "#/$defs/digest"}, "home_record_count": {"const": 0}, "production_authority": {"const": false}, "route_authority": {"const": false}, "receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}
+}

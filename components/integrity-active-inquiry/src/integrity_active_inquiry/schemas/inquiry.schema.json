@@ -1,0 +1,230 @@
+{
+  "$comment": "Structural input grammar, not authority. Runtime additionally enforces UTF-8 byte lengths, exact model coverage, duplicate rejection, uniqueness and cross-field limits.",
+  "$defs": {
+    "goal": {
+      "additionalProperties": false,
+      "properties": {
+        "context_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "environment": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "goal_id": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "max_cost": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_duration_ms": {
+          "maximum": 3600000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_output_bytes": {
+          "maximum": 1048576,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "max_steps": {
+          "maximum": 64,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "predicate_id": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "required_basis": {
+          "enum": [
+            "synthetic",
+            "reported",
+            "witnessed"
+          ]
+        },
+        "revision": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "subject": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "tenant_id": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "goal_id",
+        "tenant_id",
+        "subject",
+        "environment",
+        "revision",
+        "predicate_id",
+        "context_digest",
+        "required_basis",
+        "max_steps",
+        "max_cost",
+        "max_duration_ms",
+        "max_output_bytes"
+      ],
+      "type": "object"
+    },
+    "probe": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {
+          "enum": [
+            "available",
+            "unavailable",
+            "denied",
+            "proposed"
+          ]
+        },
+        "capability_id": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "cost": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "edge_id": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "manifest_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "max_output_bytes": {
+          "maximum": 4096,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "operation_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "predictions": {
+          "additionalProperties": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxProperties": 64,
+          "minProperties": 1,
+          "propertyNames": {
+            "maxLength": 256,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "probe_id": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+          "type": "string"
+        },
+        "response_schema_digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "safety_rank": {
+          "items": {
+            "maximum": 1000000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "type": "array"
+        },
+        "timeout_ms": {
+          "maximum": 3600000,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "probe_id",
+        "edge_id",
+        "capability_id",
+        "manifest_digest",
+        "operation_digest",
+        "response_schema_digest",
+        "predictions",
+        "cost",
+        "timeout_ms",
+        "max_output_bytes",
+        "safety_rank",
+        "availability"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "urn:integrity-active-inquiry:request:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "answers": {
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "maxProperties": 64,
+      "minProperties": 1,
+      "propertyNames": {
+        "maxLength": 256,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "goal": {
+      "$ref": "#/$defs/goal"
+    },
+    "probes": {
+      "items": {
+        "$ref": "#/$defs/probe"
+      },
+      "maxItems": 32,
+      "minItems": 1,
+      "type": "array"
+    },
+    "protocol": {
+      "const": "integrity-active-inquiry/request/v1"
+    },
+    "session_id": {
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,255}$",
+      "type": "string"
+    },
+    "task_allowed": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "protocol",
+    "goal",
+    "answers",
+    "probes",
+    "session_id",
+    "task_allowed"
+  ],
+  "type": "object"
+}

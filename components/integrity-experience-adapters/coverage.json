@@ -1,0 +1,171 @@
+{
+  "schema": "integrity-experience-coverage/v1",
+  "version": "0.1.0rc3",
+  "change_intent": 197,
+  "base_commit": "e0baf524dfd92d9851be00d39f70b96ec3a5e801",
+  "all_runtime_features_implemented": false,
+  "upstream_source_vendored": false,
+  "upstream_assets_vendored": false,
+  "features": [
+    {
+      "id": "contract-parity",
+      "reference": "https://github.com/Vaibhavs10/py-migrations/blob/main/docs/codex-parallel-agents.md",
+      "observed_document_blob_sha1": "158d5ea72775bd518ac34ca53f30de6f3bc1c911",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "validate_workplan",
+      "tests": [
+        "test_workplan",
+        "test_workplan_self_review",
+        "test_workplan_overlap",
+        "test_json_key_order"
+      ],
+      "implementation_level": "actual_diff_scope_gate",
+      "remaining_acceptance": [
+        "Actual multi-language migration and authenticated host leases remain untested"
+      ],
+      "runtime_api": "release_tools.audit_changed_paths"
+    },
+    {
+      "id": "transcription",
+      "reference": "https://github.com/Vaibhavs10/insanely-fast-whisper/blob/main/README.md",
+      "observed_document_blob_sha1": "09abc8f1feabbe9e8995be1fcf41faa002fee149",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "transcript_observation",
+      "tests": [
+        "test_transcript_no_instruction_authority",
+        "test_transcript_timing",
+        "test_transcript_identity_pin"
+      ],
+      "implementation_level": "implemented_model_inference_mocked",
+      "remaining_acceptance": [
+        "Real staged model ASR inference; target-language quality; hardware limits and admitted SDK worker"
+      ],
+      "runtime_api": "media.LocalWhisper"
+    },
+    {
+      "id": "mcp-preflight",
+      "reference": "https://github.com/Vaibhavs10/mcp-with-openai-gpt-oss/blob/main/README.md",
+      "observed_document_blob_sha1": "6a2b05a944d6357b8ee473a29e3dc18c42d528ab",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "validate_mcp",
+      "tests": [
+        "test_mcp_cloud_model_local_browser",
+        "test_mcp_no_floating",
+        "test_mcp_no_raw_credentials"
+      ],
+      "implementation_level": "implemented_synthetic_stdio_tested",
+      "remaining_acceptance": [
+        "Live admitted third-party MCP server; Windows child-process custody; 2026 protocol compatibility not claimed"
+      ],
+      "runtime_api": "mcp_client.StdioClient"
+    },
+    {
+      "id": "realtime-preflight",
+      "reference": "https://github.com/Vaibhavs10/gpt-realtime-starter-app/blob/main/README.md",
+      "observed_document_blob_sha1": "342e291a9f43364bb45120c8d2d1696e229538fb",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "realtime_request",
+      "tests": [
+        "test_realtime_no_key_minted",
+        "test_realtime_origins",
+        "test_realtime_key_rejected"
+      ],
+      "implementation_level": "implemented_provider_and_peer_mocked",
+      "remaining_acceptance": [
+        "Live TLS/provider/WebRTC acceptance; real host identity and signed dispatch; provider-enforced spend controls"
+      ],
+      "runtime_api": "realtime.VoiceBroker; realtime.OpenAIWebRTC; static/voice.mjs"
+    },
+    {
+      "id": "release-inventory",
+      "reference": "https://github.com/Vaibhavs10/research-release-kit/blob/main/README.md",
+      "observed_document_blob_sha1": null,
+      "source_pin_note": "Document identity not captured; no source is imported",
+      "api": "release_inventory",
+      "tests": [
+        "test_release_inventory_deterministic",
+        "test_release_traversal",
+        "test_release_case_collision"
+      ],
+      "implementation_level": "implemented_real_git_tested",
+      "remaining_acceptance": [
+        "Actual release signature and exact-head project certification; no Stable promotion"
+      ],
+      "runtime_api": "release_tools.git_inventory"
+    },
+    {
+      "id": "tts-catalog",
+      "reference": "https://github.com/Vaibhavs10/open-tts-tracker/blob/main/README.md",
+      "observed_document_blob_sha1": "d3c80179d27a9cbb278c44a9988146ec38404fd3",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "select_tts",
+      "tests": [
+        "test_tts_language_license",
+        "test_tts_no_cloned_voice",
+        "test_tts_pinned_license"
+      ],
+      "implementation_level": "implemented_local_english_tts_tested",
+      "remaining_acceptance": [
+        "Reviewed actual binary/voice inventory; target-language or neural TTS quality; host execution custody"
+      ],
+      "runtime_api": "media.synthesize_espeak"
+    },
+    {
+      "id": "inert-preview",
+      "reference": "https://github.com/Vaibhavs10/little-coder/blob/main/app.py",
+      "observed_document_blob_sha1": "fd4110ed4c67f4f48db7859a4d805f2fd82a6989",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "inert_preview",
+      "tests": [
+        "test_preview_markup",
+        "test_preview_active_fallback",
+        "test_preview_attribute_breakout"
+      ],
+      "implementation_level": "implemented_chromium_dom_tested",
+      "remaining_acceptance": [
+        "Cross-engine/platform tests and host OS isolation; no active JS/React mode"
+      ],
+      "runtime_api": "presentation.preview_page"
+    },
+    {
+      "id": "memory-estimate",
+      "reference": "https://github.com/Vaibhavs10/llm-mem-finder/blob/main/calculate.ts",
+      "observed_document_blob_sha1": "cf25335b2af8ceac0e94078ff73251d5f578ac28",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "estimate_memory",
+      "tests": [
+        "test_memory_formula",
+        "test_memory_scaling",
+        "test_memory_does_not_guess_architecture"
+      ],
+      "implementation_level": "offline_implementation",
+      "remaining_acceptance": [
+        "Actual peak allocator/hardware comparison; estimate never grants workload admission"
+      ],
+      "runtime_api": "contracts.estimate_memory"
+    },
+    {
+      "id": "companion",
+      "reference": "https://github.com/Vaibhavs10/pets/blob/main/README.md",
+      "observed_document_blob_sha1": "65eab355543a1025a076305bd1ad913018c94c16",
+      "source_pin_note": "Document identity only; not an executable dependency pin",
+      "api": "validate_companion",
+      "tests": [
+        "test_companion_manifest",
+        "test_companion_hooks",
+        "test_companion_invalid_fields"
+      ],
+      "implementation_level": "implemented_pillow_chromium_tested",
+      "remaining_acceptance": [
+        "Admitted host decoder and UI lifecycle; no decorative animation as action evidence"
+      ],
+      "runtime_api": "media.decoded_companion; presentation.companion_page"
+    }
+  ],
+  "predecessor_commit": "b2e85a73ce8b8caf152663498d52c75ffd0d9ac6",
+  "host_side_backend_code_present": true,
+  "all_live_acceptance_complete": false,
+  "integration_change_intent": 201,
+  "integration_base_commit": "e40b9973fb8864fed29297a8dc61ba41111f5dbf",
+  "audit_update": "../../docs/updates/2026-09-11-rc1/AUDIT.md"
+}
