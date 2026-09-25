@@ -62,8 +62,8 @@
     },
     {
       "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/rollout_usage.py",
-      "bytes": 14240,
-      "sha256": "e7a7d18b003400d0f640f1665c92cef4fcbe4672c9a6292115d074a905178c21"
+      "bytes": 14230,
+      "sha256": "a6aa1d0ed61bf5e818150b4f12587e4b74478638fded2fe98e811c601a2e5e83"
     }
   ]
 }
