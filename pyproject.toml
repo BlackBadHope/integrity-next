@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "integrity-guardian"
+version = "6.0.0"
+description = "Local-first integrity layer for verified discovery, action and learning"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Integrity Project contributors" }]
+keywords = ["integrity", "audit", "agents", "evidence", "local-first"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Security",
+  "Typing :: Typed",
+]
+dependencies = [
+  "cryptography>=50.0.0,<51",
+  "jsonschema>=4.19.2,<5",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<10",
+  "ruff>=0.9,<1",
+]
+
+[project.scripts]
+guardian = "integrity_guardian.cli:main"
+guardian-cross-agent-continuity-acceptance = "integrity_guardian.cross_agent_acceptance_cli:main"
+guardian-memory-synapse-mcp = "integrity_guardian.memory_synapse_mcp_protocol:main"
+guardian-galaxy-ppv4-bridge = "integrity_guardian.galaxy_ppv4_bridge:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/integrity_guardian"]
+
+[tool.hatch.build]
+include = [
+  "src/integrity_guardian/**",
+  "README.md",
+  "LICENSE",
+  "NOTICE",
+  "AUTHORS.md",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

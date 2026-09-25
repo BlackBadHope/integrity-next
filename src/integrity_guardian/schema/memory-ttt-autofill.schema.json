@@ -1,0 +1,179 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-ttt-autofill.schema.json",
+  "title": "TIME-TO-TASK runbook path autofill receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "catalog_protocol", "path_catalog_digest", "path_relation", "graph_digest", "source_namespace",
+    "goal", "normalized_goal", "last_hop", "normalized_last_hop", "result", "path",
+    "remaining_path", "blocked", "ambiguous", "hops_saved_estimate", "path_count",
+    "ops_lookup_policy", "executable", "persistent_derived_state",
+    "production_authority", "route_authority", "live_seed_append", "mariadb_touched",
+    "receipt_id"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/memory-ttt-autofill/v1"},
+    "catalog_protocol": {"const": "integrity-guardian/memory-ttt-path-catalog/v1"},
+    "path_catalog_digest": {
+      "oneOf": [
+        {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        {"type": "null"}
+      ]
+    },
+    "path_relation": {"const": "next-hop"},
+    "graph_digest": {
+      "oneOf": [
+        {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        {"type": "null"}
+      ]
+    },
+    "source_namespace": {
+      "oneOf": [
+        {"type": "string", "pattern": "^seed://project/[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+        {"type": "null"}
+      ]
+    },
+    "goal": {"type": "string", "minLength": 1, "maxLength": 512},
+    "normalized_goal": {"type": "string", "minLength": 1, "maxLength": 512},
+    "last_hop": {"type": "string", "minLength": 1, "maxLength": 512},
+    "normalized_last_hop": {"type": "string", "minLength": 1, "maxLength": 512},
+    "result": {"enum": ["REMAINING", "COMPLETE", "BLOCKED", "AMBIGUOUS"]},
+    "path": {
+      "oneOf": [
+        {"$ref": "#/$defs/path"},
+        {"type": "null"}
+      ]
+    },
+    "remaining_path": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {"$ref": "#/$defs/hop"}
+    },
+    "blocked": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["reason"],
+          "properties": {
+            "reason": {"type": "string", "minLength": 1, "maxLength": 256}
+          },
+          "additionalProperties": true
+        },
+        {"type": "null"}
+      ]
+    },
+    "ambiguous": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason", "candidates"],
+          "properties": {
+            "reason": {"type": "string", "minLength": 1, "maxLength": 256},
+            "candidates": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {"type": "object"}
+            }
+          }
+        },
+        {"type": "null"}
+      ]
+    },
+    "hops_saved_estimate": {"type": "integer", "minimum": 0, "maximum": 32},
+    "path_count": {"type": "integer", "minimum": 0, "maximum": 64},
+    "ops_lookup_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production_authority", "mutate_billing_mariadb", "prefer", "forbid_as_search"
+      ],
+      "properties": {
+        "production_authority": {"const": false},
+        "mutate_billing_mariadb": {"const": false},
+        "prefer": {"type": "array", "items": {"type": "string"}},
+        "forbid_as_search": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "executable": {"const": false},
+    "persistent_derived_state": {"const": false},
+    "production_authority": {"const": false},
+    "route_authority": {"const": false},
+    "live_seed_append": {"const": false},
+    "mariadb_touched": {"const": false},
+    "receipt_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "snapshot_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol", "snapshot_id", "seed_source_digest", "seed_catalog_digest",
+        "snapshot_event_id", "graph_digest", "path_catalog_digest", "ttt_receipt_id",
+        "production_authority", "route_authority", "receipt_id"
+      ],
+      "properties": {
+        "protocol": {"const": "integrity-client/memory-ttt-snapshot-binding/v1"},
+        "snapshot_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "seed_source_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "seed_catalog_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "snapshot_event_id": {"type": "integer", "minimum": 0},
+        "graph_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "path_catalog_digest": {
+          "oneOf": [
+            {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+            {"type": "null"}
+          ]
+        },
+        "ttt_receipt_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+        "production_authority": {"const": false},
+        "route_authority": {"const": false},
+        "receipt_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    }
+  },
+  "$defs": {
+    "hop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hop_id", "title", "aliases", "hint_template", "mode", "node_ref",
+        "evidence_path", "schema_names_as_is", "executable", "production_authority",
+        "mutate_billing", "navigational_only"
+      ],
+      "properties": {
+        "hop_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "title": {"type": "string", "minLength": 1, "maxLength": 512},
+        "aliases": {"type": "array", "maxItems": 32, "items": {"type": "string"}},
+        "hint_template": {"type": "string", "maxLength": 4096},
+        "mode": {"type": "string", "minLength": 1, "maxLength": 64},
+        "node_ref": {"oneOf": [{"type": "string"}, {"type": "null"}]},
+        "evidence_path": {"oneOf": [{"type": "string"}, {"type": "null"}]},
+        "schema_names_as_is": {"type": "array", "maxItems": 32, "items": {"type": "string"}},
+        "executable": {"const": false},
+        "production_authority": {"const": false},
+        "mutate_billing": {"const": false},
+        "navigational_only": {"const": true}
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path_id", "title", "goal_aliases", "description", "source", "hop_count",
+        "hops", "production_authority", "route_authority", "executable"
+      ],
+      "properties": {
+        "path_id": {"type": "string", "minLength": 1, "maxLength": 256},
+        "title": {"type": "string", "minLength": 1, "maxLength": 512},
+        "goal_aliases": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"type": "string"}},
+        "description": {"type": "string", "maxLength": 4096},
+        "source": {"type": "string", "minLength": 1, "maxLength": 64},
+        "hop_count": {"type": "integer", "minimum": 1, "maximum": 32},
+        "hops": {"type": "array", "minItems": 1, "maxItems": 32, "items": {"$ref": "#/$defs/hop"}},
+        "production_authority": {"const": false},
+        "route_authority": {"const": false},
+        "executable": {"const": false}
+      }
+    }
+  }
+}

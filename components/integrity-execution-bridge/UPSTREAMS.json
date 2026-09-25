@@ -1,0 +1,162 @@
+{
+  "format": "integrity-execution-bridge/upstream-inventory/v1",
+  "checked_date": "2026-09-17",
+  "scope": "Per-file source and license snapshots, not complete-repository audits or live acceptance",
+  "sources": [
+    {
+      "repository": "miuuyy/codex-chatgpt-web",
+      "url": "https://github.com/miuuyy/codex-chatgpt-web",
+      "source_path": "src/adapters/chatgpt-web/mcp-server.ts",
+      "source_blob_sha1": "f788c4c69d318b7b7843db112bcde6df25134345",
+      "inspected_lines": [
+        1,
+        155
+      ],
+      "license_path": "LICENSE",
+      "license_blob_sha1": "99a9feb4d2246a1fe00eb0f27394a97497af32cf",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 codex-chatgpt-web contributors",
+      "adopted_patterns": [
+        "task-bound tools",
+        "finite per-call waits",
+        "explicit manual tool loop"
+      ],
+      "excluded": [
+        "browser DOM automation",
+        "browser profiles/cookies",
+        "raw JavaScript gateway"
+      ],
+      "reuse": "Original Python implementation of selected patterns; no upstream runtime vendored"
+    },
+    {
+      "repository": "wonderwhy-er/DesktopCommanderMCP",
+      "url": "https://github.com/wonderwhy-er/DesktopCommanderMCP",
+      "source_path": "src/tools/schemas.ts",
+      "source_blob_sha1": "6257f2af83ae6fb40f90fee1178bfa0cfe8fcbad",
+      "inspected_lines": [
+        1,
+        105
+      ],
+      "license_path": "LICENSE",
+      "license_blob_sha1": "cc6ce4fa68f26cd5db3dc1ff83c8163094f28451",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2024-2025 Eduard Ruzga and Desktop Commander Contributors",
+      "adopted_patterns": [
+        "explicit discoverable schemas",
+        "exact editing and bounded output"
+      ],
+      "excluded": [
+        "hosted relay",
+        "telemetry",
+        "unrestricted configuration tools"
+      ],
+      "reuse": "Original Python implementation of selected patterns; no upstream runtime vendored"
+    },
+    {
+      "repository": "int04/ChatCmd",
+      "url": "https://github.com/int04/ChatCmd",
+      "source_path": "docs/approval-grants.md",
+      "source_blob_sha1": "030db06133e21dc3985e3edf66d0c412c70c7cb8",
+      "inspected_lines": null,
+      "license_path": "LICENSE",
+      "license_blob_sha1": "071c6ed13630c7253717c720b9104a9130bf7b53",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Nghia Duc and ChatCMD contributors",
+      "adopted_patterns": [
+        "task-scoped ownership",
+        "execution admission distinct from UI hints",
+        "cleanup despite revoked write authority"
+      ],
+      "excluded": [
+        "parallel approval system",
+        "UI execution-mode changes exposed to models"
+      ],
+      "reuse": "Original Python implementation of selected patterns; no upstream runtime vendored"
+    },
+    {
+      "repository": "hoangcoderr/chatgpt-local-coder",
+      "url": "https://github.com/hoangcoderr/chatgpt-local-coder",
+      "source_path": "src/tools/shell.ts",
+      "source_blob_sha1": "1658122a1f17349b6dee84033feac7133654a9e1",
+      "inspected_lines": [
+        1,
+        200
+      ],
+      "license_path": "LICENSE",
+      "license_blob_sha1": "c2b9bce3ec1a9fa633b7681432e8e98b9470265a",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 hoangcoderr",
+      "adopted_patterns": [
+        "separate start/read/write/stop lifecycle",
+        "bounded output retention"
+      ],
+      "excluded": [
+        "ambient shell environment",
+        "in-memory-only delivery identity",
+        "implicit shell parsing"
+      ],
+      "reuse": "Original Python implementation of selected patterns; no upstream runtime vendored"
+    },
+    {
+      "repository": "alexcodeplace/chatgpt-mcp",
+      "url": "https://github.com/alexcodeplace/chatgpt-mcp",
+      "source_path": "SPEC.md",
+      "source_blob_sha1": "b2d2b87b422ffef61a6ec80d93d846ee0906e062",
+      "inspected_lines": [
+        1,
+        145
+      ],
+      "license_path": "LICENSE",
+      "license_blob_sha1": "50e8d7baf01758061c33966e4014ad226aec4994",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Alex",
+      "adopted_patterns": [
+        "thin MCP adapter",
+        "loopback deployment seam",
+        "explicit continuation handles"
+      ],
+      "excluded": [
+        "automatic installers",
+        "root filesystem grants",
+        "claiming untested 2026 MCP compatibility"
+      ],
+      "reuse": "Original Python implementation of selected patterns; no upstream runtime vendored"
+    },
+    {
+      "repository": "yuga-hashimoto/localant",
+      "url": "https://github.com/yuga-hashimoto/localant",
+      "source_path": "README.md",
+      "source_blob_sha1": "2bca497ac4159108f39376942f3b7a16fa289495",
+      "inspected_lines": [
+        1,
+        155
+      ],
+      "license_path": "LICENSE",
+      "license_blob_sha1": "c39a55432eed8cbccd2399fcd1b3589cd2595338",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 chatgpt-local-app contributors",
+      "adopted_patterns": [
+        "focused direct coding profile",
+        "no redundant web/planning tools",
+        "explicit backend separation"
+      ],
+      "excluded": [
+        "automatic model/provider fallback",
+        "autopilot",
+        "200-tool and GUI surface"
+      ],
+      "reuse": "Original Python implementation of selected patterns; no upstream runtime vendored"
+    }
+  ],
+  "codex": {
+    "repository": "openai/codex",
+    "commit": "b0659c53865dd48b0cd69c454368cea3980017cc",
+    "contract": "command/exec plus write/terminate, no model turn",
+    "sandbox_schema_blob": "5575701ff2d7924e431df7b86d57947d650f2989"
+  },
+  "integrity": {
+    "base": "d6b57bed832401690628a03c78e9552c03dabc68",
+    "sdk_pattern_path": "components/integrity-agents-api/src/integrity_agents_api/transport.py",
+    "sdk_pattern_blob": "6bbde5971bc876df6a00f9fab9e44d3ff20e8f86"
+  }
+}

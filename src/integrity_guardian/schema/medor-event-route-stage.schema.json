@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/medor-event-route-stage.schema.json",
+  "title": "Medor request-bound Connectome/Synapse action route stage v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "route_stage_id", "protocol", "stage", "request_digest",
+    "architecture_admission_id", "security_admission_id",
+    "connectome_manifest", "connectome_compilation", "synapse_route",
+    "synapse_simulation", "evidence_digests", "plan_context",
+    "execution_performed_by_planner", "production_authority"
+  ],
+  "properties": {
+    "route_stage_id": {"$ref": "#/$defs/digest"},
+    "protocol": {"const": "integrity-guardian/medor-event-route-stage/v1"},
+    "stage": {"enum": ["reuse", "pre-action", "action", "outcome"]},
+    "request_digest": {"$ref": "#/$defs/digest"},
+    "architecture_admission_id": {"$ref": "#/$defs/digest"},
+    "security_admission_id": {"$ref": "#/$defs/digest"},
+    "connectome_manifest": {"type": "object"},
+    "connectome_compilation": {"type": "object"},
+    "synapse_route": {"type": "object"},
+    "synapse_simulation": {"type": "object"},
+    "evidence_digests": {
+      "type": "object",
+      "minProperties": 3,
+      "propertyNames": {"$ref": "#/$defs/id"},
+      "additionalProperties": {"$ref": "#/$defs/digest"}
+    },
+    "plan_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_node_key", "target_node_key", "facts",
+        "allowed_capabilities", "granted_authorities", "max_transition",
+        "max_blast_radius", "as_of", "evidence_observed_at"
+      ],
+      "properties": {
+        "current_node_key": {"$ref": "#/$defs/id"},
+        "target_node_key": {"$ref": "#/$defs/id"},
+        "facts": {
+          "type": "object",
+          "additionalProperties": {"type": ["string", "integer", "boolean", "null"]}
+        },
+        "allowed_capabilities": {
+          "type": "array", "minItems": 1, "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "granted_authorities": {
+          "type": "array", "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        },
+        "max_transition": {"enum": ["observe", "analyze", "plan", "verify", "disposable_mutation"]},
+        "max_blast_radius": {"enum": ["none", "process", "host", "tenant"]},
+        "as_of": {"type": "string", "format": "date-time"},
+        "evidence_observed_at": {"type": "string", "format": "date-time"}
+      }
+    },
+    "execution_performed_by_planner": {"const": false},
+    "production_authority": {"const": false}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"}
+  }
+}

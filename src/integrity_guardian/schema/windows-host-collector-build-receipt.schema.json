@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/windows-host-collector-build-receipt.schema.json",
+  "title": "Windows host collector build receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "status",
+    "compiler",
+    "compiler_digest",
+    "assets_manifest_digest",
+    "source_digest",
+    "executable_digest",
+    "profile_digest",
+    "add_type_used",
+    "application_file_count",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/windows-host-collector-build-receipt/v1" },
+    "status": { "const": "PASS" },
+    "compiler": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "compiler_digest": { "$ref": "#/$defs/digest" },
+    "assets_manifest_digest": { "$ref": "#/$defs/digest" },
+    "source_digest": { "$ref": "#/$defs/digest" },
+    "executable_digest": { "$ref": "#/$defs/digest" },
+    "profile_digest": { "$ref": "#/$defs/digest" },
+    "add_type_used": { "const": false },
+    "application_file_count": { "const": 1 },
+    "production_authority": { "const": false }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

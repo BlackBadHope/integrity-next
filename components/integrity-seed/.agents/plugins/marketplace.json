@@ -1,0 +1,20 @@
+{
+  "name": "integrity-public",
+  "interface": {
+    "displayName": "Integrity Public Plugins"
+  },
+  "plugins": [
+    {
+      "name": "integrity-seed",
+      "source": {
+        "source": "local",
+        "path": "./plugins/integrity-seed"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}

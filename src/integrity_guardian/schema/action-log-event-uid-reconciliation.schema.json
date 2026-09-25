@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/action-log-event-uid-reconciliation.schema.json",
+  "title": "Integrity Action Log event UID reconciliation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "reconciliation_id",
+    "source_namespace",
+    "action_log_alias",
+    "event_uid",
+    "request_sha256",
+    "observed_at",
+    "match_count",
+    "event_id",
+    "content_read",
+    "event_body_emitted",
+    "unique_index_expected",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/action-log-event-uid-reconciliation/v1"},
+    "reconciliation_id": {"type": "string", "pattern": "^event-uid-reconciliation:[a-f0-9]{64}$"},
+    "source_namespace": {"type": "string", "pattern": "^seed://project/[a-z0-9][a-z0-9._-]{0,127}$"},
+    "action_log_alias": {"const": "actionlog://global"},
+    "event_uid": {"$ref": "#/$defs/event_uid"},
+    "request_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "match_count": {"type": "integer", "minimum": 0, "maximum": 1},
+    "event_id": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+      ]
+    },
+    "content_read": {"const": false},
+    "event_body_emitted": {"const": false},
+    "unique_index_expected": {"const": true},
+    "production_authority": {"const": false}
+  },
+  "$defs": {
+    "event_uid": {"type": "string", "pattern": "^client:[A-Za-z0-9][A-Za-z0-9._:-]{7,154}$"}
+  }
+}

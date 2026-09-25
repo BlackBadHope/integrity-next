@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v2/medor-security-admission-bundle.schema.json",
+  "title": "Medor operational exact-artifact Security Harness bundle v2",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol", "subject", "environment", "policy", "evidence", "decision", "trust", "bundle_id"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/medor-security-admission-bundle/v2"},
+    "subject": {
+      "type": "object", "additionalProperties": false,
+      "required": ["tenant_id", "product_id", "artifact_id", "artifact_digest"],
+      "properties": {
+        "tenant_id": {"const": "tenant:public-b9d53e60dea942e6"},
+        "product_id": {"const": "product:integrity-guardian-medor-lts"},
+        "artifact_id": {"const": "artifact:medor-memory-synapse-lts"},
+        "artifact_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "environment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile_id", "fingerprint_digest", "consumer", "transport", "listener", "winops_authorized"],
+      "properties": {
+        "profile_id": {"const": "environment:local-client-forced-stdio"},
+        "fingerprint_digest": {"$ref": "#/$defs/digest"},
+        "consumer": {"const": "client-workstation"},
+        "transport": {"const": "openssh-forced-command-stdio"},
+        "listener": {"const": false},
+        "winops_authorized": {"const": false}
+      }
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy_id", "requested_channel", "requirements"],
+      "properties": {
+        "policy_id": {"const": "policy:medor-memory-synapse-lts-operational-rc"},
+        "requested_channel": {"const": "rc"},
+        "requirements": {
+          "type": "object", "additionalProperties": false,
+          "required": ["reproducible_provenance", "assessment_mode", "complete_coverage", "validated_findings", "max_unresolved", "containment_required", "containment_assurance", "genesis_rehearsal_required"],
+          "properties": {
+            "reproducible_provenance": {"const": true},
+            "assessment_mode": {"const": "diff"},
+            "complete_coverage": {"const": true},
+            "validated_findings": {"const": true},
+            "max_unresolved": {"$ref": "#/$defs/zero_severities"},
+            "containment_required": {"const": true},
+            "containment_assurance": {"const": "protected"},
+            "genesis_rehearsal_required": {"const": true}
+          }
+        }
+      }
+    },
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["provenance", "assessment", "containment"],
+      "properties": {
+        "provenance": {
+          "type": "object", "additionalProperties": false,
+          "required": ["source_revision", "source_tree_digest", "dependency_lock_digest", "build_digest", "artifact_digest", "state", "reproducible", "artifact_count", "created_at", "expires_at", "receipt_id"],
+          "properties": {
+            "source_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+            "source_tree_digest": {"$ref": "#/$defs/digest"},
+            "dependency_lock_digest": {"$ref": "#/$defs/digest"},
+            "build_digest": {"$ref": "#/$defs/digest"},
+            "artifact_digest": {"$ref": "#/$defs/digest"},
+            "state": {"const": "exact"}, "reproducible": {"const": true},
+            "artifact_count": {"const": 1}, "created_at": {"$ref": "#/$defs/time"},
+            "expires_at": {"$ref": "#/$defs/time"}, "receipt_id": {"$ref": "#/$defs/digest"}
+          }
+        },
+        "assessment": {
+          "type": "object", "additionalProperties": false,
+          "required": ["mode", "evidence_digest", "threat_model_digest", "coverage_state", "examined_count", "omitted_count", "total_findings", "unresolved", "validation_state", "tool_calls", "model_calls", "elapsed_ms", "created_at", "expires_at", "receipt_id"],
+          "properties": {
+            "mode": {"const": "diff"}, "evidence_digest": {"$ref": "#/$defs/digest"},
+            "threat_model_digest": {"$ref": "#/$defs/digest"}, "coverage_state": {"const": "complete"},
+            "examined_count": {"type": "integer", "minimum": 1}, "omitted_count": {"const": 0},
+            "total_findings": {"const": 0}, "unresolved": {"$ref": "#/$defs/zero_severities"},
+            "validation_state": {"const": "validated-complete"},
+            "tool_calls": {"type": "integer", "minimum": 0}, "model_calls": {"const": 0},
+            "elapsed_ms": {"type": "integer", "minimum": 0}, "created_at": {"$ref": "#/$defs/time"},
+            "expires_at": {"$ref": "#/$defs/time"}, "receipt_id": {"$ref": "#/$defs/digest"}
+          }
+        },
+        "containment": {
+          "type": "object", "additionalProperties": false,
+          "required": ["evidence_digest", "assurance_class", "environment_supported", "ready_before_untrusted_work", "policy_frozen", "controls", "genesis_rehearsal", "post_run_drift", "production_targets", "created_at", "expires_at", "receipt_id"],
+          "properties": {
+            "evidence_digest": {"$ref": "#/$defs/digest"}, "assurance_class": {"const": "protected"},
+            "environment_supported": {"const": true}, "ready_before_untrusted_work": {"const": true},
+            "policy_frozen": {"const": true},
+            "controls": {
+              "type": "object", "additionalProperties": false,
+              "required": ["egress", "privilege", "filesystem", "secrets"],
+              "properties": {
+                "egress": {"const": "loopback-and-forced-stdio-only"},
+                "privilege": {"const": "two-exact-local-helpers-only"},
+                "filesystem": {"const": "fixed-server-paths-no-client-selection"},
+                "secrets": {"const": "separate-private-server-custody"}
+              }
+            },
+            "genesis_rehearsal": {"const": "passed-isolated-synthetic-envelope"},
+            "post_run_drift": {"const": "none"}, "production_targets": {"const": false},
+            "created_at": {"$ref": "#/$defs/time"}, "expires_at": {"$ref": "#/$defs/time"},
+            "receipt_id": {"$ref": "#/$defs/digest"}
+          }
+        }
+      }
+    },
+    "decision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["decision", "reasons", "subject_artifact_digest", "environment_fingerprint_digest", "inputs", "authority_boundary", "evaluated_at", "expires_at", "receipt_id", "signature"],
+      "properties": {
+        "decision": {"const": "rc-eligible"}, "reasons": {"const": []},
+        "subject_artifact_digest": {"$ref": "#/$defs/digest"},
+        "environment_fingerprint_digest": {"$ref": "#/$defs/digest"},
+        "inputs": {
+          "type": "object", "additionalProperties": false,
+          "required": ["provenance", "assessment", "containment"],
+          "properties": {"provenance": {"$ref": "#/$defs/digest"}, "assessment": {"$ref": "#/$defs/digest"}, "containment": {"$ref": "#/$defs/digest"}}
+        },
+        "authority_boundary": {"$ref": "#/$defs/false_authority"},
+        "evaluated_at": {"$ref": "#/$defs/time"}, "expires_at": {"$ref": "#/$defs/time"},
+        "receipt_id": {"$ref": "#/$defs/digest"}, "signature": {"$ref": "#/$defs/signature"}
+      }
+    },
+    "trust": {
+      "type": "object", "additionalProperties": false,
+      "required": ["anchor", "key_id", "public_key_fingerprint"],
+      "properties": {
+        "anchor": {"const": "configured-trusted-key"},
+        "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"},
+        "public_key_fingerprint": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "bundle_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "time": {"type": "string", "format": "date-time"},
+    "zero_severities": {
+      "type": "object", "additionalProperties": false,
+      "required": ["critical", "high", "medium", "low"],
+      "properties": {"critical": {"const": 0}, "high": {"const": 0}, "medium": {"const": 0}, "low": {"const": 0}}
+    },
+    "false_authority": {
+      "type": "object", "additionalProperties": false,
+      "required": ["execution", "production", "route", "credentials", "winops", "external_systems"],
+      "properties": {"execution": {"const": false}, "production": {"const": false}, "route": {"const": false}, "credentials": {"const": false}, "winops": {"const": false}, "external_systems": {"const": false}}
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {"algorithm": {"const": "ed25519"}, "key_id": {"type": "string", "minLength": 1, "maxLength": 200}, "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]{86}$"}}
+    }
+  }
+}

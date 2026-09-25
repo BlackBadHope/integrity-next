@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-synapse-snapshot.schema.json",
+  "title": "Memory and Synapse immutable Seed snapshot v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol", "contract_version", "artifact_digest", "source_namespace", "action_log_alias", "catalog_protocol", "catalog_schema_version", "catalog_run_id", "cursor", "source_digest", "catalog_digest", "home_record_count", "health", "immutable", "production_authority", "route_authority", "authority_contract", "snapshot_id"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/memory-synapse-snapshot/v1"},
+    "contract_version": {"const": "1.9.0"},
+    "artifact_digest": {"$ref": "#/$defs/digest"},
+    "source_namespace": {"type": "string", "pattern": "^seed://project/[a-z0-9][a-z0-9._-]{0,127}$"},
+    "action_log_alias": {"const": "actionlog://global"},
+    "catalog_protocol": {"const": "integrity-guardian/seed-catalog/v1"},
+    "catalog_schema_version": {"const": 1},
+    "catalog_run_id": {"type": "string", "minLength": 1, "maxLength": 256},
+    "cursor": {
+      "type": "object", "additionalProperties": false, "required": ["event_count", "maximum_event_id"],
+      "properties": {"event_count": {"type": "integer", "minimum": 1}, "maximum_event_id": {"type": "integer", "minimum": 1}}
+    },
+    "source_digest": {"$ref": "#/$defs/digest"}, "catalog_digest": {"$ref": "#/$defs/digest"},
+    "home_record_count": {"const": 0}, "health": {"const": "ready"}, "immutable": {"const": true},
+    "production_authority": {"const": false}, "route_authority": {"const": false},
+    "authority_contract": {"$ref": "#/$defs/authority_contract"},
+    "snapshot_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "authority_contract": {
+      "type": "object", "additionalProperties": false,
+      "required": ["protocol", "provider_authority", "target_action_authority", "coordination", "legacy_projection"],
+      "properties": {
+        "protocol": {"const": "integrity-guardian/authority-separation/v1"},
+        "provider_authority": {
+          "type": "object", "additionalProperties": false,
+          "required": ["provider", "scope", "execution", "production", "route", "canonical_seed_append"],
+          "properties": {
+            "provider": {"const": "integrity-client-memory"},
+            "scope": {"const": "canonical-seed-memory"},
+            "execution": {"const": "absent"},
+            "production": {"const": "absent"},
+            "route": {"const": "absent"},
+            "canonical_seed_append": {"const": "one-use-only"}
+          }
+        },
+        "target_action_authority": {
+          "type": "object", "additionalProperties": false,
+          "required": ["decision", "authoritative_source", "provider_boundary_is_target_denial"],
+          "properties": {
+            "decision": {"const": "not-evaluated"},
+            "authoritative_source": {"const": "target-specific-action-guard"},
+            "provider_boundary_is_target_denial": {"const": false}
+          }
+        },
+        "coordination": {
+          "type": "object", "additionalProperties": false,
+          "required": ["scope", "status", "canonical_seed_append_affected", "external_target_actions_affected"],
+          "properties": {
+            "scope": {"const": "integrity-memory-route"},
+            "status": {"const": "not-evaluated"},
+            "canonical_seed_append_affected": {"const": false},
+            "external_target_actions_affected": {"const": false}
+          }
+        },
+        "legacy_projection": {
+          "type": "object", "additionalProperties": false,
+          "required": ["production_authority", "semantics", "deprecated", "replacement"],
+          "properties": {
+            "production_authority": {"const": false},
+            "semantics": {"const": "memory-provider-does-not-grant-production-authority"},
+            "deprecated": {"const": true},
+            "replacement": {"const": "authority_contract.provider_authority.production"}
+          }
+        }
+      }
+    }
+  }
+}

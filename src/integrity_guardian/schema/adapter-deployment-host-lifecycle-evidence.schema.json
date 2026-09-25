@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/adapter-deployment-host-lifecycle-evidence.schema.json",
+  "title": "Integrity ASDK deployment host lifecycle evidence v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_id", "protocol", "sdk_version", "manifest", "package", "host", "lifecycle", "actual_host", "synthetic", "content_free", "independence", "authority_boundary", "created_at", "signer_id", "signature"],
+  "properties": {
+    "evidence_id": { "type": "string", "pattern": "^adapter-deployment-host-lifecycle-evidence:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/adapter-deployment-host-lifecycle-evidence/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "manifest": { "$ref": "#/$defs/manifest" },
+    "package": { "$ref": "#/$defs/package" },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "platform_family", "architecture", "host_identity_digest", "platform_identity_digest", "environment_identity_digest"],
+      "properties": {
+        "role": { "enum": ["linux-primary", "windows-vm", "client-workstation"] },
+        "platform_family": { "enum": ["linux", "windows"] },
+        "architecture": { "$ref": "#/$defs/id" },
+        "host_identity_digest": { "$ref": "#/$defs/digest" },
+        "platform_identity_digest": { "$ref": "#/$defs/digest" },
+        "environment_identity_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["install", "upgrade", "revoke", "recovery"],
+      "properties": {
+        "install": { "$ref": "#/$defs/lifecycle_result" },
+        "upgrade": { "$ref": "#/$defs/lifecycle_result" },
+        "revoke": { "$ref": "#/$defs/lifecycle_result" },
+        "recovery": { "$ref": "#/$defs/lifecycle_result" }
+      }
+    },
+    "actual_host": { "const": true },
+    "synthetic": { "const": false },
+    "content_free": { "const": true },
+    "independence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject_signer_id", "assessor_signer_id", "same_identity"],
+      "properties": {
+        "subject_signer_id": { "$ref": "#/$defs/id" },
+        "assessor_signer_id": { "$ref": "#/$defs/id" },
+        "same_identity": { "const": false }
+      }
+    },
+    "authority_boundary": { "$ref": "#/$defs/authority" },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_id", "manifest_digest", "adapter_id", "adapter_artifact_digest"],
+      "properties": {
+        "manifest_id": { "type": "string", "pattern": "^manifest:[a-f0-9]{64}$" },
+        "manifest_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["distribution", "version", "artifact_digest"],
+      "properties": {
+        "distribution": { "const": "integrity-adapter-sdk" },
+        "version": { "const": "1.0.0" },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "lifecycle_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "receipt_digest"],
+      "properties": {
+        "result": { "enum": ["passed", "failed", "unknown"] },
+        "receipt_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issues_grants", "executes_actions", "memory_write", "production_authority"],
+      "properties": {
+        "issues_grants": { "const": false },
+        "executes_actions": { "const": false },
+        "memory_write": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

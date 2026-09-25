@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/perpetual-dialogue-transport-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "receipt_id", "dispatch_id", "conversation_id", "work_item_id",
+    "wake_id", "baton_id", "transport_turn_id", "driver_outcome",
+    "reconciled_after_unknown", "execution_started", "authority_inherited",
+    "production_authority", "signature"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/perpetual-dialogue-transport-receipt/v1"},
+    "receipt_id": {"$ref": "#/$defs/digest"},
+    "dispatch_id": {"$ref": "#/$defs/digest"},
+    "conversation_id": {"$ref": "#/$defs/id"},
+    "work_item_id": {"$ref": "#/$defs/id"},
+    "wake_id": {"$ref": "#/$defs/id"},
+    "baton_id": {"$ref": "#/$defs/id"},
+    "transport_turn_id": {"$ref": "#/$defs/id"},
+    "driver_outcome": {"enum": ["CREATED", "EXISTS"]},
+    "reconciled_after_unknown": {"type": "boolean"},
+    "execution_started": {"const": false},
+    "authority_inherited": {"const": false},
+    "production_authority": {"const": false},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/lts-release-index.schema.json",
+  "title": "Integrity LTS signed release index payload v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "artifact_path", "release", "source_revision", "created_at",
+    "matrix_digest", "matrix", "controls"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/lts-release-index/v1"},
+    "artifact_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["release_id", "version", "tag", "status"],
+      "properties": {
+        "release_id": {
+          "type": "string",
+          "pattern": "^release:lts:integrity:[0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.]+)?$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9]+(?:\\.[A-Za-z0-9]+)*)?$"
+        },
+        "tag": {
+          "type": "string",
+          "pattern": "^lts/integrity/v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[A-Za-z0-9.]+)?$"
+        },
+        "status": {"enum": ["candidate", "active"]}
+      }
+    },
+    "source_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "matrix_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "matrix": {"type": "object"},
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signed_release_manifest_required", "exact_artifact_inventory_required",
+        "production_authority", "memory_grants_authority", "automatic_remote_rollout"
+      ],
+      "properties": {
+        "signed_release_manifest_required": {"const": true},
+        "exact_artifact_inventory_required": {"const": true},
+        "production_authority": {"const": false},
+        "memory_grants_authority": {"const": false},
+        "automatic_remote_rollout": {"const": false}
+      }
+    }
+  }
+}

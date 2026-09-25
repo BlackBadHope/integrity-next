@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/seed-direct-link-verification.schema.json",
+  "title": "Independent direct Seed link verification v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol", "snapshot_id", "source_event_id", "direct_link_count", "verified_link_count", "links", "result", "home_record_count", "verification_receipt_id"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/seed-direct-link-verification/v1"}, "snapshot_id": {"$ref": "#/$defs/digest"},
+    "source_event_id": {"type": "integer", "minimum": 1}, "direct_link_count": {"type": "integer", "minimum": 0},
+    "verified_link_count": {"type": "integer", "minimum": 0},
+    "links": {"type": "array", "maxItems": 200, "items": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target_event_id", "source_event_digest", "target_event_digest", "methods", "result"],
+      "properties": {
+        "target_event_id": {"type": "integer", "minimum": 1}, "source_event_digest": {"$ref": "#/$defs/digest"},
+        "target_event_digest": {"$ref": "#/$defs/digest"}, "methods": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "result": {"enum": ["PASS", "FAIL"]}
+      }
+    }},
+    "result": {"enum": ["PASS", "FAIL"]}, "home_record_count": {"const": 0}, "verification_receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}
+}

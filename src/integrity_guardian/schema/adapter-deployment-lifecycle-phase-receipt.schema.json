@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/adapter-deployment-lifecycle-phase-receipt.schema.json",
+  "title": "Integrity ASDK deployment lifecycle composite phase receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_id", "protocol", "sdk_version", "binding", "precondition", "execution", "postcondition", "result", "actual_host", "synthetic", "content_free", "independence", "authority_boundary", "observed_at", "signer_id", "signature"],
+  "properties": {
+    "receipt_id": { "type": "string", "pattern": "^adapter-deployment-lifecycle-phase-receipt:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/adapter-deployment-lifecycle-phase-receipt/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "binding": { "$ref": "#/$defs/binding" },
+    "precondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "receipt_digest", "signer_id"],
+      "properties": {
+        "receipt_id": { "type": "string", "pattern": "^adapter-deployment-lifecycle-precondition-receipt:[a-f0-9]{64}$" },
+        "receipt_digest": { "$ref": "#/$defs/digest" },
+        "signer_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "receipt_digest", "attempt_id", "signer_id"],
+      "properties": {
+        "receipt_id": { "type": "string", "pattern": "^adapter-deployment-lifecycle-execution-receipt:[a-f0-9]{64}$" },
+        "receipt_digest": { "$ref": "#/$defs/digest" },
+        "attempt_id": { "type": "string", "pattern": "^adapter-deployment-lifecycle-attempt:[a-f0-9]{64}$" },
+        "signer_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "postcondition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "receipt_digest", "signer_id"],
+      "properties": {
+        "receipt_id": { "type": "string", "pattern": "^adapter-deployment-lifecycle-postcondition-receipt:[a-f0-9]{64}$" },
+        "receipt_digest": { "$ref": "#/$defs/digest" },
+        "signer_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "result": { "enum": ["passed", "failed", "unknown"] },
+    "actual_host": { "const": true },
+    "synthetic": { "const": false },
+    "content_free": { "const": true },
+    "independence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["precondition_observer_signer_id", "executor_signer_id", "observer_signer_id", "assessor_signer_id", "all_distinct"],
+      "properties": {
+        "precondition_observer_signer_id": { "$ref": "#/$defs/id" },
+        "executor_signer_id": { "$ref": "#/$defs/id" },
+        "observer_signer_id": { "$ref": "#/$defs/id" },
+        "assessor_signer_id": { "$ref": "#/$defs/id" },
+        "all_distinct": { "const": true }
+      }
+    },
+    "authority_boundary": { "$ref": "#/$defs/authority" },
+    "observed_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deployment", "phase", "manifest", "package", "guardian", "host", "transition", "predecessor"],
+      "properties": {
+        "deployment": { "$ref": "#/$defs/deployment" },
+        "phase": { "enum": ["install", "upgrade", "revoke", "recovery"] },
+        "manifest": { "$ref": "#/$defs/manifest" },
+        "package": { "$ref": "#/$defs/package" },
+        "guardian": { "$ref": "#/$defs/guardian" },
+        "host": { "$ref": "#/$defs/host" },
+        "transition": { "$ref": "#/$defs/transition" },
+        "predecessor": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/predecessor" }] }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["deployment_run_id", "challenge_digest"],
+      "properties": {
+        "deployment_run_id": { "type": "string", "pattern": "^adapter-deployment-run:[a-f0-9]{64}$" },
+        "challenge_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest_id", "manifest_digest", "adapter_id", "adapter_artifact_digest"],
+      "properties": {
+        "manifest_id": { "type": "string", "pattern": "^manifest:[a-f0-9]{64}$" },
+        "manifest_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["distribution", "version", "artifact_digest"],
+      "properties": {
+        "distribution": { "const": "integrity-adapter-sdk" },
+        "version": { "const": "1.0.0" },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "guardian": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["distribution", "version", "artifact_digest"],
+      "properties": {
+        "distribution": { "const": "integrity-guardian" },
+        "version": { "const": "6.0.0" },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "platform_family", "architecture", "host_identity_digest", "platform_identity_digest", "environment_identity_digest"],
+      "properties": {
+        "role": { "enum": ["linux-primary", "windows-vm", "client-workstation"] },
+        "platform_family": { "enum": ["linux", "windows"] },
+        "architecture": { "$ref": "#/$defs/id" },
+        "host_identity_digest": { "$ref": "#/$defs/digest" },
+        "platform_identity_digest": { "$ref": "#/$defs/digest" },
+        "environment_identity_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_state", "to_state"],
+      "properties": {
+        "from_state": { "$ref": "#/$defs/state" },
+        "to_state": { "$ref": "#/$defs/state" }
+      }
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "state_digest"],
+      "properties": {
+        "kind": { "enum": ["absent", "predecessor-installed", "candidate-installed", "candidate-revoked", "candidate-recovered-revocation-preserved"] },
+        "state_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "predecessor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["package", "guardian"],
+      "properties": {
+        "package": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["distribution", "version", "artifact_digest"],
+          "properties": {
+            "distribution": { "const": "integrity-adapter-sdk" },
+            "version": { "type": "string", "minLength": 1, "maxLength": 64, "not": { "const": "1.0.0" } },
+            "artifact_digest": { "$ref": "#/$defs/digest" }
+          }
+        },
+        "guardian": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["distribution", "version", "artifact_digest"],
+          "properties": {
+            "distribution": { "const": "integrity-guardian" },
+            "version": { "type": "string", "minLength": 1, "maxLength": 64, "not": { "const": "6.0.0" } },
+            "artifact_digest": { "$ref": "#/$defs/digest" }
+          }
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["issues_grants", "executes_actions", "memory_write", "production_authority"],
+      "properties": {
+        "issues_grants": { "const": false },
+        "executes_actions": { "const": false },
+        "memory_write": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/ledger-inclusion-proof.schema.json",
+  "title": "Guardian Ledger Inclusion Proof v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "tenant_id",
+    "ledger_id",
+    "tree_size",
+    "leaf_index",
+    "event_digest",
+    "root_digest",
+    "audit_path"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/ledger-inclusion-proof/v1"
+    },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "ledger_id": { "$ref": "#/$defs/id" },
+    "tree_size": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "leaf_index": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "event_digest": { "$ref": "#/$defs/digest" },
+    "root_digest": { "$ref": "#/$defs/digest" },
+    "audit_path": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["side", "digest"],
+        "properties": {
+          "side": {
+            "enum": ["left", "right"]
+          },
+          "digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    }
+  }
+}

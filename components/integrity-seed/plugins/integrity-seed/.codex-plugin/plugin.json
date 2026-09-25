@@ -1,0 +1,34 @@
+{
+  "name": "integrity-seed",
+  "version": "0.1.13",
+  "description": "Catalogs workspace memory and events into bounded, source-linked continuity for Codex agents.",
+  "author": {
+    "name": "Integrity Project"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "agents",
+    "memory",
+    "coordination",
+    "audit",
+    "handoff"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Integrity Seed",
+    "shortDescription": "Fast, source-linked memory for Codex agents",
+    "longDescription": "Catalogs decisions, observations, handoffs, and task events so each supported Codex task begins with fast, bounded access to relevant recorded memory. Local-first by default; secure multi-agent deployments use a separately operated authenticated server transport.",
+    "developerName": "Integrity Project",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Initialize Integrity memory for this workspace.",
+      "Explain which recorded events shaped this task.",
+      "Plan a secure multi-agent Integrity deployment."
+    ]
+  }
+}

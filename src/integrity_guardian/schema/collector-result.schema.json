@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/collector-result.schema.json",
+  "title": "Integrity collector result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "result_id",
+    "ok",
+    "profile",
+    "observed_at",
+    "facts",
+    "receipt"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/collector-result/v1" },
+    "result_id": { "type": "string", "pattern": "^collector-result:[a-f0-9]{64}$" },
+    "ok": { "const": true },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tenant_id",
+        "collector_id",
+        "node_id",
+        "executable_digest",
+        "credential_reference",
+        "profile_digest",
+        "profile_digest_custody"
+      ],
+      "properties": {
+        "tenant_id": { "$ref": "#/$defs/id" },
+        "collector_id": { "$ref": "#/$defs/id" },
+        "node_id": { "$ref": "#/$defs/id" },
+        "executable_digest": { "$ref": "#/$defs/digest" },
+        "credential_reference": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^credential:[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" }
+          ]
+        },
+        "profile_digest": { "$ref": "#/$defs/digest" },
+        "profile_digest_custody": {
+          "enum": ["verified-file", "in-memory-profile"]
+        }
+      }
+    },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "facts": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "subject_kind",
+          "identity",
+          "layer",
+          "state",
+          "content_digest",
+          "metadata"
+        ],
+        "properties": {
+          "subject_kind": {
+            "enum": [
+              "node", "host", "network-interface", "route", "file",
+              "directory", "package", "service", "policy", "behavior"
+            ]
+          },
+          "identity": { "type": "string", "minLength": 1, "maxLength": 4096 },
+          "layer": { "enum": ["L0", "L1", "L2", "L3"] },
+          "state": { "enum": ["present", "absent", "unknown", "sensor-gap"] },
+          "content_digest": { "$ref": "#/$defs/nullable_digest" },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": { "type": ["string", "integer", "boolean", "null"] }
+          }
+        }
+      }
+    },
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stdout_digest",
+        "fact_count",
+        "read_only_claim",
+        "shell_used",
+        "inherited_environment",
+        "credential_value_exposed",
+        "production_authority",
+        "production_mutated",
+        "mutation_evidence",
+        "profile_digest",
+        "profile_digest_custody"
+      ],
+      "properties": {
+        "stdout_digest": { "$ref": "#/$defs/digest" },
+        "fact_count": { "type": "integer", "minimum": 0, "maximum": 1000 },
+        "read_only_claim": { "const": true },
+        "shell_used": { "const": false },
+        "inherited_environment": { "const": false },
+        "credential_value_exposed": { "const": false },
+        "production_authority": { "const": false },
+        "production_mutated": { "const": "UNKNOWN" },
+        "mutation_evidence": { "const": "not_observed_by_guardian" },
+        "profile_digest": { "$ref": "#/$defs/digest" },
+        "profile_digest_custody": {
+          "enum": ["verified-file", "in-memory-profile"]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nullable_digest": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/digest" }
+      ]
+    }
+  }
+}

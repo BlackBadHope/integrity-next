@@ -1,0 +1,222 @@
+{
+  "candidate_id": "2026.09.17-active-inquiry.3",
+  "note": "All five directions are specified; implementation stages are not live acceptance. Tests use finite synthetic observations unless explicitly identified as native root integration.",
+  "protocol": "integrity-active-inquiry/coverage/v1",
+  "requirements": [
+    {
+      "id": "AI01",
+      "milestone": "W0",
+      "requirement": "Goal-directed finite inference",
+      "source": "core.py",
+      "stage": "implemented",
+      "test": "test_stop_at_goal_not_full_inventory"
+    },
+    {
+      "id": "AI02",
+      "milestone": "W0",
+      "requirement": "Existing native Synapse eligibility",
+      "source": "bridge.py",
+      "stage": "implemented-seam",
+      "test": "test_native_denial_removes_probe"
+    },
+    {
+      "id": "AI03",
+      "milestone": "W2",
+      "requirement": "Fixed predicate and compact response",
+      "source": "core.py",
+      "stage": "modeled",
+      "test": "test_bit_all_worlds"
+    },
+    {
+      "id": "AI04",
+      "milestone": "W2",
+      "requirement": "Aggregate resource reservations",
+      "source": "core.py",
+      "stage": "modeled",
+      "test": "test_reservations_precede_result"
+    },
+    {
+      "id": "AI05",
+      "milestone": "W0",
+      "requirement": "Limited observability and unknown worlds",
+      "source": "core.py",
+      "stage": "implemented",
+      "test": "test_health_only_is_not_version"
+    },
+    {
+      "id": "AI06",
+      "milestone": "W1",
+      "requirement": "Exact goal/context/request/operation/response binding",
+      "source": "core.py",
+      "stage": "synthetic-lifecycle",
+      "test": "test_every_binding_field_and_extra_key_rejected"
+    },
+    {
+      "id": "AI07",
+      "milestone": "W0",
+      "requirement": "ACK/readiness/completion are not result evidence",
+      "source": "core.py",
+      "stage": "implemented",
+      "test": "test_ack_ready_and_completion_are_not_facts"
+    },
+    {
+      "id": "AI08",
+      "milestone": "W1",
+      "requirement": "Unknown no-repeat and exact reconciliation identity",
+      "source": "core.py",
+      "stage": "synthetic-lifecycle",
+      "test": "test_unknown_capsule_keeps_operation_identity"
+    },
+    {
+      "id": "AI09",
+      "milestone": "W3",
+      "requirement": "Inert missing-observation proposal",
+      "source": "core.py",
+      "stage": "proposal-api",
+      "test": "test_observability_request_inert"
+    },
+    {
+      "id": "AI10",
+      "milestone": "W3",
+      "requirement": "Attributed narrow human report",
+      "source": "core.py",
+      "stage": "proposal-api",
+      "test": "test_human_report_keeps_attribution_and_does_not_narrow"
+    },
+    {
+      "id": "AI11",
+      "milestone": "W3",
+      "requirement": "No human fallback for denied task",
+      "source": "core.py",
+      "stage": "implemented",
+      "test": "test_denial_cannot_be_delegated_to_human"
+    },
+    {
+      "id": "AI12",
+      "milestone": "W4",
+      "requirement": "Conditional recipe and expiry",
+      "source": "core.py",
+      "stage": "candidate-api",
+      "test": "test_recipe_stale_environment_and_expiry"
+    },
+    {
+      "id": "AI13",
+      "milestone": "W4",
+      "requirement": "Cross-agent recipe does not transfer authority",
+      "source": "core.py",
+      "stage": "candidate-api",
+      "test": "test_recipe_transfer_is_only_candidate_compatibility"
+    },
+    {
+      "id": "AI14",
+      "milestone": "W0",
+      "requirement": "Minimal non-authoritative context capsule",
+      "source": "core.py",
+      "stage": "implemented",
+      "test": "test_capsule_bounded_and_unknown_preserved"
+    },
+    {
+      "id": "AI15",
+      "milestone": "W0",
+      "requirement": "Closed input and bounded parsing",
+      "source": "core.py",
+      "stage": "implemented",
+      "test": "test_unknown_and_missing_fields"
+    },
+    {
+      "id": "AI16",
+      "milestone": "W0",
+      "requirement": "Safety priority before utility",
+      "source": "core.py",
+      "stage": "implemented",
+      "test": "test_native_gate_overrides_declared_safety"
+    },
+    {
+      "id": "AI17",
+      "milestone": "W1",
+      "requirement": "Real witness cannot be replaced by modeled result",
+      "source": "core.py",
+      "stage": "implemented-boundary",
+      "test": "test_synthetic_does_not_meet_witness_requirement"
+    },
+    {
+      "id": "AI18",
+      "milestone": "W1",
+      "requirement": "Real SDK dispatch and durable crash recovery",
+      "source": null,
+      "stage": "not-implemented",
+      "test": null
+    },
+    {
+      "id": "AI19",
+      "milestone": "W2",
+      "requirement": "Real I/O and cumulative disclosure enforcement",
+      "source": null,
+      "stage": "not-implemented",
+      "test": null
+    },
+    {
+      "id": "AI20",
+      "milestone": "W4",
+      "requirement": "Live existing Toolz feedback and agent handoff",
+      "source": null,
+      "stage": "not-implemented",
+      "test": null
+    },
+    {
+      "id": "AI21",
+      "milestone": "W5",
+      "requirement": "Learning unfamiliar interface contracts",
+      "source": null,
+      "stage": "not-implemented",
+      "test": null
+    },
+    {
+      "id": "AI22",
+      "milestone": "W6",
+      "requirement": "Paired fixed/adaptive target benchmark and release admission",
+      "source": null,
+      "stage": "not-performed",
+      "test": null
+    }
+  ],
+  "rc2": {
+    "version": "0.1.0rc2",
+    "requirements": [
+      {
+        "id": "AI-RC2-01",
+        "requirement": "native selection is bound to the simulated attempt",
+        "implementation": "begin_from_synapse",
+        "tests": "tests/test_continuation.py",
+        "live_sdk_dispatch": false
+      },
+      {
+        "id": "AI-RC2-02",
+        "requirement": "exact-source additive integration and contract drift diagnostics",
+        "implementation": "tools/merge_preflight.py",
+        "tests": "tests/test_merge_preflight.py",
+        "general_merge_or_authority": false
+      }
+    ],
+    "handoff": "MERGE-HANDOFF.md"
+  },
+  "source_successor_3": {
+    "runtime_version_unchanged": "0.1.0rc2",
+    "requirements": [
+      {
+        "id": "AI-S3-01",
+        "requirement": "portable directory topology and complete tree identity",
+        "implementation": "tools/merge_preflight.py",
+        "tests": "tests/test_merge_result.py",
+        "native_platform_certification": false
+      },
+      {
+        "id": "AI-S3-02",
+        "requirement": "exact prospective normal/squash result preserves target and candidate",
+        "implementation": "verify_result",
+        "tests": "tests/test_merge_result.py",
+        "merge_or_release_authority": false
+      }
+    ]
+  }
+}

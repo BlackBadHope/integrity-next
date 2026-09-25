@@ -1,0 +1,69 @@
+{
+  "protocol": "integrity-resource-advisor/source-inventory/v1",
+  "candidate_id": "2026.09.19-resource-advisor.7",
+  "base_commit": "d6b57bed832401690628a03c78e9552c03dabc68",
+  "component_version": "0.1.0rc6",
+  "production_authority": false,
+  "files": [
+    {
+      "path": "components/integrity-resource-advisor/.gitattributes",
+      "bytes": 14,
+      "sha256": "a79691a93b46e49ce460c26ef22afcc03d6eca1e63bf2edbc20e96159510f6c9"
+    },
+    {
+      "path": "components/integrity-resource-advisor/LICENSE",
+      "bytes": 11359,
+      "sha256": "8c6db340475136df3c1201d458fa5755698eace76e510471ecc9d857d6083dac"
+    },
+    {
+      "path": "components/integrity-resource-advisor/README.md",
+      "bytes": 8242,
+      "sha256": "3236618314d9678653930fa0da6c49cc3b031180042ded6d74f9a52d4a261ed0"
+    },
+    {
+      "path": "components/integrity-resource-advisor/pyproject.toml",
+      "bytes": 739,
+      "sha256": "3d802fdf5e3e50b635d60fa0ddd4f64a4fb409200389d380d35b5bee03df8910"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/__init__.py",
+      "bytes": 768,
+      "sha256": "b6bf12823f8941cfe8311912f8ed5d0f4bcb53e61a50d340226429d45ab3649a"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/__main__.py",
+      "bytes": 4269,
+      "sha256": "1b8a8adac953af6100b8372cc5111f104b7823fb850127be7d5f4167e7f1f487"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/app_server_snapshot.py",
+      "bytes": 11060,
+      "sha256": "510666336a937d39b39aeb14917f6f0f4ee0fef4176fe75d6cf474d7b700192d"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/codex.py",
+      "bytes": 25956,
+      "sha256": "484c5dff2322c1a71249e85fcf4c2bf31010373639ef1964435959d836406237"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/core.py",
+      "bytes": 20315,
+      "sha256": "45e6cf7b3118846a10aca22889089c6139284bb088cc068833ed762d1392c6bc"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/metering.py",
+      "bytes": 10005,
+      "sha256": "ad242d9e79e390ef8172fab30e16871aaf1e3e6fd11945572ff5ec672198671d"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/native.py",
+      "bytes": 4796,
+      "sha256": "37ea2115860b3e9f589188b7f6a98f368b5a86b128e0b400d5e4076da8ec48cb"
+    },
+    {
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor/rollout_usage.py",
+      "bytes": 14240,
+      "sha256": "e7a7d18b003400d0f640f1665c92cef4fcbe4672c9a6292115d074a905178c21"
+    }
+  ]
+}

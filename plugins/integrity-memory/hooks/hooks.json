@@ -1,0 +1,96 @@
+{
+  "description": "Mandatory client Integrity admission and closure enforcement.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" SessionStart",
+            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event SessionStart",
+            "timeout": 45,
+            "statusMessage": "Integrity capability and snapshot admission"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" UserPromptSubmit",
+            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event UserPromptSubmit",
+            "timeout": 45,
+            "statusMessage": "Integrity Mind Graph and architecture admission"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" PreToolUse",
+            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event PreToolUse",
+            "timeout": 10,
+            "statusMessage": "Integrity admission and mutation gate"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" PostToolUse",
+            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event PostToolUse",
+            "timeout": 60,
+            "statusMessage": "Integrity outcome and closure witness"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" SubagentStart",
+            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event SubagentStart",
+            "timeout": 45,
+            "statusMessage": "Integrity subagent architecture admission"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" Stop",
+            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event Stop",
+            "timeout": 60,
+            "statusMessage": "Integrity admission and closure check"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" SubagentStop",
+            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event SubagentStop",
+            "timeout": 60,
+            "statusMessage": "Integrity subagent closure check"
+          }
+        ]
+      }
+    ]
+  }
+}

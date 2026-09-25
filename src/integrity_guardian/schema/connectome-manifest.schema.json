@@ -1,0 +1,297 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/connectome-manifest.schema.json",
+  "title": "Integrity Connectome Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "manifest_id",
+    "tenant_id",
+    "nodes",
+    "capabilities",
+    "compiler_boundary"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/connectome-manifest/v1"
+    },
+    "manifest_id": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "capabilities": {
+      "type": "array",
+      "maxItems": 25000,
+      "items": { "$ref": "#/$defs/capability" }
+    },
+    "compiler_boundary": { "$ref": "#/$defs/offline_boundary" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "primitive": {
+      "oneOf": [
+        { "type": "string", "maxLength": 4096 },
+        { "type": "integer" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_key",
+        "kind",
+        "ref",
+        "label",
+        "truth_status",
+        "attributes"
+      ],
+      "properties": {
+        "node_key": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": [
+            "current_state",
+            "intent",
+            "evidence",
+            "artifact",
+            "decision",
+            "action",
+            "verification",
+            "rollback"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        },
+        "truth_status": {
+          "enum": [
+            "reported",
+            "observed",
+            "verified",
+            "derived",
+            "proposed",
+            "unknown",
+            "stale"
+          ]
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/primitive" }
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fact", "operator", "value"],
+      "properties": {
+        "fact": { "$ref": "#/$defs/id" },
+        "operator": {
+          "enum": ["equals", "not_equals", "exists", "absent"]
+        },
+        "value": { "$ref": "#/$defs/primitive" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["class", "source_id", "source_digest", "explanation"],
+      "properties": {
+        "class": {
+          "enum": ["DECLARED", "OBSERVED", "DERIVED", "LEARNED", "PROPOSED"]
+        },
+        "source_id": { "$ref": "#/$defs/id" },
+        "source_digest": { "$ref": "#/$defs/digest" },
+        "explanation": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4096
+        }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "capability_id",
+        "from_node_key",
+        "to_node_key",
+        "subsystem",
+        "transition_kind",
+        "authority",
+        "evidence_requirements",
+        "preconditions",
+        "postconditions",
+        "verifier",
+        "reversibility",
+        "blast_radius",
+        "cost",
+        "provenance"
+      ],
+      "properties": {
+        "capability_id": { "$ref": "#/$defs/id" },
+        "from_node_key": { "$ref": "#/$defs/id" },
+        "to_node_key": { "$ref": "#/$defs/id" },
+        "subsystem": { "$ref": "#/$defs/id" },
+        "transition_kind": {
+          "enum": [
+            "observe",
+            "analyze",
+            "plan",
+            "disposable_mutation",
+            "production_mutation",
+            "verify",
+            "rollback"
+          ]
+        },
+        "authority": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "required_authority_ids",
+            "production_authority"
+          ],
+          "properties": {
+            "required_authority_ids": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": { "$ref": "#/$defs/id" }
+            },
+            "production_authority": { "type": "boolean" }
+          }
+        },
+        "evidence_requirements": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["evidence_id", "max_age_seconds"],
+            "properties": {
+              "evidence_id": { "$ref": "#/$defs/id" },
+              "max_age_seconds": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 31536000
+              }
+            }
+          }
+        },
+        "preconditions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/condition" }
+        },
+        "postconditions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/condition" }
+        },
+        "verifier": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["verifier_id", "required"],
+          "properties": {
+            "verifier_id": {
+              "oneOf": [
+                { "$ref": "#/$defs/id" },
+                { "type": "null" }
+              ]
+            },
+            "required": { "type": "boolean" }
+          }
+        },
+        "reversibility": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mode", "rollback_capability_id"],
+          "properties": {
+            "mode": {
+              "enum": [
+                "not_applicable",
+                "automatic",
+                "manual",
+                "irreversible"
+              ]
+            },
+            "rollback_capability_id": {
+              "oneOf": [
+                { "$ref": "#/$defs/id" },
+                { "type": "null" }
+              ]
+            }
+          }
+        },
+        "blast_radius": {
+          "enum": ["none", "process", "host", "tenant", "network"]
+        },
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "latency_ms",
+            "context_bytes",
+            "model_calls",
+            "tool_calls",
+            "resource_units"
+          ],
+          "properties": {
+            "latency_ms": { "type": "integer", "minimum": 0 },
+            "context_bytes": { "type": "integer", "minimum": 0 },
+            "model_calls": { "type": "integer", "minimum": 0 },
+            "tool_calls": { "type": "integer", "minimum": 0 },
+            "resource_units": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "provenance": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/provenance" }
+        }
+      }
+    },
+    "offline_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credentials",
+        "execution",
+        "model_sdk",
+        "network",
+        "production_authority"
+      ],
+      "properties": {
+        "credentials": { "const": false },
+        "execution": { "const": false },
+        "model_sdk": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false }
+      }
+    }
+  }
+}

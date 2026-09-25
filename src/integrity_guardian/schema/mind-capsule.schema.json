@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/mind-capsule.schema.json",
+  "title": "Integrity synaptic capsule v1",
+  "description": "Bounded working view: here, typed one-hop links, allowed moves. Not the graph and not authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "door",
+    "links_status",
+    "budget",
+    "projection",
+    "here",
+    "links",
+    "moves",
+    "learned_hints",
+    "omitted_link_count",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/mind-capsule/v1" },
+    "door": {
+      "enum": ["session-missing", "undeclared", "session-expired", "admitted"]
+    },
+    "links_status": { "enum": ["isolated", "linked"] },
+    "budget": { "enum": ["complete", "truncated"] },
+    "projection": { "enum": ["current", "stale"] },
+    "here": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "status", "agent_id", "agent_product"],
+      "properties": {
+        "task_id": { "type": "string", "maxLength": 160 },
+        "status": { "type": "string", "maxLength": 32 },
+        "agent_id": { "type": "string", "maxLength": 200 },
+        "agent_product": { "type": "string", "maxLength": 64 }
+      }
+    },
+    "links": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["class", "type", "target", "provenance"],
+        "properties": {
+          "class": { "enum": ["direct", "supported", "contextual"] },
+          "type": { "type": "string", "maxLength": 64 },
+          "target": { "type": "string", "maxLength": 200 },
+          "provenance": { "enum": ["declared"] }
+        }
+      }
+    },
+    "moves": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "provenance", "reason"],
+        "properties": {
+          "kind": {
+            "enum": [
+              "refuse-undeclared",
+              "renew-admission",
+              "resume",
+              "follow-dependency",
+              "wait-or-resume-after",
+              "close-or-reconcile"
+            ]
+          },
+          "provenance": { "enum": ["declared", "learned"] },
+          "reason": { "type": "string", "maxLength": 200 }
+        }
+      }
+    },
+    "learned_hints": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "type": "string", "maxLength": 280 }
+    },
+    "omitted_link_count": { "type": "integer", "minimum": 0 },
+    "production_authority": { "const": false }
+  }
+}

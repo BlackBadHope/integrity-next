@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/native-trust-genesis.schema.json",
+  "title": "Integrity native trust genesis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "instance_id", "profile", "backend", "created_at",
+    "root", "operational_keys", "genesis_id"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/native-trust-genesis/v1" },
+    "instance_id": { "type": "string", "pattern": "^instance:[a-z0-9][a-z0-9._-]{0,127}$" },
+    "profile": { "enum": ["personal-native", "managed-external"] },
+    "backend": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "root": { "$ref": "#/$defs/key" },
+    "operational_keys": {
+      "type": "array", "minItems": 5, "maxItems": 16,
+      "items": { "$ref": "#/$defs/certificate" }
+    },
+    "genesis_id": { "$ref": "#/$defs/digest" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "key": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "role", "algorithm", "public_key", "fingerprint"],
+      "properties": {
+        "key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "role": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,63}$" },
+        "algorithm": { "const": "ed25519" },
+        "public_key": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$" },
+        "fingerprint": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "certificate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["protocol", "issuer_key_id", "subject", "created_at", "certificate_id", "signature"],
+      "properties": {
+        "protocol": { "const": "integrity-guardian/native-key-certificate/v1" },
+        "issuer_key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "subject": { "$ref": "#/$defs/key" },
+        "created_at": { "type": "string", "format": "date-time" },
+        "certificate_id": { "$ref": "#/$defs/digest" },
+        "signature": {
+          "type": "object", "additionalProperties": false,
+          "required": ["algorithm", "key_id", "value"],
+          "properties": {
+            "algorithm": { "const": "ed25519" },
+            "key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+            "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+          }
+        }
+      }
+    }
+  }
+}

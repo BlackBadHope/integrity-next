@@ -1,0 +1,10 @@
+{
+  "protocol": "integrity-active-inquiry/integration-profile/v1",
+  "base_commit": "238a47117409b1b490b6115329fb41c6b6abfbce",
+  "contract_blobs": {
+    "pyproject.toml": "82911603e3b2165b3913d7f419698943ab1fb130",
+    "src/integrity_guardian/synapse.py": "9dc5b44f9a016f13185631ffe43067cf1b692825",
+    "src/integrity_guardian/schemas.py": "f860d4b3eee1a3206779d4efd3bb9b762ca699b4",
+    "src/integrity_guardian/schema/adapter-capability-manifest.schema.json": "1db7dd75b018dc460eba701d3dd0c774fda013de"
+  }
+}

@@ -1,0 +1,41 @@
+name: Public surface safety
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install declared Linux containment prerequisite
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes bubblewrap
+      - name: Verify manifest closure and privacy boundary
+        run: python .github/scripts/public_surface_check.py --root .
+      - name: Build and install the public wheel
+        run: |
+          python -m pip wheel . --no-deps --wheel-dir dist
+          python -m pip install "pytest>=8.2,<10" dist/integrity_guardian-*.whl
+      - name: Verify installed public profile
+        run: |
+          guardian version --all
+          guardian capabilities
+          guardian lts-contracts
+      - name: Run the public functional suite
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -B -m pytest -q -p no:cacheprovider

@@ -1,0 +1,90 @@
+{
+  "protocol": "integrity-codex-persistent-source-candidate/v1",
+  "version": "0.1.0rc3",
+  "status": "offline-source-checked-windows",
+  "enabled_by_default": false,
+  "live_binding": false,
+  "launch_capability": false,
+  "production_authority": false,
+  "canonical_completion_receipt": null,
+  "integrity_base": "d6b57bed832401690628a03c78e9552c03dabc68",
+  "codex_reference": "787823cf957709b314276646024ec54e1761c089",
+  "change_intent": 213,
+  "manifest_self_binding": "Git commit; self excluded from payload digests",
+  "files": {
+    "LICENSE": "8c6db340475136df3c1201d458fa5755698eace76e510471ecc9d857d6083dac",
+    "pyproject.toml": "38604ee226d989b0ddb427a5ca400afec202047bc178a7a978dc4cfc31258acf",
+    "README.md": "e460d93545005c6e9cd8058d3eb2db6206f1892efa17eff5998674ae51052556",
+    "src/integrity_codex_persistent/__init__.py": "ea1c7b6fb7703a6ac780ab7bfea27712b3ee136fa868ec8b4d70577988806425",
+    "src/integrity_codex_persistent/connection.py": "eca2d292e0dc699ffc336a2d3a93f519fc637659d8bb6032b16c8c51299eadcd",
+    "src/integrity_codex_persistent/policy.py": "a60cd4eba48aa92f510eb9c334fa7fd161437367ac6d6c7354a1582135f1f626",
+    "src/integrity_codex_persistent/supervisor.py": "9eaca61972e1e5f83f32e84492129201bb40cc12cc8c7dac44e79cd5eca8e1ad"
+  },
+  "validation": {
+    "python": "3.12.10",
+    "source_tests": 97,
+    "installed_tests": "not-run",
+    "model_calls": 0,
+    "live_codex": "not-run",
+    "full_monorepo": "not-run",
+    "hosted_ci": "not-observed-for-rc3",
+    "independent_acceptance": "not-claimed",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "root_entrypoint_tests": 1,
+    "wheel_membership": "not-repeated-for-portability-only-fix",
+    "installed_payload": "not-repeated-for-portability-only-fix",
+    "source_result": "97 passed",
+    "root_entrypoint_result": "1 passed"
+  },
+  "predecessor_commit": "d84cc3b91ff3a6c12bceae7e1d533a93998ec61b",
+  "mitigation_intent_comment": 5711681906,
+  "history": [
+    {
+      "version": "0.1.0rc2",
+      "commit": "d84cc3b91ff3a6c12bceae7e1d533a93998ec61b",
+      "validation": {
+        "python": "3.13.5",
+        "source_tests": 97,
+        "installed_tests": 97,
+        "model_calls": 0,
+        "live_codex": "not-run",
+        "full_monorepo": "not-run",
+        "hosted_ci": "not-observed-for-rc2",
+        "independent_acceptance": "not-claimed",
+        "source_date_epoch": 1789264137,
+        "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+        "build_backend": "setuptools 82.0.1",
+        "root_entrypoint_tests": 1,
+        "predecessor_regression_tests": 9,
+        "predecessor_failed_assertions": 26,
+        "predecessor_regression_errors": 0,
+        "wheel_membership": "exact",
+        "wheel_record": "all non-self hashes verified",
+        "installed_payload": "exact bytes and membership before and after tests",
+        "tampered_installed_payload": "rejected before tests",
+        "clean_wheel_sha256": "aede1b81893798326b96757cfffe42531392eb6f718cd09e1783b42fb9d2e875",
+        "reproducible_clean_builds": 2
+      }
+    },
+    {
+      "version": "0.1.0rc1",
+      "commit": "f4f468b942cfbbadf31d4a28acb5f46f897cf8fa",
+      "validation": {
+        "python": "3.13.5",
+        "platform": "Linux x86_64 disposable container",
+        "source_tests": 58,
+        "model_calls": 0,
+        "live_codex": "not-run",
+        "full_monorepo": "not-run",
+        "hosted_ci": "not-observed",
+        "independent_acceptance": "not-claimed",
+        "installed_tests": 58,
+        "wheel_membership": "exact",
+        "wheel_record": "all non-self hashes verified",
+        "source_date_epoch": 1789264137,
+        "clean_wheel_sha256": "e68bb4e75c572e8ec0358ccf72f36776fc06ce44773328e870114363488dc33a",
+        "reproducible_clean_builds": 2
+      }
+    }
+  ]
+}

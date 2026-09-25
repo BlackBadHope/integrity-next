@@ -1,0 +1,350 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-action-trace-receipt.schema.json",
+  "title": "Integrity Uroboros Toolzs Action Trace Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "trace_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "tool_context",
+    "observer",
+    "projection_target",
+    "started_at",
+    "completed_at",
+    "outcome",
+    "coverage_digest",
+    "initial_state",
+    "final_state",
+    "steps",
+    "privacy_boundary",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-action-trace-receipt/v1"
+    },
+    "trace_id": {
+      "type": "string",
+      "pattern": "^toolz-action-trace:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "tool_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_digest",
+        "environment_profile_id",
+        "environment_fingerprint_digest",
+        "ui_context_digest"
+      ],
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "environment_profile_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "environment_fingerprint_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "ui_context_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observer_id",
+        "observer_artifact_digest"
+      ],
+      "properties": {
+        "observer_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "observer_artifact_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "projection_target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_epoch",
+        "source_artifact_digest",
+        "relation_type"
+      ],
+      "properties": {
+        "source_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "source_epoch": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "source_artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "relation_type": {
+          "const": "relation-type:synthetic-toolz-transition"
+        }
+      }
+    },
+    "started_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "completed_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "outcome": {
+      "const": "observed-success"
+    },
+    "coverage_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "initial_state": {
+      "$ref": "#/$defs/state"
+    },
+    "final_state": {
+      "$ref": "#/$defs/state"
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "items": {
+        "$ref": "#/$defs/step"
+      }
+    },
+    "privacy_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cookies",
+        "credentials",
+        "dom",
+        "form_values",
+        "free_text",
+        "screenshots",
+        "selectors",
+        "urls"
+      ],
+      "properties": {
+        "cookies": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "dom": {
+          "const": false
+        },
+        "form_values": {
+          "const": false
+        },
+        "free_text": {
+          "const": false
+        },
+        "screenshots": {
+          "const": false
+        },
+        "selectors": {
+          "const": false
+        },
+        "urls": {
+          "const": false
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "browser_control",
+        "credentials",
+        "execution",
+        "global_publish",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "storage",
+        "tool_invocation"
+      ],
+      "properties": {
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution": {
+          "const": false
+        },
+        "global_publish": {
+          "const": false
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "storage": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_digest",
+        "zone_id"
+      ],
+      "properties": {
+        "state_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "zone_id": {
+          "$ref": "#/$defs/synthetic_id"
+        }
+      }
+    },
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sequence",
+        "action_class",
+        "operation_digest",
+        "before_state_digest",
+        "after_state_digest",
+        "before_zone_id",
+        "after_zone_id",
+        "observed_at",
+        "outcome",
+        "evidence_digest",
+        "confidence_ppm"
+      ],
+      "properties": {
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 31
+        },
+        "action_class": {
+          "enum": [
+            "observe",
+            "navigate",
+            "activate",
+            "input",
+            "submit",
+            "wait",
+            "external-call"
+          ]
+        },
+        "operation_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "before_state_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "after_state_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "before_zone_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "after_zone_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "outcome": {
+          "const": "observed-success"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "confidence_ppm": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000000
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

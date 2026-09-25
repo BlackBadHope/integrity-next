@@ -1,0 +1,14 @@
+include LICENSE
+include MANIFEST.in
+include NOTICE
+include PACKAGE_ALLOWLIST.txt
+include README.md
+include pyproject.toml
+include requirements/ci.lock.txt
+recursive-include src/integrity_adapter_sdk *.json *.py py.typed
+recursive-include tests *.py
+recursive-include tools *.py
+global-exclude .pytest_cache
+global-exclude __pycache__
+global-exclude *.egg-info
+global-exclude *.py[cod]

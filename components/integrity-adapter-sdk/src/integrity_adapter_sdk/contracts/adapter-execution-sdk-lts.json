@@ -1,0 +1,53 @@
+{
+  "activation_rule": "first-signed-non-prerelease-release",
+  "component": "integrity-adapter-sdk",
+  "distribution": "integrity-adapter-sdk",
+  "facade_modules": [
+    "adapter_conformance",
+    "adapter_portability",
+    "adapter_runtime",
+    "adapter_sdk",
+    "browser_adapter",
+    "browser_page_observer",
+    "host_command_adapter",
+    "network_adapter",
+    "network_endpoint_observer",
+    "webdriver_transport",
+    "windows_bounded_process_adapter",
+    "workspace_patch_adapter"
+  ],
+  "forbidden_wheel_prefixes": [
+    "integrity_guardian/"
+  ],
+  "guardian_dependency": "integrity-guardian==6.0.0",
+  "implementation_boundary": "transitional-guardian-facade",
+  "implementation_extraction": "later-major-boundary",
+  "invariants": [
+    "a13-authority-is-verified-not-issued",
+    "a14-outcome-observer-remains-independent",
+    "dispatch-envelope-has-durable-global-consumption",
+    "guardian-facade-origin-is-byte-bound",
+    "guardian-seed-synapse-and-custody-are-not-reimplemented",
+    "memory-grants-authority-is-false",
+    "network-peer-is-manifest-bound-and-challenge-authenticated",
+    "package-owns-no-integrity-guardian-paths",
+    "production-authority-is-absent",
+    "readonly-operation-manifest-v1-grammar-is-immutable",
+    "signed-document-version-remains-1.0.0a2",
+    "terminal-success-reverifies-canonical-a14-observation",
+    "unknown-outcome-is-never-automatic-retry",
+    "workspace-receipts-require-exact-run-context"
+  ],
+  "memory_grants_authority": false,
+  "owned_import_roots": [
+    "integrity_adapter_sdk"
+  ],
+  "package_version": "2.0.0rc1",
+  "production_authority": false,
+  "protocol": "integrity-adapter-sdk/lts-support-contract/v1",
+  "signed_document_version": "1.0.0a2",
+  "stable_activated": false,
+  "status": "lts-candidate",
+  "support_window_months": 24,
+  "track_id": "adapter-execution-sdk-lts"
+}

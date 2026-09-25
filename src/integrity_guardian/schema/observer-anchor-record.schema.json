@@ -1,0 +1,144 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/observer-anchor-record.schema.json",
+  "title": "Integrity Independent Observer External Anchor Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "anchor_id",
+    "store_id",
+    "sequence",
+    "previous_anchor_digest",
+    "subject_kind",
+    "subject_digest",
+    "subject",
+    "created_at",
+    "storage_boundary"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/observer-anchor-record/v1"
+    },
+    "anchor_id": {
+      "type": "string",
+      "pattern": "^observer-anchor:[a-f0-9]{64}$"
+    },
+    "store_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "previous_anchor_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "subject_kind": {
+      "enum": [
+        "toolz-route-store-cursor",
+        "toolz-authority-checkpoint",
+        "toolz-action-outcome-observation"
+      ]
+    },
+    "subject_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "subject": {
+      "type": "object"
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "storage_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "availability_recovery",
+        "crash_atomic_replace",
+        "local_storage",
+        "network",
+        "production_authority",
+        "same_failure_domain_rollback_protection",
+        "subject_store_write",
+        "trusted_latest_without_external_pin"
+      ],
+      "properties": {
+        "availability_recovery": {
+          "const": true
+        },
+        "crash_atomic_replace": {
+          "const": true
+        },
+        "local_storage": {
+          "const": true
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "same_failure_domain_rollback_protection": {
+          "const": false
+        },
+        "subject_store_write": {
+          "const": false
+        },
+        "trusted_latest_without_external_pin": {
+          "const": false
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "sequence": {
+            "const": 0
+          }
+        },
+        "required": [
+          "sequence"
+        ]
+      },
+      "then": {
+        "properties": {
+          "previous_anchor_digest": {
+            "type": "null"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "previous_anchor_digest": {
+            "$ref": "#/$defs/digest"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

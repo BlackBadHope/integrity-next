@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/action-log-append-attempt-receipt.schema.json",
+  "title": "Integrity Action Log append attempt receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "attempt_id",
+    "event_uid",
+    "request_sha256",
+    "request_sent",
+    "response_received",
+    "state",
+    "server_outcome",
+    "event_id",
+    "reconciliation",
+    "first_request_allowed",
+    "automatic_retry_allowed",
+    "permitted_next_step",
+    "privacy_boundary",
+    "authority_boundary"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/action-log-append-attempt-receipt/v1"},
+    "attempt_id": {"type": "string", "pattern": "^action-log-append-attempt:[a-f0-9]{64}$"},
+    "event_uid": {"$ref": "#/$defs/event_uid"},
+    "request_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "request_sent": {"type": "boolean"},
+    "response_received": {"type": "boolean"},
+    "state": {
+      "enum": [
+        "not-started",
+        "confirmed-created",
+        "confirmed-duplicate",
+        "unknown-outcome",
+        "reconciled-created",
+        "reconciled-absent"
+      ]
+    },
+    "server_outcome": {
+      "oneOf": [
+        {"type": "null"},
+        {"enum": ["created", "duplicate"]}
+      ]
+    },
+    "event_id": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+      ]
+    },
+    "reconciliation": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "protocol",
+            "reconciliation_id",
+            "source_namespace",
+            "action_log_alias",
+            "event_uid",
+            "request_sha256",
+            "observed_at",
+            "match_count",
+            "event_id",
+            "content_read",
+            "event_body_emitted",
+            "unique_index_expected",
+            "production_authority"
+          ],
+          "properties": {
+            "protocol": {"const": "integrity-guardian/action-log-event-uid-reconciliation/v1"},
+            "reconciliation_id": {"type": "string", "pattern": "^event-uid-reconciliation:[a-f0-9]{64}$"},
+            "source_namespace": {"type": "string", "pattern": "^seed://project/[a-z0-9][a-z0-9._-]{0,127}$"},
+            "action_log_alias": {"const": "actionlog://global"},
+            "event_uid": {"$ref": "#/$defs/event_uid"},
+            "request_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+            "observed_at": {"type": "string", "format": "date-time"},
+            "match_count": {"type": "integer", "minimum": 0, "maximum": 1},
+            "event_id": {
+              "oneOf": [
+                {"type": "null"},
+                {"type": "integer", "minimum": 1, "maximum": 9223372036854775807}
+              ]
+            },
+            "content_read": {"const": false},
+            "event_body_emitted": {"const": false},
+            "unique_index_expected": {"const": true},
+            "production_authority": {"const": false}
+          }
+        }
+      ]
+    },
+    "first_request_allowed": {"type": "boolean"},
+    "automatic_retry_allowed": {"const": false},
+    "permitted_next_step": {
+      "enum": ["send-once", "none", "reconcile-by-event-uid", "owner-decision-required"]
+    },
+    "privacy_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_body_read", "event_body_emitted", "secrets_emitted"],
+      "properties": {
+        "event_body_read": {"const": false},
+        "event_body_emitted": {"const": false},
+        "secrets_emitted": {"const": false}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_create_attempted",
+        "event_update",
+        "event_delete",
+        "event_import",
+        "event_overwrite",
+        "bulk_write",
+        "production_authority"
+      ],
+      "properties": {
+        "event_create_attempted": {"type": "boolean"},
+        "event_update": {"const": false},
+        "event_delete": {"const": false},
+        "event_import": {"const": false},
+        "event_overwrite": {"const": false},
+        "bulk_write": {"const": false},
+        "production_authority": {"const": false}
+      }
+    }
+  },
+  "$defs": {
+    "event_uid": {"type": "string", "pattern": "^client:[A-Za-z0-9][A-Za-z0-9._:-]{7,154}$"}
+  }
+}

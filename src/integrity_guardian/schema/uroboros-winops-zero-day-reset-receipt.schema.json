@@ -1,0 +1,172 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/uroboros-winops-zero-day-reset-receipt.schema.json",
+  "title": "Uroboros WinOps zero-day reset terminal receipt v2",
+  "description": "Closed terminal record for exactly one destructive reset attempt, with retry, replay and authority boundaries fixed fail-closed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "outcome",
+    "attempt_uid",
+    "started_at",
+    "finished_at",
+    "plan_digest",
+    "task_name",
+    "contained_processes",
+    "self_process_excluded_count",
+    "controller_process_excluded_count",
+    "deletions",
+    "reservation_digest",
+    "target_absence",
+    "task_absent",
+    "credentials_deleted",
+    "failure",
+    "automatic_retry_allowed",
+    "action_replayed",
+    "local_destructive_action",
+    "owner_authorization_proven",
+    "imports_remote_memory",
+    "production_authority",
+    "path_identity_held_during_delete",
+    "hostile_same_principal_race_proven",
+    "receipt_guard_held_until_atomic_commit",
+    "receipt_guard_release",
+    "same_principal_precommit_swap_window"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/uroboros-winops-zero-day-reset-receipt/v2"
+    },
+    "outcome": {
+      "enum": ["confirmed-success", "confirmed-failure", "unknown-outcome"]
+    },
+    "attempt_uid": {"$ref": "#/$defs/attempt_uid"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "plan_digest": {"$ref": "#/$defs/digest"},
+    "task_name": {"type": "string", "minLength": 1, "maxLength": 255},
+    "contained_processes": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/contained_process"}
+    },
+    "self_process_excluded_count": {"const": 1},
+    "controller_process_excluded_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 32
+    },
+    "deletions": {
+      "type": "array",
+      "minItems": 0,
+      "items": {"$ref": "#/$defs/deletion"}
+    },
+    "reservation_digest": {"$ref": "#/$defs/digest"},
+    "target_absence": {
+      "type": "array",
+      "minItems": 3,
+      "items": {"type": "boolean"}
+    },
+    "task_absent": {"type": "boolean"},
+    "credentials_deleted": {"type": "boolean"},
+    "failure": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "minLength": 1}
+      ]
+    },
+    "automatic_retry_allowed": {"const": false},
+    "action_replayed": {"const": false},
+    "local_destructive_action": {"const": true},
+    "owner_authorization_proven": {"const": false},
+    "imports_remote_memory": {"const": false},
+    "production_authority": {"const": false},
+    "path_identity_held_during_delete": {"const": false},
+    "hostile_same_principal_race_proven": {"const": false},
+    "receipt_guard_held_until_atomic_commit": {"const": true},
+    "receipt_guard_release": {
+      "const": "after-final-create-flush-acl-and-byte-readback-before-write-through-reservation-archive"
+    },
+    "same_principal_precommit_swap_window": {"const": false}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"outcome": {"const": "confirmed-success"}},
+        "required": ["outcome"]
+      },
+      "then": {
+        "properties": {
+          "target_absence": {"items": {"const": true}},
+          "task_absent": {"const": true},
+          "failure": {"type": "null"}
+        }
+      },
+      "else": {
+        "properties": {
+          "failure": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "attempt_uid": {"type": "string", "pattern": "^[a-f0-9]{32}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "windows_path": {"type": "string", "minLength": 3, "maxLength": 32767},
+    "contained_process": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "process_id",
+        "parent_process_id",
+        "creation_date",
+        "executable_path"
+      ],
+      "properties": {
+        "process_id": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+        "parent_process_id": {"type": "integer", "minimum": 0, "maximum": 4294967295},
+        "creation_date": {"type": "string", "minLength": 1, "maxLength": 128},
+        "executable_path": {"type": "string", "maxLength": 32767}
+      }
+    },
+    "deletion_without_exit_code": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "result", "elapsed_ms"],
+      "properties": {
+        "path": {"$ref": "#/$defs/windows_path"},
+        "result": {"enum": ["already-absent", "unknown-outcome-timeout"]},
+        "elapsed_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      }
+    },
+    "deletion_with_exit_code": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "result", "exit_code", "elapsed_ms"],
+      "properties": {
+        "path": {"$ref": "#/$defs/windows_path"},
+        "result": {"enum": ["confirmed-absent", "confirmed-failure"]},
+        "exit_code": {
+          "type": "integer",
+          "minimum": -2147483648,
+          "maximum": 2147483647
+        },
+        "elapsed_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        }
+      }
+    },
+    "deletion": {
+      "oneOf": [
+        {"$ref": "#/$defs/deletion_without_exit_code"},
+        {"$ref": "#/$defs/deletion_with_exit_code"}
+      ]
+    }
+  }
+}

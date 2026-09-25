@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/task-instruction-envelope.schema.json",
+  "title": "Integrity task instruction envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "instruction_id",
+    "instruction_digest",
+    "task_id",
+    "sequence",
+    "issued_at",
+    "authority_source",
+    "owner_key_fingerprint",
+    "owner_instruction_digest",
+    "scope",
+    "phase_id",
+    "supersedes_digest",
+    "constraints",
+    "mutation_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/task-instruction-envelope/v1"},
+    "instruction_id": {"type": "string", "pattern": "^task-instruction:[a-f0-9]{64}$"},
+    "instruction_digest": {"$ref": "#/$defs/digest"},
+    "task_id": {"$ref": "#/$defs/id"},
+    "sequence": {"type": "integer", "minimum": 1, "maximum": 9223372036854775807},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "authority_source": {"const": "owner-explicit"},
+    "owner_key_fingerprint": {"$ref": "#/$defs/digest"},
+    "owner_instruction_digest": {"$ref": "#/$defs/digest"},
+    "scope": {"enum": ["task", "phase"]},
+    "phase_id": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/id"}
+      ]
+    },
+    "supersedes_digest": {
+      "oneOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/digest"}
+      ]
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["terminal_event_append"],
+      "properties": {
+        "terminal_event_append": {"enum": ["allow", "deny", "unchanged"]}
+      }
+    },
+    "mutation_boundary": {"$ref": "#/$defs/mutation_boundary"},
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"$ref": "#/$defs/id"},
+        "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"scope": {"const": "task"}}},
+      "then": {"properties": {"phase_id": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"scope": {"const": "phase"}}},
+      "then": {"properties": {"phase_id": {"$ref": "#/$defs/id"}}}
+    }
+  ],
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "mutation_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["update", "delete", "import", "overwrite", "bulk_write"],
+      "properties": {
+        "update": {"const": false},
+        "delete": {"const": false},
+        "import": {"const": false},
+        "overwrite": {"const": false},
+        "bulk_write": {"const": false}
+      }
+    }
+  }
+}

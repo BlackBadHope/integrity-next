@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/lts-track-activation-receipt.schema.json",
+  "title": "Integrity LTS track activation receipt v1 and v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "track_id", "contract_version", "contract_digest",
+    "artifact_path", "release", "activated_at", "support_until",
+    "support_window_months", "evidence", "controls"
+  ],
+  "properties": {
+    "protocol": {"enum": ["integrity-guardian/lts-track-activation-receipt/v1", "integrity-guardian/lts-track-activation-receipt/v2"]},
+    "track_id": {
+      "enum": ["guardian-core-lts", "seed-synapse-lts", "adapter-observer-sdk-lts"]
+    },
+    "contract_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+-candidate\\.[0-9]+$"
+    },
+    "contract_digest": {"$ref": "#/$defs/digest"},
+    "contract_digest_scope": {"const": "track"},
+    "artifact_path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "release": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["release_id", "version", "tag", "product_version", "source_revision"],
+      "properties": {
+        "release_id": {
+          "type": "string",
+          "pattern": "^release:lts:(guardian-core-lts|seed-synapse-lts|adapter-observer-sdk-lts):[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+        "tag": {
+          "type": "string",
+          "pattern": "^lts/(guardian-core-lts|seed-synapse-lts|adapter-observer-sdk-lts)/v[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "product_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:(?:a|b|rc)[0-9]+|[.-][A-Za-z0-9.]+)?$"
+        },
+        "source_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"}
+      }
+    },
+    "activated_at": {"type": "string", "format": "date-time"},
+    "support_until": {"type": "string", "format": "date-time"},
+    "support_window_months": {"type": "integer", "minimum": 24, "maximum": 120},
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reproducible_artifacts_digest", "local_suite_digest",
+        "hosted_linux_digest", "track_gate_digest", "release_review_digest"
+      ],
+      "properties": {
+        "reproducible_artifacts_digest": {"$ref": "#/$defs/digest"},
+        "local_suite_digest": {"$ref": "#/$defs/digest"},
+        "hosted_linux_digest": {"$ref": "#/$defs/digest"},
+        "track_gate_digest": {"$ref": "#/$defs/digest"},
+        "release_review_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "production_authority", "memory_grants_authority",
+        "signed_release_manifest_required", "other_tracks_activated"
+      ],
+      "properties": {
+        "production_authority": {"const": false},
+        "memory_grants_authority": {"const": false},
+        "signed_release_manifest_required": {"const": true},
+        "other_tracks_activated": {"const": false}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "protocol": {"const": "integrity-guardian/lts-track-activation-receipt/v2"}
+        }
+      },
+      "then": {"required": ["contract_digest_scope"]},
+      "else": {"not": {"required": ["contract_digest_scope"]}}
+    }
+  ],
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

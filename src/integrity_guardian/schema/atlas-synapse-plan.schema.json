@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/atlas-synapse-plan.schema.json",
+  "title": "Integrity Atlas-Synapse Plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "plan_id",
+    "tenant_id",
+    "projection_id",
+    "projection_digest",
+    "projection_observed_at",
+    "as_of",
+    "graph_id",
+    "policy_digest",
+    "current_node_id",
+    "target_node_id",
+    "location",
+    "available_moves",
+    "capability_slice",
+    "route",
+    "simulation",
+    "invariants"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/atlas-synapse-plan/v1" },
+    "plan_id": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "projection_id": {
+      "type": "string",
+      "pattern": "^atlas:[a-f0-9]{64}$"
+    },
+    "projection_digest": { "$ref": "#/$defs/digest" },
+    "projection_observed_at": { "type": "string", "format": "date-time" },
+    "as_of": { "type": "string", "format": "date-time" },
+    "graph_id": { "$ref": "#/$defs/digest" },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "current_node_id": { "$ref": "#/$defs/node_id" },
+    "target_node_id": { "$ref": "#/$defs/node_id" },
+    "location": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "graph_id",
+        "tenant_id",
+        "node",
+        "control_plane_calls",
+        "execution_authority"
+      ],
+      "properties": {
+        "protocol": { "const": "integrity-guardian/synapse-location/v1" },
+        "graph_id": { "$ref": "#/$defs/digest" },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "node": {
+          "type": "object",
+          "required": ["node_id"],
+          "properties": {
+            "node_id": { "$ref": "#/$defs/node_id" }
+          }
+        },
+        "control_plane_calls": { "$ref": "#/$defs/zero_calls" },
+        "execution_authority": { "const": false }
+      }
+    },
+    "available_moves": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "graph_id",
+        "tenant_id",
+        "current_node_id",
+        "moves",
+        "control_plane_calls",
+        "execution_authority"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/synapse-available-moves/v1"
+        },
+        "graph_id": { "$ref": "#/$defs/digest" },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "current_node_id": { "$ref": "#/$defs/node_id" },
+        "moves": { "type": "array" },
+        "control_plane_calls": { "$ref": "#/$defs/zero_calls" },
+        "execution_authority": { "const": false }
+      }
+    },
+    "capability_slice": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "slice_id",
+        "graph_id",
+        "tenant_id",
+        "current_node_id",
+        "control_plane_calls",
+        "execution_authority"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/synapse-capability-slice/v1"
+        },
+        "slice_id": { "$ref": "#/$defs/digest" },
+        "graph_id": { "$ref": "#/$defs/digest" },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "current_node_id": { "$ref": "#/$defs/node_id" },
+        "control_plane_calls": { "$ref": "#/$defs/zero_calls" },
+        "execution_authority": { "const": false }
+      }
+    },
+    "route": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "route_id",
+        "graph_id",
+        "tenant_id",
+        "start_node_id",
+        "target_node_id",
+        "edge_ids",
+        "control_plane_calls",
+        "execution_authority"
+      ],
+      "properties": {
+        "protocol": { "const": "integrity-guardian/synapse-route/v1" },
+        "route_id": { "$ref": "#/$defs/digest" },
+        "graph_id": { "$ref": "#/$defs/digest" },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "start_node_id": { "$ref": "#/$defs/node_id" },
+        "target_node_id": { "$ref": "#/$defs/node_id" },
+        "edge_ids": {
+          "type": "array",
+          "maxItems": 32,
+          "items": { "$ref": "#/$defs/edge_id" }
+        },
+        "control_plane_calls": { "$ref": "#/$defs/zero_calls" },
+        "execution_authority": { "const": false }
+      }
+    },
+    "simulation": {
+      "type": "object",
+      "required": [
+        "protocol",
+        "simulation_id",
+        "graph_id",
+        "route_id",
+        "tenant_id",
+        "execution_performed",
+        "production_mutated",
+        "control_plane_calls"
+      ],
+      "properties": {
+        "protocol": { "const": "integrity-guardian/synapse-simulation/v1" },
+        "simulation_id": { "$ref": "#/$defs/digest" },
+        "graph_id": { "$ref": "#/$defs/digest" },
+        "route_id": { "$ref": "#/$defs/digest" },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "execution_performed": { "const": false },
+        "production_mutated": { "const": false },
+        "control_plane_calls": { "$ref": "#/$defs/zero_calls" }
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_performed",
+        "graph_policy_bound",
+        "model_calls",
+        "production_authority",
+        "projection_verified",
+        "read_only",
+        "route_context_bound",
+        "route_edges_declared",
+        "tool_calls"
+      ],
+      "properties": {
+        "execution_performed": { "const": false },
+        "graph_policy_bound": { "const": true },
+        "model_calls": { "const": 0 },
+        "production_authority": { "const": false },
+        "projection_verified": { "const": true },
+        "read_only": { "const": true },
+        "route_context_bound": { "const": true },
+        "route_edges_declared": { "const": true },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "node_id": {
+      "type": "string",
+      "pattern": "^synapse-node:[a-f0-9]{64}$"
+    },
+    "edge_id": {
+      "type": "string",
+      "pattern": "^synapse-edge:[a-f0-9]{64}$"
+    },
+    "zero_calls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "tool_calls"],
+      "properties": {
+        "model_calls": { "const": 0 },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  }
+}

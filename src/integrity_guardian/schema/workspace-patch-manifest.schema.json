@@ -1,0 +1,89 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/workspace-patch-manifest.schema.json",
+  "title": "Integrity Workspace Patch manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["patch_id", "protocol", "sdk_version", "manifest", "intent_operation_digest", "target", "patch", "controls", "created_at", "signer_id", "signature"],
+  "properties": {
+    "patch_id": { "type": "string", "pattern": "^workspace-patch:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/workspace-patch-manifest/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_id", "manifest_digest", "adapter_id", "adapter_artifact_digest"],
+      "properties": {
+        "manifest_id": { "type": "string", "pattern": "^manifest:[a-f0-9]{64}$" },
+        "manifest_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "intent_operation_digest": { "$ref": "#/$defs/digest" },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "zone_id", "repository_id", "worktree_id", "environment_digest", "object_format", "base_head_oid", "base_tree_oid", "expected_tree_oid"],
+      "properties": {
+        "node_id": { "$ref": "#/$defs/id" },
+        "zone_id": { "$ref": "#/$defs/id" },
+        "repository_id": { "$ref": "#/$defs/id" },
+        "worktree_id": { "$ref": "#/$defs/id" },
+        "environment_digest": { "$ref": "#/$defs/digest" },
+        "object_format": { "enum": ["sha1", "sha256"] },
+        "base_head_oid": { "$ref": "#/$defs/oid" },
+        "base_tree_oid": { "$ref": "#/$defs/oid" },
+        "expected_tree_oid": { "$ref": "#/$defs/oid" }
+      }
+    },
+    "patch": {
+      "type": "object", "additionalProperties": false,
+      "required": ["digest", "byte_count", "allowed_paths", "allowed_paths_digest"],
+      "properties": {
+        "digest": { "$ref": "#/$defs/digest" },
+        "byte_count": { "type": "integer", "minimum": 1, "maximum": 4194304 },
+        "allowed_paths": {
+          "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1, "maxLength": 240 }
+        },
+        "allowed_paths_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "controls": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clean_worktree_required", "tracked_paths_only", "regular_files_only", "binary_patch", "rename_copy", "mode_change", "symlink", "git_index_write", "git_remote", "network", "credentials", "production_authority", "max_invocations", "automatic_retry_after_unknown"],
+      "properties": {
+        "clean_worktree_required": { "const": true },
+        "tracked_paths_only": { "const": true },
+        "regular_files_only": { "const": true },
+        "binary_patch": { "const": false },
+        "rename_copy": { "const": false },
+        "mode_change": { "const": false },
+        "symlink": { "const": false },
+        "git_index_write": { "const": false },
+        "git_remote": { "const": false },
+        "network": { "const": false },
+        "credentials": { "const": false },
+        "production_authority": { "const": false },
+        "max_invocations": { "const": 1 },
+        "automatic_retry_after_unknown": { "const": false }
+      }
+    },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "oid": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" }, "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

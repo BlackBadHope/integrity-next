@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "integrity-resource-advisor"
+version = "0.1.0rc6"
+description = "Evidence-calibrated, advisory-only model and resource allocation for Integrity"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+readme = "README.md"
+dependencies = []
+
+[project.scripts]
+integrity-resource-advisor = "integrity_resource_advisor.__main__:main"
+integrity-codex-telemetry = "integrity_resource_advisor.codex:main"
+integrity-codex-read-snapshot = "integrity_resource_advisor.app_server_snapshot:main"
+integrity-codex-rollout-usage = "integrity_resource_advisor.rollout_usage:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

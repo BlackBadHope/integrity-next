@@ -1,0 +1,466 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v4/tenant-profile.schema.json",
+  "title": "Integrity Guardian Tenant Profile v1/v2/v3/v4",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/profile_v1"
+    },
+    {
+      "$ref": "#/$defs/profile_v2"
+    },
+    {
+      "$ref": "#/$defs/profile_v3"
+    },
+    {
+      "$ref": "#/$defs/profile_v4"
+    }
+  ],
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "properties": {
+        "tenant_id": {
+          "type": "string",
+          "pattern": "^tenant:[a-z0-9][a-z0-9._-]{0,63}$"
+        },
+        "deployment_id": {
+          "type": "string",
+          "pattern": "^deployment:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "namespace": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "controls": {
+          "$ref": "#/$defs/controls"
+        }
+      }
+    },
+    "profile_v1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "tenant_id",
+        "deployment_id",
+        "namespace",
+        "retention_policy_digest",
+        "key_registry_digest",
+        "created_at",
+        "controls"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/tenant-profile/v1"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/identity/properties/tenant_id"
+        },
+        "deployment_id": {
+          "$ref": "#/$defs/identity/properties/deployment_id"
+        },
+        "namespace": {
+          "$ref": "#/$defs/identity/properties/namespace"
+        },
+        "retention_policy_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "key_registry_digest": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "created_at": {
+          "$ref": "#/$defs/identity/properties/created_at"
+        },
+        "controls": {
+          "$ref": "#/$defs/controls"
+        }
+      }
+    },
+    "profile_v2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "tenant_id",
+        "deployment_id",
+        "namespace",
+        "enrollment",
+        "created_at",
+        "controls"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/tenant-profile/v2"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/identity/properties/tenant_id"
+        },
+        "deployment_id": {
+          "$ref": "#/$defs/identity/properties/deployment_id"
+        },
+        "namespace": {
+          "$ref": "#/$defs/identity/properties/namespace"
+        },
+        "enrollment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "retention_policy",
+            "key_registry"
+          ],
+          "properties": {
+            "retention_policy": {
+              "$ref": "#/$defs/enrollment"
+            },
+            "key_registry": {
+              "$ref": "#/$defs/enrollment"
+            }
+          }
+        },
+        "created_at": {
+          "$ref": "#/$defs/identity/properties/created_at"
+        },
+        "controls": {
+          "$ref": "#/$defs/controls"
+        }
+      }
+    },
+    "profile_v3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "tenant_id",
+        "deployment_id",
+        "namespace",
+        "enrollment",
+        "governance",
+        "created_at",
+        "controls"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/tenant-profile/v3"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/identity/properties/tenant_id"
+        },
+        "deployment_id": {
+          "$ref": "#/$defs/identity/properties/deployment_id"
+        },
+        "namespace": {
+          "$ref": "#/$defs/identity/properties/namespace"
+        },
+        "enrollment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "retention_policy",
+            "key_registry"
+          ],
+          "properties": {
+            "retention_policy": {
+              "$ref": "#/$defs/enrollment"
+            },
+            "key_registry": {
+              "$ref": "#/$defs/enrollment"
+            }
+          }
+        },
+        "governance": {
+          "$ref": "#/$defs/governance"
+        },
+        "created_at": {
+          "$ref": "#/$defs/identity/properties/created_at"
+        },
+        "controls": {
+          "$ref": "#/$defs/controls"
+        }
+      }
+    },
+    "profile_v4": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "tenant_id",
+        "deployment_id",
+        "namespace",
+        "enrollment",
+        "governance",
+        "created_at",
+        "controls"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/tenant-profile/v4"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/identity/properties/tenant_id"
+        },
+        "deployment_id": {
+          "$ref": "#/$defs/identity/properties/deployment_id"
+        },
+        "namespace": {
+          "$ref": "#/$defs/identity/properties/namespace"
+        },
+        "enrollment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "retention_policy",
+            "key_registry"
+          ],
+          "properties": {
+            "retention_policy": {
+              "$ref": "#/$defs/enrollment"
+            },
+            "key_registry": {
+              "$ref": "#/$defs/enrollment"
+            }
+          }
+        },
+        "governance": {
+          "$ref": "#/$defs/operational_governance"
+        },
+        "created_at": {
+          "$ref": "#/$defs/identity/properties/created_at"
+        },
+        "controls": {
+          "$ref": "#/$defs/controls"
+        }
+      }
+    },
+    "enrollment": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "UNENROLLED"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "digest"
+          ],
+          "properties": {
+            "status": {
+              "const": "ENROLLED"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:(?!0{64}$)[a-f0-9]{64}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "digest"
+          ],
+          "properties": {
+            "status": {
+              "const": "PRESENT_UNVERIFIED"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:(?!0{64}$)[a-f0-9]{64}$"
+            }
+          }
+        }
+      ]
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "customer_local",
+        "guardian_has_production_credentials",
+        "network_service_required",
+        "cross_tenant_access"
+      ],
+      "properties": {
+        "customer_local": {
+          "const": true
+        },
+        "guardian_has_production_credentials": {
+          "const": false
+        },
+        "network_service_required": {
+          "const": false
+        },
+        "cross_tenant_access": {
+          "const": false
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_bundle",
+        "customer_policy"
+      ],
+      "properties": {
+        "product_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "digest"
+          ],
+          "properties": {
+            "status": {
+              "const": "VERIFIED"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:(?!0{64}$)[a-f0-9]{64}$"
+            }
+          }
+        },
+        "customer_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status"
+          ],
+          "properties": {
+            "status": {
+              "const": "UNENROLLED"
+            }
+          }
+        }
+      }
+    },
+    "operational_governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "product_bundle",
+        "customer_policy"
+      ],
+      "properties": {
+        "product_bundle": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "digest"
+          ],
+          "properties": {
+            "status": {
+              "const": "VERIFIED"
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^sha256:(?!0{64}$)[a-f0-9]{64}$"
+            }
+          }
+        },
+        "customer_policy": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "binding"
+          ],
+          "properties": {
+            "status": {
+              "const": "BOUND"
+            },
+            "binding": {
+              "$ref": "#/$defs/customer_policy_binding"
+            }
+          }
+        }
+      }
+    },
+    "customer_policy_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "binding_id",
+        "tenant_id",
+        "policy_digest",
+        "valid_from",
+        "valid_until",
+        "authority_id",
+        "production_authority",
+        "signature"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/customer-policy-binding/v1"
+        },
+        "binding_id": {
+          "type": "string",
+          "pattern": "^policy-binding:[a-f0-9]{64}$"
+        },
+        "tenant_id": {
+          "$ref": "#/$defs/identity/properties/tenant_id"
+        },
+        "policy_digest": {
+          "type": "string",
+          "pattern": "^sha256:(?!0{64}$)[a-f0-9]{64}$"
+        },
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "authority_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+        },
+        "production_authority": {
+          "const": false
+        },
+        "signature": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "algorithm",
+            "key_id",
+            "value"
+          ],
+          "properties": {
+            "algorithm": {
+              "const": "ed25519"
+            },
+            "key_id": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+            },
+            "value": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{43,128}$"
+            }
+          }
+        }
+      }
+    }
+  }
+}

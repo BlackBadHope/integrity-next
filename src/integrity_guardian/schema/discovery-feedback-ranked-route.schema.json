@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/discovery-feedback-ranked-route.schema.json",
+  "title": "Integrity Fog of War Feedback-ranked Route v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "proposal_id",
+    "tenant_id",
+    "snapshot_id",
+    "snapshot_digest",
+    "policy_id",
+    "policy_digest",
+    "created_at",
+    "from_entity_id",
+    "to_entity_id",
+    "status",
+    "route_entity_ids",
+    "hops",
+    "bottleneck_confidence_ppm",
+    "assumptions",
+    "gaps",
+    "invalidation_zone_ids",
+    "theory_boundary",
+    "feedback_overlay_id",
+    "feedback_overlay_digest",
+    "feedback_score",
+    "feedback_effect",
+    "selection_objective",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/discovery-feedback-ranked-route/v1"
+    },
+    "proposal_id": {
+      "type": "string",
+      "pattern": "^discovery-feedback-ranked-route:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^discovery-index-snapshot:[a-f0-9]{64}$"
+    },
+    "snapshot_digest": { "$ref": "#/$defs/digest" },
+    "policy_id": { "$ref": "#/$defs/id" },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "from_entity_id": { "$ref": "#/$defs/id" },
+    "to_entity_id": { "$ref": "#/$defs/id" },
+    "status": { "enum": ["candidate", "unresolved"] },
+    "route_entity_ids": {
+      "type": "array",
+      "maxItems": 33,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "hops": {
+      "type": "array",
+      "maxItems": 32,
+      "items": { "$ref": "#/$defs/hop" }
+    },
+    "bottleneck_confidence_ppm": { "$ref": "#/$defs/confidence" },
+    "assumptions": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "incomplete-coverage",
+          "missing-entity-evidence",
+          "no-route-within-policy",
+          "non-observed-relation",
+          "relation-evidence-is-not-live-reachability",
+          "search-bound-reached",
+          "unknowns-intersect-route"
+        ]
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "maxItems": 1000,
+      "items": { "$ref": "#/$defs/gap" }
+    },
+    "invalidation_zone_ids": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "theory_boundary": { "$ref": "#/$defs/theory_boundary" },
+    "feedback_overlay_id": {
+      "type": "string",
+      "pattern": "^discovery-feedback-overlay:[a-f0-9]{64}$"
+    },
+    "feedback_overlay_digest": { "$ref": "#/$defs/digest" },
+    "feedback_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 32000
+    },
+    "feedback_effect": {
+      "enum": ["unchanged", "preferred", "rerouted", "excluded-route"]
+    },
+    "selection_objective": {
+      "const": "fewest-hops/highest-bottleneck/highest-feedback/lexicographic"
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "confidence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "hop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "source_id",
+        "source_epoch",
+        "relation_id",
+        "relation_type",
+        "from_entity_id",
+        "to_entity_id",
+        "from_zone_id",
+        "to_zone_id",
+        "provenance",
+        "confidence_ppm",
+        "coverage_state",
+        "coverage_scope_digest"
+      ],
+      "properties": {
+        "record_id": {
+          "type": "string",
+          "pattern": "^discovery-record:[a-f0-9]{64}$"
+        },
+        "source_id": { "$ref": "#/$defs/id" },
+        "source_epoch": { "$ref": "#/$defs/id" },
+        "relation_id": { "$ref": "#/$defs/id" },
+        "relation_type": { "$ref": "#/$defs/id" },
+        "from_entity_id": { "$ref": "#/$defs/id" },
+        "to_entity_id": { "$ref": "#/$defs/id" },
+        "from_zone_id": { "$ref": "#/$defs/id" },
+        "to_zone_id": { "$ref": "#/$defs/id" },
+        "provenance": { "enum": ["OBSERVED", "DERIVED", "LEARNED", "PROPOSED"] },
+        "confidence_ppm": { "$ref": "#/$defs/confidence" },
+        "coverage_state": { "enum": ["complete", "partial", "denied", "unknown"] },
+        "coverage_scope_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "gap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id",
+        "source_id",
+        "gap_id",
+        "classification",
+        "subject_id",
+        "zone_id"
+      ],
+      "properties": {
+        "record_id": {
+          "type": "string",
+          "pattern": "^discovery-record:[a-f0-9]{64}$"
+        },
+        "source_id": { "$ref": "#/$defs/id" },
+        "gap_id": { "$ref": "#/$defs/id" },
+        "classification": {
+          "enum": [
+            "unknown-entity",
+            "unknown-relation",
+            "conflicting-identity",
+            "unobserved-zone",
+            "unsupported-protocol",
+            "denied-coverage",
+            "stale-source",
+            "ambiguous-owner",
+            "model-gap"
+          ]
+        },
+        "subject_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/id" },
+            { "type": "null" }
+          ]
+        },
+        "zone_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "theory_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credentials",
+        "execution",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "synapse_authority"
+      ],
+      "properties": {
+        "credentials": { "const": false },
+        "execution": { "const": false },
+        "model_sdk": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "synapse_authority": { "const": false }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

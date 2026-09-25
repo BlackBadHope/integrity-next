@@ -1,0 +1,18 @@
+{
+  "distribution": "integrity-adapter-sdk",
+  "facade_target_distribution": "integrity-guardian",
+  "facade_target_version": "6.0.0",
+  "forbidden_wheel_prefixes": [
+    "integrity_guardian/"
+  ],
+  "implementation_boundary": "transitional-guardian-facade",
+  "implementation_extraction": "later-major-boundary",
+  "guardian_origin_manifest_protocol": "integrity-adapter-sdk/guardian-origin-manifest/v1",
+  "owned_import_roots": [
+    "integrity_adapter_sdk"
+  ],
+  "package_version": "2.0.0rc1",
+  "production_authority": false,
+  "protocol": "integrity-adapter-sdk/package-ownership/v1",
+  "signed_document_version": "1.0.0a2"
+}

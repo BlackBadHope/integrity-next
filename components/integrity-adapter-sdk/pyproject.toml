@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools==78.1.1", "wheel==0.46.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "integrity-adapter-sdk"
+version = "2.0.0rc1"
+description = "Versioned transitional facade for the Integrity Adapter Execution SDK"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+authors = [{ name = "Integrity Project" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+]
+dependencies = [
+  "integrity-guardian==6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2,<10",
+]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["integrity_adapter_sdk*"]
+
+[tool.setuptools.package-data]
+integrity_adapter_sdk = [
+  "py.typed",
+  "guardian-origin.json",
+  "package-ownership.json",
+  "contracts/*.json",
+]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

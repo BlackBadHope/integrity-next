@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/perpetual-dialogue-transport-request.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "dispatch_id", "tenant_id", "conversation_id", "work_item_id",
+    "wake_id", "baton_id", "target_agent_id", "processing_turn_id", "lease_fence",
+    "claim_digest", "control_generation", "authority_inherited",
+    "production_authority", "signature"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/perpetual-dialogue-transport-request/v1"},
+    "dispatch_id": {"$ref": "#/$defs/digest"},
+    "tenant_id": {"type": "string", "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/\\-]{0,248}$"},
+    "conversation_id": {"$ref": "#/$defs/id"},
+    "work_item_id": {"$ref": "#/$defs/id"},
+    "wake_id": {"$ref": "#/$defs/id"},
+    "baton_id": {"$ref": "#/$defs/id"},
+    "target_agent_id": {"$ref": "#/$defs/id"},
+    "processing_turn_id": {"$ref": "#/$defs/id"},
+    "lease_fence": {"type": "integer", "minimum": 1},
+    "claim_digest": {"$ref": "#/$defs/digest"},
+    "control_generation": {"type": "integer", "minimum": 0},
+    "authority_inherited": {"const": false},
+    "production_authority": {"const": false},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

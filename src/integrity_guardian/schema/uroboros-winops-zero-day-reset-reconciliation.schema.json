@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/uroboros-winops-zero-day-reset-reconciliation.schema.json",
+  "title": "Uroboros WinOps zero-day reset reconciliation receipt v2",
+  "description": "Confirms bounded postconditions after an unknown reset receipt without reclassifying or replaying the original action.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "reconciliation_uid",
+    "reconciliation_id",
+    "reconciled_at",
+    "host",
+    "attempt_uid",
+    "source_attempt_id",
+    "source_reservation",
+    "original_terminal",
+    "bound_preexisting_artifacts",
+    "artifact_inventory_digest",
+    "original_action_outcome",
+    "reconciliation_outcome",
+    "postconditions_status",
+    "plan_digest",
+    "reservation_digest",
+    "original_plan_provenance",
+    "postconditions",
+    "limitations",
+    "reconciliation_only",
+    "reconciliation_required",
+    "action_replayed",
+    "automatic_retry_allowed",
+    "destructive_write_performed",
+    "event_write_performed",
+    "evidence_write_scope",
+    "local_destructive_authority",
+    "imports_remote_memory",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/uroboros-winops-zero-day-reset-reconciliation/v2"
+    },
+    "reconciliation_uid": {"$ref": "#/$defs/uid"},
+    "reconciliation_id": {
+      "type": "string",
+      "pattern": "^uroboros-winops-zero-day-reset-reconciliation:[a-f0-9]{64}$"
+    },
+    "reconciled_at": {"type": "string", "format": "date-time"},
+    "host": {"type": "string", "minLength": 1, "maxLength": 255},
+    "attempt_uid": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,255}$"
+    },
+    "source_attempt_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,255}$"
+    },
+    "source_reservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "digest", "location_at_open", "name_digest"],
+      "properties": {
+        "protocol": {
+          "enum": [
+            "integrity-guardian/uroboros-winops-zero-day-reset-reservation/v1",
+            "integrity-guardian/uroboros-winops-zero-day-reset-reservation/v2"
+          ]
+        },
+        "digest": {"$ref": "#/$defs/digest"},
+        "location_at_open": {"enum": ["active", "archive"]},
+        "name_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "original_terminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state", "name_digest", "content_digest", "recorded_outcome",
+        "trusted_for_outcome"
+      ],
+      "properties": {
+        "state": {"enum": ["absent", "valid", "partial-invalid"]},
+        "name_digest": {"$ref": "#/$defs/digest"},
+        "content_digest": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]
+        },
+        "recorded_outcome": {
+          "oneOf": [
+            {"type": "null"},
+            {"enum": ["confirmed-success", "confirmed-failure", "unknown-outcome"]}
+          ]
+        },
+        "trusted_for_outcome": {"const": false}
+      }
+    },
+    "bound_preexisting_artifacts": {
+      "type": "array",
+      "maxItems": 768,
+      "items": {"$ref": "#/$defs/artifact"}
+    },
+    "artifact_inventory_digest": {"$ref": "#/$defs/digest"},
+    "original_action_outcome": {"const": "unknown-outcome"},
+    "reconciliation_outcome": {"const": "confirmed-success"},
+    "postconditions_status": {"const": "confirmed-absent"},
+    "plan_digest": {"$ref": "#/$defs/digest"},
+    "reservation_digest": {"$ref": "#/$defs/digest"},
+    "original_plan_provenance": {
+      "enum": [
+        "retained-before-action",
+        "reconstructed-from-captured-terminal-output"
+      ]
+    },
+    "postconditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "targets",
+        "task",
+        "inspected_process_count",
+        "self_process_excluded_count",
+        "controller_process_excluded_count",
+        "matching_process_count",
+        "uninspectable_process_count",
+        "protected_os_process_count",
+        "inspected_listener_ports",
+        "matching_tcp_listener_count",
+        "matching_udp_listener_count"
+      ],
+      "properties": {
+        "targets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["path_digest", "absent"],
+            "properties": {
+              "path_digest": {"$ref": "#/$defs/digest"},
+              "absent": {"const": true}
+            }
+          }
+        },
+        "task": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name_digest", "absent"],
+          "properties": {
+            "name_digest": {"$ref": "#/$defs/digest"},
+            "absent": {"const": true}
+          }
+        },
+        "inspected_process_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "self_process_excluded_count": {"const": 1},
+        "controller_process_excluded_count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        },
+        "matching_process_count": {"const": 0},
+        "uninspectable_process_count": {"const": 0},
+        "protected_os_process_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1048576
+        },
+        "inspected_listener_ports": {
+          "type": "array",
+          "const": [8765, 8775]
+        },
+        "matching_tcp_listener_count": {"const": 0},
+        "matching_udp_listener_count": {"const": 0}
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 2,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "original_action_outcome_remains_unknown",
+          "original_plan_reconstructed_from_captured_terminal_output"
+        ]
+      },
+      "allOf": [
+        {"contains": {"const": "original_action_outcome_remains_unknown"}}
+      ]
+    },
+    "reconciliation_only": {"const": true},
+    "reconciliation_required": {"const": false},
+    "action_replayed": {"const": false},
+    "automatic_retry_allowed": {"const": false},
+    "destructive_write_performed": {"const": false},
+    "event_write_performed": {"const": false},
+    "evidence_write_scope": {"const": "reconciliation-receipt-only"},
+    "local_destructive_authority": {"const": false},
+    "imports_remote_memory": {"const": false},
+    "production_authority": {"const": false}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "original_plan_provenance": {
+            "const": "reconstructed-from-captured-terminal-output"
+          }
+        },
+        "required": ["original_plan_provenance"]
+      },
+      "then": {
+        "properties": {
+          "limitations": {
+            "contains": {
+              "const": "original_plan_reconstructed_from_captured_terminal_output"
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "limitations": {
+            "not": {
+              "contains": {
+                "const": "original_plan_reconstructed_from_captured_terminal_output"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "uid": {"type": "string", "pattern": "^[a-f0-9]{32}$"},
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "name_digest", "content_digest", "size", "validation"],
+      "properties": {
+        "role": {"enum": ["top-level", "reservation-archive", "receipt-fragment"]},
+        "name_digest": {"$ref": "#/$defs/digest"},
+        "content_digest": {
+          "oneOf": [{"type": "null"}, {"$ref": "#/$defs/digest"}]
+        },
+        "size": {"type": "integer", "minimum": 0, "maximum": 1048576},
+        "validation": {"enum": ["json-valid", "partial-invalid"]}
+      }
+    }
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/promotion-decision-receipt.schema.json",
+  "title": "Integrity Promotion Decision Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "product_id",
+    "subject",
+    "environment",
+    "requested_channel",
+    "inputs",
+    "requirements",
+    "decision",
+    "reasons",
+    "evaluated_at",
+    "expires_at",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/promotion-decision-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^promotion-decision-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "const": "tenant:public-6e3cdbebaafc8efa" },
+    "policy_id": { "$ref": "#/$defs/synthetic_id" },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "product_id": { "$ref": "#/$defs/synthetic_id" },
+    "subject": { "$ref": "#/$defs/subject" },
+    "environment": { "$ref": "#/$defs/environment" },
+    "requested_channel": { "enum": ["rc", "stable"] },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provenance", "assessment", "containment"],
+      "properties": {
+        "provenance": { "$ref": "#/$defs/input_receipt" },
+        "assessment": { "$ref": "#/$defs/input_receipt" },
+        "containment": {
+          "oneOf": [
+            { "$ref": "#/$defs/input_receipt" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reproducible_provenance",
+        "assessment_mode",
+        "complete_coverage",
+        "validated_findings",
+        "max_unresolved",
+        "containment_required",
+        "containment_assurance"
+      ],
+      "properties": {
+        "reproducible_provenance": { "type": "boolean" },
+        "assessment_mode": { "enum": ["path", "diff", "full"] },
+        "complete_coverage": { "type": "boolean" },
+        "validated_findings": { "type": "boolean" },
+        "max_unresolved": { "$ref": "#/$defs/severity_counts" },
+        "containment_required": { "type": "boolean" },
+        "containment_assurance": {
+          "enum": ["protected", "audit", "degraded", "none"]
+        }
+      }
+    },
+    "decision": {
+      "enum": ["ineligible", "rc-eligible", "stable-eligible"]
+    },
+    "reasons": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]{0,63}$"
+      }
+    },
+    "evaluated_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "release_executed",
+        "owner_authorization",
+        "production_authority",
+        "remediation_authority"
+      ],
+      "properties": {
+        "release_executed": { "const": false },
+        "owner_authorization": { "const": false },
+        "production_authority": { "const": false },
+        "remediation_authority": { "const": false }
+      }
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "severity_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["critical", "high", "medium", "low"],
+      "properties": {
+        "critical": { "$ref": "#/$defs/count" },
+        "high": { "$ref": "#/$defs/count" },
+        "medium": { "$ref": "#/$defs/count" },
+        "low": { "$ref": "#/$defs/count" }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "artifact_digest"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/synthetic_id" },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "fingerprint_digest"],
+      "properties": {
+        "profile_id": { "$ref": "#/$defs/synthetic_id" },
+        "fingerprint_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "input_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["receipt_id", "receipt_digest"],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,63}:[a-f0-9]{64}$"
+        },
+        "receipt_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

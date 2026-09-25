@@ -1,0 +1,84 @@
+{
+  "accepted": false,
+  "base_commit": "2d689464042044932ed74073e448abe1dc555a82",
+  "base_tree": "f9c01b82eacef44eaf858a9a14f365610a814bb1",
+  "candidate_id": "2026.09.23-active-inquiry.9-memory-recovery-binding",
+  "change_intent": "https://example.invalid/private-history",
+  "component": "integrity-active-inquiry",
+  "component_version": "0.1.0rc2",
+  "existing_product_versions_unchanged": true,
+  "files": [
+    {
+      "bytes": 14,
+      "git_blob_sha1": "fcadb2cf97913f58a2523f535336e725c6b59d1f",
+      "path": "components/integrity-active-inquiry/.gitattributes",
+      "sha256": "a79691a93b46e49ce460c26ef22afcc03d6eca1e63bf2edbc20e96159510f6c9"
+    },
+    {
+      "bytes": 11359,
+      "git_blob_sha1": "6b0b1270ff0ca8f03867efcd09ba6ddb6392b1e1",
+      "path": "components/integrity-active-inquiry/LICENSE",
+      "sha256": "8c6db340475136df3c1201d458fa5755698eace76e510471ecc9d857d6083dac"
+    },
+    {
+      "bytes": 9511,
+      "git_blob_sha1": "d2c85c6d809d31d7781a10c2b306ae158d9baa0f",
+      "path": "components/integrity-active-inquiry/README.md",
+      "sha256": "dc11571c05123ce956ed2296ce34f640a2e43b8eb335aaaf7e0782e077095fd7"
+    },
+    {
+      "bytes": 6646,
+      "git_blob_sha1": "bd6cbeee8c10270c88fea4e498b0738bf80e7116",
+      "path": "components/integrity-active-inquiry/coverage.json",
+      "sha256": "db9221518b7a32c6ff1d68182ab2413e3de057a656c34fe8a2f98588352fec22"
+    },
+    {
+      "bytes": 512,
+      "git_blob_sha1": "3791006192fa9ff5cd383e9400e44e7be13afdfd",
+      "path": "components/integrity-active-inquiry/integration.json",
+      "sha256": "2d05c769d9f62b7a738263a4850bfb2300bf38c7b2922beef9c0292101e40b3b"
+    },
+    {
+      "bytes": 552,
+      "git_blob_sha1": "da8ae1e89c2549887b49da0a0d332cb4d93e286f",
+      "path": "components/integrity-active-inquiry/pyproject.toml",
+      "sha256": "6618aa8f8a20248f1b94d91ef1bbfe398d526399cb076833d0bc78c328464655"
+    },
+    {
+      "bytes": 446,
+      "git_blob_sha1": "b6a6f806e337d13c0ed6c02372390c8057a100d4",
+      "path": "components/integrity-active-inquiry/src/integrity_active_inquiry/__init__.py",
+      "sha256": "58d634e3a91f98668579dc7020b53a44683bfb81c5430ea7eaf714feb54ac833"
+    },
+    {
+      "bytes": 4058,
+      "git_blob_sha1": "642e278deff18aa62c0f82fac123f6cf16635cbf",
+      "path": "components/integrity-active-inquiry/src/integrity_active_inquiry/__main__.py",
+      "sha256": "38b61cf756abc461dcd56a478b3b788220f7983a52a447d06af212c56eddd59b"
+    },
+    {
+      "bytes": 5693,
+      "git_blob_sha1": "4a899551bd97687be8c340ec4bc925900712251d",
+      "path": "components/integrity-active-inquiry/src/integrity_active_inquiry/bridge.py",
+      "sha256": "a2e1210c94cd295721e88c0482caefa4b7b8054db3282ef9a052ffc2630f3818"
+    },
+    {
+      "bytes": 24224,
+      "git_blob_sha1": "fc8c30a1a88f579e4384a76bec5ee29d413d247a",
+      "path": "components/integrity-active-inquiry/src/integrity_active_inquiry/core.py",
+      "sha256": "c12b0d2bb9f76804cf04667f084d1ab12806d43652c01e6b138c271ac98e70fb"
+    },
+    {
+      "bytes": 5728,
+      "git_blob_sha1": "c15489fd6f43ca86daec4b6af38268c8592fe1da",
+      "path": "components/integrity-active-inquiry/src/integrity_active_inquiry/schemas/inquiry.schema.json",
+      "sha256": "f5d71f717866ddb2a5c9ad03597e30ae76dd9cb72c6c0335922475af4ce72d3c"
+    }
+  ],
+  "manifest_self_binding": "Git commit tree; manifest intentionally excluded from its own file list",
+  "predecessor_commit": "72835486fd24d42c3669866c62a52eb519654b87",
+  "prior_scope_comment": 5707953408,
+  "production_authority": false,
+  "protocol": "integrity-active-inquiry/source-candidate/v1",
+  "stage": "development-source-candidate"
+}

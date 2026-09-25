@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-grant-consumption.schema.json",
+  "title": "Integrity Uroboros Toolzs Grant Consumption v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "consumption_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "ledger",
+    "request",
+    "decision",
+    "grant_id",
+    "status",
+    "sequence",
+    "consumed_at",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-grant-consumption/v1"
+    },
+    "consumption_id": {
+      "type": "string",
+      "pattern": "^toolz-grant-consumption:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "ledger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ledger_id",
+        "authority_id",
+        "authority_artifact_digest",
+        "key_id",
+        "key_fingerprint"
+      ],
+      "properties": {
+        "ledger_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "authority_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "authority_artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "key_fingerprint": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "request_digest"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^toolz-authorization-request:[a-f0-9]{64}$"
+        },
+        "request_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_id",
+        "decision_digest"
+      ],
+      "properties": {
+        "decision_id": {
+          "type": "string",
+          "pattern": "^toolz-authority-decision:[a-f0-9]{64}$"
+        },
+        "decision_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "grant_id": {
+      "type": "string",
+      "pattern": "^toolz-single-use-grant:[a-f0-9]{64}$"
+    },
+    "status": {
+      "const": "pending-ledger-record"
+    },
+    "sequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_source_sequence",
+        "consumption_source_sequence",
+        "further_source_events_allowed"
+      ],
+      "properties": {
+        "decision_source_sequence": {
+          "const": 0
+        },
+        "consumption_source_sequence": {
+          "const": 1
+        },
+        "further_source_events_allowed": {
+          "const": false
+        }
+      }
+    },
+    "consumed_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_decided",
+        "authorization_granted",
+        "consumption_recorded",
+        "execution_performed",
+        "external_effect_performed",
+        "grant_consumption_requested",
+        "ledger_proof_required",
+        "network",
+        "next_stage_must_contain_execution",
+        "production_authority",
+        "request_transport_performed",
+        "route_memory_store_write",
+        "tool_invocation"
+      ],
+      "properties": {
+        "authorization_decided": {
+          "const": true
+        },
+        "authorization_granted": {
+          "const": true
+        },
+        "consumption_recorded": {
+          "const": false
+        },
+        "execution_performed": {
+          "const": false
+        },
+        "external_effect_performed": {
+          "const": false
+        },
+        "grant_consumption_requested": {
+          "const": true
+        },
+        "ledger_proof_required": {
+          "const": true
+        },
+        "network": {
+          "const": false
+        },
+        "next_stage_must_contain_execution": {
+          "const": true
+        },
+        "production_authority": {
+          "const": false
+        },
+        "request_transport_performed": {
+          "const": false
+        },
+        "route_memory_store_write": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

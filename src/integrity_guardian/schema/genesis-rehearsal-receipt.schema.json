@@ -1,0 +1,274 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/genesis-rehearsal-receipt.schema.json",
+  "title": "Integrity 5.5 Genesis Synthetic Rehearsal Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "protocol",
+    "tenant_id",
+    "policy",
+    "policy_digest",
+    "scenarios",
+    "totals",
+    "workspace",
+    "isolation",
+    "timing",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^genesis-rehearsal-receipt:[a-f0-9]{64}$"
+    },
+    "protocol": {
+      "const": "integrity-guardian/genesis-rehearsal-receipt/v1"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy_id",
+        "session_id",
+        "owner_uid",
+        "owner_gid",
+        "root_identity_digest",
+        "seed_digest",
+        "appliance_digest",
+        "containment_profile_digest",
+        "budgets",
+        "mode",
+        "direct_test_gate"
+      ],
+      "properties": {
+        "policy_id": {
+          "type": "string",
+          "pattern": "^policy:synthetic-genesis-[A-Za-z0-9._:-]{1,128}$"
+        },
+        "session_id": {
+          "type": "string",
+          "pattern": "^genesis-session:synthetic-[A-Za-z0-9._:-]{1,128}$"
+        },
+        "owner_uid": {"type": "integer", "minimum": 1},
+        "owner_gid": {"type": "integer", "minimum": 1},
+        "root_identity_digest": {"$ref": "#/$defs/digest"},
+        "seed_digest": {"$ref": "#/$defs/digest"},
+        "appliance_digest": {"$ref": "#/$defs/digest"},
+        "containment_profile_digest": {"$ref": "#/$defs/digest"},
+        "budgets": {"$ref": "#/$defs/budgets"},
+        "mode": {"const": "synthetic-user-space-rehearsal"},
+        "direct_test_gate": {"const": "owner-attended-disabled"}
+      }
+    },
+    "policy_digest": {"$ref": "#/$defs/digest"},
+    "scenarios": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "prefixItems": [
+        {"$ref": "#/$defs/ddos_scenario"},
+        {"$ref": "#/$defs/operator_scenario"},
+        {"$ref": "#/$defs/file_scenario"},
+        {"$ref": "#/$defs/cascade_scenario"}
+      ],
+      "items": false
+    },
+    "totals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_count",
+        "event_count",
+        "mutation_count",
+        "affected_asset_count"
+      ],
+      "properties": {
+        "scenario_count": {"const": 4},
+        "event_count": {"type": "integer", "minimum": 4, "maximum": 4096},
+        "mutation_count": {"type": "integer", "minimum": 3, "maximum": 4096},
+        "affected_asset_count": {"type": "integer", "minimum": 4, "maximum": 1024}
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "root_kind",
+        "mode",
+        "owner_uid",
+        "owner_gid",
+        "bytes_written",
+        "stop_file_checked",
+        "output_digest"
+      ],
+      "properties": {
+        "root_kind": {"const": "new-private-user-root"},
+        "mode": {"const": "0700"},
+        "owner_uid": {"type": "integer", "minimum": 1},
+        "owner_gid": {"type": "integer", "minimum": 1},
+        "bytes_written": {"type": "integer", "minimum": 1, "maximum": 16777216},
+        "stop_file_checked": {"const": true},
+        "output_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "existing_integrity_attached",
+        "existing_integrity_paths_read",
+        "host_files_mutated",
+        "network_namespace_isolated",
+        "network_used",
+        "production_targets",
+        "real_vulnerability_exploited",
+        "seed_mcp_oauth_accessed",
+        "system_services_accessed",
+        "sudo_used"
+      ],
+      "properties": {
+        "existing_integrity_attached": {"const": false},
+        "existing_integrity_paths_read": {"const": false},
+        "host_files_mutated": {"const": false},
+        "network_namespace_isolated": {"const": true},
+        "network_used": {"const": false},
+        "production_targets": {"const": false},
+        "real_vulnerability_exploited": {"const": false},
+        "seed_mcp_oauth_accessed": {"const": false},
+        "system_services_accessed": {"const": false},
+        "sudo_used": {"const": false}
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["started_at", "completed_at", "elapsed_ms"],
+      "properties": {
+        "started_at": {"type": "string", "format": "date-time"},
+        "completed_at": {"type": "string", "format": "date-time"},
+        "elapsed_ms": {"type": "integer", "minimum": 0, "maximum": 60000}
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "attack_authority",
+        "execution_authority",
+        "production_authority",
+        "promotion_authority",
+        "remediation_authority"
+      ],
+      "properties": {
+        "attack_authority": {"const": false},
+        "execution_authority": {"const": false},
+        "production_authority": {"const": false},
+        "promotion_authority": {"const": false},
+        "remediation_authority": {"const": false}
+      }
+    },
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_events",
+        "max_bytes",
+        "max_assets",
+        "max_cascade_depth",
+        "timeout_ms"
+      ],
+      "properties": {
+        "max_events": {"type": "integer", "minimum": 1, "maximum": 4096},
+        "max_bytes": {"type": "integer", "minimum": 4096, "maximum": 16777216},
+        "max_assets": {"type": "integer", "minimum": 1, "maximum": 256},
+        "max_cascade_depth": {"type": "integer", "minimum": 1, "maximum": 32},
+        "timeout_ms": {"type": "integer", "minimum": 100, "maximum": 60000}
+      }
+    },
+    "scenario_base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "outcome",
+        "event_count",
+        "mutation_count",
+        "cascade_depth",
+        "affected_assets",
+        "evidence_digest",
+        "scenario_digest"
+      ],
+      "properties": {
+        "name": {"type": "string"},
+        "outcome": {"const": "synthetic-detected"},
+        "event_count": {"type": "integer", "minimum": 1, "maximum": 4096},
+        "mutation_count": {"type": "integer", "minimum": 0, "maximum": 4096},
+        "cascade_depth": {"type": "integer", "minimum": 0, "maximum": 32},
+        "affected_assets": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^asset:synthetic-[A-Za-z0-9._:-]{1,128}$"
+          }
+        },
+        "evidence_digest": {"$ref": "#/$defs/digest"},
+        "scenario_digest": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "ddos_scenario": {
+      "allOf": [
+        {"$ref": "#/$defs/scenario_base"},
+        {"properties": {"name": {"const": "synthetic-ddos-burst"}}}
+      ]
+    },
+    "operator_scenario": {
+      "allOf": [
+        {"$ref": "#/$defs/scenario_base"},
+        {"properties": {"name": {"const": "synthetic-hostile-operator"}}}
+      ]
+    },
+    "file_scenario": {
+      "allOf": [
+        {"$ref": "#/$defs/scenario_base"},
+        {"properties": {"name": {"const": "synthetic-system-file-change"}}}
+      ]
+    },
+    "cascade_scenario": {
+      "allOf": [
+        {"$ref": "#/$defs/scenario_base"},
+        {"properties": {"name": {"const": "synthetic-zero-day-cascade"}}}
+      ]
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}
