@@ -381,13 +381,20 @@ from .governance import (
     governance_bundle_digest,
     verify_governance_bundle,
 )
-from .hashing import digest_object, sha256_digest
+from .hashing import digest_object, sha256_digest, validate_domain
 from .host_command_adapter import (
     HostCommandAdapter,
     HostCommandError,
     build_host_command_witness,
     host_command_witness_digest,
     verify_host_command_witness,
+)
+from .intent_custody import (
+    IntentCustody,
+    IntentCustodyError,
+    IntentReplayError,
+    IntentReservation,
+    verify_consumption_receipt,
 )
 from .key_lifecycle import (
     KeyLifecycleError,
@@ -711,7 +718,7 @@ from .shadow import (
     verify_retention_receipt,
     verify_shadow_authorization,
 )
-from .signing import Ed25519Signer, TrustedKey, verify_signature
+from .signing import Ed25519Signer, TrustedKey, verify_signature, verify_trusted_signature
 from .synapse import (
     BlastRadius,
     ProvenanceClass,
@@ -991,6 +998,13 @@ from .windows_install import (
     load_windows_install_locator,
     windows_installation_status,
 )
+from .work_claims import (
+    ClaimDecision,
+    ClaimStatus,
+    StaleFenceError,
+    WorkClaimError,
+    WorkClaimRegistry,
+)
 from .workspace_patch_adapter import (
     WorkspacePatchAdapter,
     WorkspacePatchError,
@@ -1140,6 +1154,8 @@ __all__ = [
     "BrowserAdapter",
     "BrowserAdapterError",
     "CanonicalizationError",
+    "ClaimDecision",
+    "ClaimStatus",
     "Classification",
     "CodexAppServerClient",
     "CodexAppServerCommitUnknown",
@@ -1200,6 +1216,10 @@ __all__ = [
     "HostCommandAdapter",
     "HostCommandError",
     "IncrementalMindProjection",
+    "IntentCustody",
+    "IntentCustodyError",
+    "IntentReplayError",
+    "IntentReservation",
     "IntentVerificationError",
     "KeyLifecycleError",
     "KeyLifecycleState",
@@ -1280,6 +1300,7 @@ __all__ = [
     "SnapshotFact",
     "SourceTrust",
     "StaleAgentFenceError",
+    "StaleFenceError",
     "SynapseContext",
     "SynapseError",
     "SynapseEvidence",
@@ -1378,6 +1399,8 @@ __all__ = [
     "WindowsBoundedProcessError",
     "WindowsInstallError",
     "WitnessAdapter",
+    "WorkClaimError",
+    "WorkClaimRegistry",
     "WorkspacePatchAdapter",
     "WorkspacePatchError",
     "ZeroDaySeedError",
@@ -1708,6 +1731,7 @@ __all__ = [
     "toolz_trace_admission_policy_digest",
     "toolz_trace_state_entity_identity",
     "trusted_active_key",
+    "validate_domain",
     "validate_seed_namespace",
     "verify_action_log_recovery_verification_receipt",
     "verify_adapter_action_proposal",
@@ -1748,6 +1772,7 @@ __all__ = [
     "verify_connectome_authorization",
     "verify_connectome_compilation",
     "verify_connectome_manifest",
+    "verify_consumption_receipt",
     "verify_current_module_agent_lease",
     "verify_customer_policy_binding",
     "verify_discovery_appliance_manifest",
@@ -1827,6 +1852,7 @@ __all__ = [
     "verify_toolz_start_state_witness",
     "verify_toolz_store_manifest",
     "verify_toolz_trace_admission_receipt",
+    "verify_trusted_signature",
     "verify_turn_gap_receipt",
     "verify_turn_registration",
     "verify_turn_terminal_receipt",

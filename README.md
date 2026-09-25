@@ -136,9 +136,17 @@ observation -> signed evidence -> proposed action -> prior authority
 - **Adapters** establish explicit capabilities at an external boundary.
 - **Observers** verify outcomes independently from the actor that requested them.
 
-Start with the [clean bootstrap guide](BOOTSTRAP.md), then review
-[security guidance](SECURITY.md), the [roadmap](ROADMAP.md) and
-[contribution guide](CONTRIBUTING.md).
+Start with the [clean bootstrap guide](BOOTSTRAP.md), then review the
+[architecture map](ARCHITECTURE.md), [security guidance](SECURITY.md), the
+[roadmap](ROADMAP.md) and [contribution guide](CONTRIBUTING.md).
+
+### Verified scope
+
+The public suite verifies the protocol core, the Ledger, one-use
+ChangeIntent custody, index-backed Seed queries and fenced blast-radius
+claims between processes **on one machine**. Coordination across machines,
+authenticated agent identity for claims and production operation are not
+provided or claimed; [ARCHITECTURE.md](ARCHITECTURE.md) lists each boundary.
 
 ## Platform support
 
@@ -154,6 +162,7 @@ that host binding, credentials or production actions are configured.
 ## Project policy
 
 - [Installation and bootstrap](BOOTSTRAP.md)
+- [Architecture and verified scope](ARCHITECTURE.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
 - [Roadmap](ROADMAP.md)

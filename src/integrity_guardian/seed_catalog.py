@@ -566,6 +566,9 @@ CREATE TABLE IF NOT EXISTS seed_event_entities (
     FOREIGN KEY(entity_id) REFERENCES seed_entities(entity_id) ON DELETE CASCADE
 ) WITHOUT ROWID;
 
+CREATE INDEX IF NOT EXISTS idx_seed_event_entities_entity
+ON seed_event_entities(entity_id, role, event_id);
+
 CREATE TABLE IF NOT EXISTS seed_relations (
     relation_id TEXT PRIMARY KEY,
     from_entity_id TEXT NOT NULL,
@@ -2013,6 +2016,12 @@ class SeedCatalog:
         }
 
     def search(self, query: str, *, limit: int = 20) -> list[dict[str, Any]]:
+        """Rank events by free-text term counts.
+
+        This scans every event and matches substrings of actor, action,
+        summary, details and tags; it uses no index. Use ``find_events`` for
+        exact, index-backed filters.
+        """
         terms = [term.casefold() for term in re.findall(r"[\w./:-]+", query)]
         if not terms:
             raise SeedCatalogError("Seed search requires at least one term")
@@ -2057,6 +2066,80 @@ class SeedCatalog:
                 )
             results.sort(key=lambda item: (item[0], item[1]["event_id"]), reverse=True)
             return [item[1] for item in results[:limit]]
+
+    def find_events(
+        self,
+        *,
+        actor: str | None = None,
+        action: str | None = None,
+        task_id: str | None = None,
+        since: str | None = None,
+        until: str | None = None,
+        limit: int = 50,
+    ) -> list[dict[str, Any]]:
+        """Return events matching every given exact filter, newest first.
+
+        ``actor``, ``action`` and the ``since``/``until`` bounds on ``ts_utc``
+        use the event indexes; ``task_id`` resolves through the task entity
+        projection. At least one filter is required.
+        """
+
+        if not 1 <= limit <= 500:
+            raise SeedCatalogError("Seed event query limit is outside 1..500")
+        filters = {
+            "actor": actor,
+            "action": action,
+            "task_id": task_id,
+            "since": since,
+            "until": until,
+        }
+        for field, value in filters.items():
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise SeedCatalogError(f"Seed event query {field} must be a non-empty string")
+        if all(value is None for value in filters.values()):
+            raise SeedCatalogError("Seed event query requires at least one filter")
+        clauses: list[str] = []
+        parameters: list[Any] = []
+        if actor is not None:
+            clauses.append("actor = ?")
+            parameters.append(actor.strip())
+        if action is not None:
+            clauses.append("action = ?")
+            parameters.append(action.strip())
+        if since is not None:
+            clauses.append("ts_utc >= ?")
+            parameters.append(since)
+        if until is not None:
+            clauses.append("ts_utc <= ?")
+            parameters.append(until)
+        if task_id is not None:
+            clauses.append(
+                """
+                event_id IN (
+                    SELECT link.event_id
+                    FROM seed_entities AS entity
+                    JOIN seed_event_entities AS link
+                      ON link.entity_id = entity.entity_id AND link.role = 'task'
+                    WHERE entity.kind = 'task' AND entity.natural_key = ?
+                )
+                """
+            )
+            parameters.append(task_id.strip())
+        if not self.path.is_file():
+            raise SeedCatalogError("Seed catalog does not exist")
+        with self._read_connection() as connection:
+            connection.row_factory = sqlite3.Row
+            rows = connection.execute(
+                f"""
+                SELECT event_id, ts_utc, actor, action, summary, event_digest
+                FROM seed_events
+                WHERE {" AND ".join(clauses)}
+                ORDER BY event_id DESC
+                LIMIT ?
+                """,
+                (*parameters, limit),
+            ).fetchall()
+        return [dict(row) for row in rows]
 
     def capsule(self, *, active_limit: int = 12) -> dict[str, Any]:
         if not 1 <= active_limit <= 50:
