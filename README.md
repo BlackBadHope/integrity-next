@@ -34,13 +34,24 @@ fact, an authorized action and a verified outcome. It is intended for real use
 and testing on user-owned machines. Reports from different operating systems,
 agent stacks and external targets are the main purpose of this public project.
 
+## Local memory for agents working in turn
+
+To give one or more agents a shared local memory — record results under a
+`task_id`, restart, let a second agent continue and read every record in
+full — follow the
+**[Integrity Seed guide](components/integrity-seed/plugins/integrity-seed/README.md)**.
+It is self-contained and needs only the core package, not the optional
+components or `native-trust-bootstrap`.
+
 ## Try it in five minutes
 
 Open **Code → Local → HTTPS** on this repository and copy its URL. Install the
-exact stable release by replacing `<copied-url>` below:
+release tag `v6.0.0` by replacing `<copied-url>` below. The `main` branch also
+reports version `6.0.0` but can carry unreleased changes; use it only when you
+want the development tip.
 
 ```bash
-git clone --depth 1 <copied-url>
+git clone --branch v6.0.0 --depth 1 <copied-url>
 cd integrity-next
 python -m venv .venv
 ```
@@ -86,7 +97,7 @@ local instance.
 Linux, macOS and Windows users need Python 3.11 or newer:
 
 ```bash
-git clone <URL copied from Code → Local → HTTPS>
+git clone --branch v6.0.0 <URL copied from Code → Local → HTTPS>
 cd integrity-next
 python -m venv .venv
 ```
@@ -142,10 +153,12 @@ Start with the [clean bootstrap guide](BOOTSTRAP.md), then review the
 
 ### Verified scope
 
-The public suite verifies the protocol core, the Ledger, one-use
-ChangeIntent custody, index-backed Seed queries and fenced blast-radius
-claims between processes **on one machine**. Coordination across machines,
-authenticated agent identity for claims and production operation are not
+Local Seed memory shared by agents that take turns **on one machine** is
+documented, with its confirmed limits, in the
+[Integrity Seed guide](components/integrity-seed/plugins/integrity-seed/README.md).
+The public `tests/` directory does not cover the protocol core, one-use
+intent custody or work claims. Coordination across machines, concurrent
+agents, authenticated agent identity and production operation are not
 provided or claimed; [ARCHITECTURE.md](ARCHITECTURE.md) lists each boundary.
 
 ## Platform support
@@ -162,6 +175,7 @@ that host binding, credentials or production actions are configured.
 ## Project policy
 
 - [Installation and bootstrap](BOOTSTRAP.md)
+- [Local memory for agents (Integrity Seed)](components/integrity-seed/plugins/integrity-seed/README.md)
 - [Architecture and verified scope](ARCHITECTURE.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)

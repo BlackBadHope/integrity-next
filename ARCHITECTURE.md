@@ -45,6 +45,10 @@ Some product lines carry internal code names:
   task and lock conflicts are advisory attention items; they do not block a
   write.
 
+The [Seed guide](components/integrity-seed/plugins/integrity-seed/README.md)
+shows how agents write through the Action Log runtime and read events in full
+from a `guardian seed-sync` snapshot.
+
 `SeedCatalog.search()` is a free-text scan over every event.
 `SeedCatalog.find_events()` gives exact, index-backed filters by actor,
 action, time and task.
@@ -77,19 +81,23 @@ Every transition goes into a hash-chained log that all agents can read.
 Agent identities are asserted by the caller and not authenticated by this
 module.
 
-## What the public suite verifies
+## Verification status
 
-| Property | Status | Evidence |
-| --- | --- | --- |
-| Canonical JSON, digest vectors, signatures | Verified | `tests/test_core_protocol.py` |
-| Ledger chain, replay rejection, reopen, tamper | Verified | `tests/test_core_protocol.py`, isolated canary |
-| Two processes sharing one Ledger | Verified locally | `tests/test_core_protocol.py` |
-| One-use ChangeIntent, cross-process race | Verified locally | `tests/test_intent_custody.py` |
-| Exact Seed queries use indexes | Verified | `tests/test_seed_catalog_query.py` |
-| Overlapping claims: one writer, queue, fencing, handoff | Verified locally | `tests/test_work_claims.py` |
-| Coordination across machines, network backend, consensus | **Not provided** | Local SQLite scope only |
-| Authenticated agent identity for claims | **Not provided** | Caller-asserted |
-| Production deployment and operational acceptance | **Not claimed** | See `guardian capabilities` |
+The public `tests/` directory currently holds only the TIME-TO-TASK catalogue
+regressions. The primitives below are implemented in this tree, but their
+tests are not part of the public projection, so a green public suite does not
+cover them.
+
+| Property | Status |
+| --- | --- |
+| Canonical JSON, digest vectors, signatures, Ledger chain | Implemented; no public test |
+| One-use ChangeIntent custody | Implemented; no public test |
+| Exact Seed queries (`find_events`) | Implemented; no public test |
+| Overlapping work claims: one writer, queue, fencing, handoff | Implemented; no public test; not wired into the Seed write path |
+| Local Seed memory used by agents in turn | Documented and checked by hand in the [Seed guide](components/integrity-seed/plugins/integrity-seed/README.md) |
+| Coordination across machines, network backend, consensus | **Not provided** |
+| Authenticated agent identity for claims or Seed events | **Not provided**; caller-asserted |
+| Production deployment and operational acceptance | **Not claimed**; see `guardian capabilities` |
 
 `guardian capabilities` keeps `multi_agent_coordination_proven` and
 `blast_radius_coverage_proven` false: local primitives are not a proven
