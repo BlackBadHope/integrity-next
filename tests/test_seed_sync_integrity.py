@@ -273,7 +273,7 @@ def test_cli_authorization_masking_survives_a_full_read(runtimes, tmp_path, monk
     source = runtimes("a")
     result = source.cli(
         "remember", "--task-id", "t-auth",
-        "gateway call failed; Authorization: Bearer FAKE-NOT-A-TOKEN-0100",
+        "gateway call failed; Authorization: Bearer FAKE-TK-0100",
     )
     reply = json.loads(result.stdout)
     assert reply["summary"] == "gateway call failed; Authorization: Bearer [REDACTED]"
@@ -284,14 +284,14 @@ def test_cli_authorization_masking_survives_a_full_read(runtimes, tmp_path, monk
                    "--source-url", source.url, "--export-events", str(export)])
     exported = export.read_text()
     assert "Authorization: Bearer [REDACTED]" in exported
-    assert "FAKE-NOT-A-TOKEN-0100" not in exported
+    assert "FAKE-TK-0100" not in exported
 
 
 def test_events_stored_by_the_old_filter_stay_as_stored(runtimes, tmp_path, monkeypatch) -> None:
     """An event written before this fix keeps its bytes; reads never rewrite it."""
     source = runtimes("a")
     source.post("first")
-    old_text = "old write; Authorization: [REDACTED] FAKE-OLD-FILTER-0200"
+    old_text = "old write; Authorization: [REDACTED] FAKE-OLD-0200"
     database = source.home / "data" / "action-log.sqlite3"
     with sqlite3.connect(database) as connection:  # as the previous filter stored it
         connection.execute(
@@ -312,7 +312,7 @@ def test_events_stored_by_the_old_filter_stay_as_stored(runtimes, tmp_path, monk
     request = urllib.request.Request(
         source.url + "/api/events",
         data=json.dumps({"actor": "agent", "action": "note", "event_uid": "op-old",
-                         "summary": "old write; Authorization: Bearer FAKE-OLD-FILTER-0200",
+                         "summary": "old write; Authorization: Bearer FAKE-OLD-0200",
                          "ts_utc": "2026-09-26T00:00:00Z"}).encode(),
         method="POST",
         headers={"Content-Type": "application/json", "X-Codex-Log-Token": source.token},

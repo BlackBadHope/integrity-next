@@ -285,10 +285,10 @@ def test_number_spelling_and_tag_order_stay_significant(action_log, first, secon
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("Authorization: Bearer FAKE-NOT-A-TOKEN-0001", "Authorization: Bearer [REDACTED]"),
+        ("Authorization: Bearer FAKE-TK-0001", "Authorization: Bearer [REDACTED]"),
         ("Authorization=Basic RkFLRTpOT1QtUkVBTA==", "Authorization=Basic [REDACTED]"),
-        ("authorization:bearer FAKE-NOT-A-TOKEN-0002", "authorization:bearer [REDACTED]"),
-        ("AUTHORIZATION :  Bearer   FAKE-NOT-A-TOKEN-0003", "AUTHORIZATION :  Bearer   [REDACTED]"),
+        ("authorization:bearer FAKE-TK-0002", "authorization:bearer [REDACTED]"),
+        ("AUTHORIZATION :  Bearer   FAKE-TK-0003", "AUTHORIZATION :  Bearer   [REDACTED]"),
         ("Proxy-Authorization: Basic RkFLRS1QUk9YWQ==, next", "Proxy-Authorization: Basic [REDACTED], next"),
         ("Authorization: FAKE-SCHEMELESS-0004", "Authorization: [REDACTED]"),
     ],
@@ -305,8 +305,8 @@ def test_authorization_in_details_text_and_keys_is_masked(action_log) -> None:
     stored = write(
         action_log,
         details={
-            "note": "retry with Authorization: Bearer FAKE-NOT-A-TOKEN-0005",
-            "headers": {"Authorization": "Bearer FAKE-NOT-A-TOKEN-0006", "Accept": "json"},
+            "note": "retry with Authorization: Bearer FAKE-TK-0005",
+            "headers": {"Authorization": "Bearer FAKE-TK-0006", "Accept": "json"},
             "attempts": 2,
         },
     )
@@ -320,7 +320,7 @@ def test_authorization_in_details_text_and_keys_is_masked(action_log) -> None:
 
 
 def test_masked_authorization_retry_and_distinct_uids(action_log) -> None:
-    text = "Authorization: Bearer FAKE-NOT-A-TOKEN-0007"
+    text = "Authorization: Bearer FAKE-TK-0007"
     first = write(action_log, event_uid="op-auth-1", summary=text)
     again = write(action_log, event_uid="op-auth-1", summary=text)
     other = write(action_log, event_uid="op-auth-2", summary=text)
