@@ -15,6 +15,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -252,3 +253,70 @@ def test_remember_reports_a_refused_write(runtimes) -> None:
     assert result.returncode == 1
     refusal = json.loads(result.stderr.strip().splitlines()[-1])
     assert refusal["error"] == "summary_too_long" and refusal["limit"] == 2000
+
+
+# -- round 2: retries across a restart and Authorization masking end to end --------
+
+
+@pytest.mark.parametrize("ts_utc", ["not-a-date", "2999-01-01T00:00:00Z"])
+def test_identical_retry_across_restart_keeps_one_event(runtimes, ts_utc) -> None:
+    source = runtimes("a")
+    first = source.post("alpha", event_uid="op-restart", ts_utc=ts_utc)
+    source.stop()
+    source.setup()
+    again = source.post("alpha", event_uid="op-restart", ts_utc=ts_utc)
+    assert again["duplicate"] is True and again["id"] == first["id"]
+    assert again["ts_utc"] == first["ts_utc"]
+
+
+def test_cli_authorization_masking_survives_a_full_read(runtimes, tmp_path, monkeypatch) -> None:
+    source = runtimes("a")
+    result = source.cli(
+        "remember", "--task-id", "t-auth",
+        "gateway call failed; Authorization: Bearer FAKE-NOT-A-TOKEN-0100",
+    )
+    reply = json.loads(result.stdout)
+    assert reply["summary"] == "gateway call failed; Authorization: Bearer [REDACTED]"
+    assert reply["transformations"] == ["summary: secret-like value redacted"]
+    monkeypatch.setenv("CODEX_LOG_TOKEN", source.token)
+    export = tmp_path / "events.jsonl"
+    guardian_main(["seed-sync", "--catalog", str(tmp_path / "catalog.sqlite3"),
+                   "--source-url", source.url, "--export-events", str(export)])
+    exported = export.read_text()
+    assert "Authorization: Bearer [REDACTED]" in exported
+    assert "FAKE-NOT-A-TOKEN-0100" not in exported
+
+
+def test_events_stored_by_the_old_filter_stay_as_stored(runtimes, tmp_path, monkeypatch) -> None:
+    """An event written before this fix keeps its bytes; reads never rewrite it."""
+    source = runtimes("a")
+    source.post("first")
+    old_text = "old write; Authorization: [REDACTED] FAKE-OLD-FILTER-0200"
+    database = source.home / "data" / "action-log.sqlite3"
+    with sqlite3.connect(database) as connection:  # as the previous filter stored it
+        connection.execute(
+            "INSERT INTO events (ts_utc, actor, session_id, level, action, summary, details,"
+            " tags, event_uid, created_utc) VALUES (?, 'agent', '', 'info', 'note', ?, '{}',"
+            " '[]', 'op-old', ?)",
+            ("2026-09-26T00:00:00Z", old_text, "2026-09-26T00:00:00.000001Z"),
+        )
+    catalog = tmp_path / "catalog.sqlite3"
+    sync(source, catalog, monkeypatch)
+    before = SeedCatalog(catalog).event_at(2)
+    assert before["summary"] == old_text  # not rewritten on read or sync
+    source.post("after the fix")
+    snapshot, _ = sync(source, catalog, monkeypatch)
+    assert snapshot.source_binding == "matched"
+    assert SeedCatalog(catalog).event_at(2) == before
+    # Retrying the old operation now normalizes differently: an explicit conflict.
+    request = urllib.request.Request(
+        source.url + "/api/events",
+        data=json.dumps({"actor": "agent", "action": "note", "event_uid": "op-old",
+                         "summary": "old write; Authorization: Bearer FAKE-OLD-FILTER-0200",
+                         "ts_utc": "2026-09-26T00:00:00Z"}).encode(),
+        method="POST",
+        headers={"Content-Type": "application/json", "X-Codex-Log-Token": source.token},
+    )
+    with pytest.raises(urllib.error.HTTPError) as refused:
+        DIRECT.open(request, timeout=15)
+    assert refused.value.code == 409
