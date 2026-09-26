@@ -48,6 +48,62 @@ class SeedCatalogError(ValueError):
     """Raised when canonical memory cannot be imported without ambiguity."""
 
 
+class SeedCatalogReadChangedError(SeedCatalogError):
+    """A quiescent immutable read overlapped a writer; the read must be repeated."""
+
+
+def _catalog_file_identity(path: Path) -> tuple[int, int, int, int]:
+    details = path.stat()
+    return (details.st_dev, details.st_ino, details.st_size, details.st_mtime_ns)
+
+
+@contextmanager
+def open_catalog_readonly(path: Path, *, immutable: bool = False) -> Iterator[sqlite3.Connection]:
+    """Open a Seed catalog for reading without ever writing next to it.
+
+    Readers normally join WAL locking with ``mode=ro``, so a held snapshot keeps
+    blocking a concurrent writer's checkpoint. Seed writers close last and leave
+    a WAL-mode catalog without ``-wal`` and ``-shm`` companions; a reader that
+    may only traverse the catalog directory cannot recreate them and that open
+    fails with "attempt to write a readonly database". Only then, while the
+    companions are still absent, the fully checkpointed catalog is read with
+    ``immutable=1``. Such a read takes no WAL locks, so it counts only if the
+    main file identity is unchanged and no WAL appeared by its end; otherwise
+    :class:`SeedCatalogReadChangedError` is raised and anything read inside the
+    block must be discarded.
+    """
+
+    path = path.absolute()
+    wal = path.with_name(path.name + "-wal")
+    shm = path.with_name(path.name + "-shm")
+    suffix = "&immutable=1" if immutable else ""
+    connection = sqlite3.connect(f"file:{path}?mode=ro{suffix}", uri=True)
+    try:
+        connection.execute("SELECT 1 FROM sqlite_master LIMIT 1").fetchall()
+    except sqlite3.OperationalError:
+        connection.close()
+        if immutable or wal.exists() or shm.exists():
+            raise
+    else:
+        with closing(connection):
+            yield connection
+        return
+
+    before = _catalog_file_identity(path)
+    changed = SeedCatalogReadChangedError(
+        "Seed catalog changed during a quiescent read; repeat the read"
+    )
+    with closing(sqlite3.connect(f"file:{path}?mode=ro&immutable=1", uri=True)) as connection:
+        try:
+            yield connection
+        except sqlite3.DatabaseError as exc:
+            if wal.exists() or _catalog_file_identity(path) != before:
+                raise changed from exc
+            raise
+    if wal.exists() or _catalog_file_identity(path) != before:
+        raise changed
+
+
 class SeedCatalogReadSealError(SeedCatalogError):
     """A durable catalog generation exists but is not safe for immutable reads."""
 
@@ -1585,17 +1641,11 @@ class SeedCatalog:
             )
         self._retained_readonly_connection = readonly_connection
 
-    def _readonly_uri(self) -> str:
-        suffix = "&immutable=1" if self.immutable else ""
-        return f"file:{self.path}?mode=ro{suffix}"
-
     @contextmanager
     def _read_connection(self) -> Iterator[sqlite3.Connection]:
         retained = self._retained_readonly_connection
         if retained is None:
-            with closing(
-                sqlite3.connect(self._readonly_uri(), uri=True)
-            ) as connection:
+            with open_catalog_readonly(self.path, immutable=self.immutable) as connection:
                 yield connection
             return
         try:
@@ -2372,13 +2422,19 @@ def catalog_from_jsonl(
 
 
 def iter_catalog_events(path: Path) -> Iterator[dict[str, Any]]:
-    """Yield exact canonical events from an existing catalog."""
+    """Yield exact canonical events from an existing catalog.
 
-    with closing(sqlite3.connect(f"file:{path.absolute()}?mode=ro", uri=True)) as connection:
+    Events are read completely and validated before the first one is yielded,
+    so a quiescent read that overlapped a writer never exposes a row.
+    """
+
+    events: list[dict[str, Any]] = []
+    with open_catalog_readonly(path) as connection:
         for row in connection.execute(
             "SELECT canonical_json FROM seed_events ORDER BY event_id"
         ):
             value = _parse_seed_json(row[0].encode("utf-8"))
             if not isinstance(value, dict):
                 raise SeedCatalogError("catalog raw event is not an object")
-            yield value
+            events.append(value)
+    yield from events
