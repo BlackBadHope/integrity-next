@@ -8,12 +8,21 @@ All notable public changes are recorded here.
   `event_uid` is stored exactly as sent (up to 200 characters of
   `[A-Za-z0-9._:@/+-]`) or refused before the write; the same `event_uid`
   with a different operation returns `409 event_uid_conflict` and leaves the
-  stored event unchanged. Over-limit `summary` (2000), `actor` (120),
+  stored event unchanged. Operations are compared after normalization and
+  redaction: actor, session_id, level, action, summary and tags exactly,
+  `details` as a JSON object (key order ignored, `1` and `1.0` differ), and
+  the fact time only when the server accepted the client's `ts_utc`, to the
+  stored second. A `ts_utc` the server replaced (invalid or more than five
+  minutes ahead) is not part of the operation, so an identical retry returns
+  the first event. Requests that differ only inside redacted secret values
+  cannot be told apart and are answered as duplicates. Over-limit `summary` (2000), `actor` (120),
   `session_id` (200) and `action` (160) are refused with `<field>_too_long`
   instead of being cut. Secret masking matches whole key segments, so keys
   such as `session_id`, `tokens_used` or `secretary` keep their values and
   types; every intentional change is listed in the reply's
-  `transformations`. `integrity_seed.py remember` prints these refusals.
+  `transformations`. In text, `Authorization: <scheme> <credential>` (also
+  `=` and `Proxy-Authorization`) keeps the scheme word and masks the
+  credential; a value without a known scheme is masked as one token. `integrity_seed.py remember` prints these refusals.
 - `guardian seed-sync` finds the source tail by event id, so backdated or
   near-future `ts_utc` values no longer stall or break a sync.
 - A Seed catalog is bound to one runtime: the first sync records its
@@ -23,7 +32,10 @@ All notable public changes are recorded here.
   not proven unchanged; `seed-catalog-verify` states it checks the catalog
   only.
 - Upgrade notes: events stored before this change keep their truncated or
-  redacted values; nothing is restored. An `event_uid` longer than 160
+  redacted values; nothing is restored, and an Authorization credential that
+  the earlier filter left in place stays in those events, snapshots and
+  exports. Retrying such an old operation now normalizes differently and
+  returns `409 event_uid_conflict`. An `event_uid` longer than 160
   characters that was truncated before will not match its old row, so a
   retry stores a new event. Clients that relied on silent truncation, or on
   a reused `event_uid` returning the old event for a different operation,

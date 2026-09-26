@@ -730,11 +730,11 @@
       "sha256": "d341579dfea3cfe4bc3147c0e669d5a9bf63dd2f1cad4ec455f7f30c1ce8d712"
     },
     {
-      "bytes": 219278,
+      "bytes": 221259,
       "mode": "0o644",
       "path": "components/integrity-seed/plugins/integrity-seed/runtime/action_log.py",
       "sanitization_edits": 0,
-      "sha256": "eb453d94248016a58b2160f748c40b4c1b3256b63b697506f4407ca1c4caa1da"
+      "sha256": "4bf7622ef6c46fb1f60c07cdf80ea050964e1ee49c4618a60b1a97121d7cc1a7"
     },
     {
       "bytes": 2107,
@@ -3180,18 +3180,18 @@
       "sha256": "bedd46e5dbe27856310f2e306e071d767178d32c1e541148527ae8f9df6754e3"
     },
     {
-      "bytes": 9676,
+      "bytes": 12990,
       "mode": "0o644",
       "path": "tests/test_seed_sync_integrity.py",
       "sanitization_edits": 0,
-      "sha256": "992fc7625291ae534e7f7879d70803d7a4b13e2752dbcc33ff45ca74db59d21f"
+      "sha256": "c514356f4ff8d8a109aaa449c7011d7fd92a7506d9a91b8a06729707f0b3e5fe"
     },
     {
-      "bytes": 7482,
+      "bytes": 14198,
       "mode": "0o644",
       "path": "tests/test_seed_write_contract.py",
       "sanitization_edits": 0,
-      "sha256": "b46bb134d4d7dc3025f3013e4d2f11484ffb72ccdc2c6ecc26fad930820e4856"
+      "sha256": "cb96abe4e4d32da7c0f5106544ccd8bf4ff44b2e7912373b7e553c5ee45ae147"
     }
   ],
   "generated_file_count": 21,
@@ -3267,11 +3267,11 @@
       "sha256": "3ca85a9bf5cb8935495668bff53fa99242201dfd91c9da78878d281410185c32"
     },
     {
-      "bytes": 3261,
+      "bytes": 4226,
       "mode": "0o644",
       "path": "CHANGELOG.md",
       "sanitization_edits": 0,
-      "sha256": "750b9cc5b6c4fa65dc1ea53a51c7bda3fc16714ab1755859cdd73baeb1e5eafc"
+      "sha256": "512b81b8230dc19096c83a4a5933d7168d9362d8d743a9beaa95cb1abcb98ba2"
     },
     {
       "bytes": 775,
@@ -3344,7 +3344,7 @@
       "sha256": "b26f7596d83095ddbee8149f1e3130ee65e3396dacdb483a00bb34157f3786a1"
     }
   ],
-  "projection_digest": "sha256:92d7c8a733ec4ef537a0fcabbeb7df0143e694bc84d746c5a6ac34d4807bd672",
+  "projection_digest": "sha256:3327a4d87370fed68a4632efcf876751961182d2d45cad7394a63bd8c9b21cd1",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
