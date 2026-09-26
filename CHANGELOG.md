@@ -4,6 +4,31 @@ All notable public changes are recorded here.
 
 ## Unreleased
 
+- Seed writes no longer change identifiers or accepted text silently.
+  `event_uid` is stored exactly as sent (up to 200 characters of
+  `[A-Za-z0-9._:@/+-]`) or refused before the write; the same `event_uid`
+  with a different operation returns `409 event_uid_conflict` and leaves the
+  stored event unchanged. Over-limit `summary` (2000), `actor` (120),
+  `session_id` (200) and `action` (160) are refused with `<field>_too_long`
+  instead of being cut. Secret masking matches whole key segments, so keys
+  such as `session_id`, `tokens_used` or `secretary` keep their values and
+  types; every intentional change is listed in the reply's
+  `transformations`. `integrity_seed.py remember` prints these refusals.
+- `guardian seed-sync` finds the source tail by event id, so backdated or
+  near-future `ts_utc` values no longer stall or break a sync.
+- A Seed catalog is bound to one runtime: the first sync records its
+  `workspace_id`, later syncs refuse another source, and the catalog's first
+  and last events are re-read from the source and compared before import.
+  The sync report states which range was read and that earlier history is
+  not proven unchanged; `seed-catalog-verify` states it checks the catalog
+  only.
+- Upgrade notes: events stored before this change keep their truncated or
+  redacted values; nothing is restored. An `event_uid` longer than 160
+  characters that was truncated before will not match its old row, so a
+  retry stores a new event. Clients that relied on silent truncation, or on
+  a reused `event_uid` returning the old event for a different operation,
+  now receive an explicit error. Existing catalogs are bound on their next
+  successful sync.
 - Added `IntentCustody`: one-use reservation and consumption of signed
   ChangeIntents with replay rejection across processes and restarts.
 - Added `WorkClaimRegistry`: local blast-radius claims with arrival-order
