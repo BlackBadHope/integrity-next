@@ -47,7 +47,7 @@ class Runtime:
         }
         return subprocess.run(
             [sys.executable, str(LAUNCHER), *args],
-            cwd=self.work, env=env, capture_output=True, text=True, timeout=120,
+            cwd=self.work, env=env, capture_output=True, text=True, timeout=120, check=False,
         )
 
     def setup(self) -> Runtime:
