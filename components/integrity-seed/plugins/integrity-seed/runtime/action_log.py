@@ -115,8 +115,15 @@ EVENT_UID_MAX_LENGTH = 200
 EVENT_UID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$")
 EVENT_FIELD_LIMITS = {"actor": 120, "session_id": 200, "action": 160, "summary": 2000}
 SENSITIVE_PAIR_RE = re.compile(
-    r"(?i)\b(password|passwd|passphrase|secret|token|api[_-]?key|authorization|cookie|credential|session)"
+    r"(?i)\b(password|passwd|passphrase|secret|token|api[_-]?key|cookie|credential|session)"
     r"(\s*[:=]\s*)([^\s,;]+)"
+)
+# "Authorization: <scheme> <credential>" (also Proxy-Authorization and "=").
+# The credential after a known scheme word is masked; a value without a
+# known scheme is masked as one token.
+AUTHORIZATION_PAIR_RE = re.compile(
+    r"(?i)\b(authorization)(\s*[:=]\s*)"
+    r"(?:(basic|bearer|digest|negotiate|token)(\s+))?([^\s,;]+)"
 )
 
 
@@ -649,8 +656,16 @@ def is_sensitive_key(key: str) -> bool:
     )
 
 
+def _contains_secret_pair(value: str) -> bool:
+    return bool(SENSITIVE_PAIR_RE.search(value) or AUTHORIZATION_PAIR_RE.search(value))
+
+
 def redact_text(value: str, changes: list[str] | None = None, field: str = "") -> str:
-    redacted = SENSITIVE_PAIR_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}[REDACTED]", value)
+    redacted = AUTHORIZATION_PAIR_RE.sub(
+        lambda m: f"{m.group(1)}{m.group(2)}{m.group(3) or ''}{m.group(4) or ''}[REDACTED]",
+        value,
+    )
+    redacted = SENSITIVE_PAIR_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}[REDACTED]", redacted)
     if changes is not None and redacted != value:
         changes.append(f"{field}: secret-like value redacted")
     return redacted
@@ -826,7 +841,7 @@ def validate_event_uid(value: Any) -> str:
             f"event_uid must match {EVENT_UID_RE.pattern}",
             max_length=EVENT_UID_MAX_LENGTH,
         )
-    if SENSITIVE_PAIR_RE.search(event_uid):
+    if _contains_secret_pair(event_uid):
         raise EventRejectedError(
             "event_uid_secret_like",
             "event_uid looks like it carries a secret; use an opaque identifier",
@@ -849,9 +864,16 @@ def _bounded_text(raw: dict[str, Any], field: str, default: str) -> str:
 
 
 def normalize_event(
-    raw: dict[str, Any], changes: list[str] | None = None
+    raw: dict[str, Any],
+    changes: list[str] | None = None,
+    accepted: dict[str, Any] | None = None,
 ) -> dict[str, str]:
+    """Normalize one write. ``accepted`` receives the client fact time the
+    server kept (``client_ts_utc``), or None when none was sent or it was
+    replaced."""
     changes = [] if changes is None else changes
+    accepted = {} if accepted is None else accepted
+    accepted["client_ts_utc"] = None
     event_uid = validate_event_uid(raw.get("event_uid"))
     actor = _bounded_text(raw, "actor", "codex")
     session_id = _bounded_text(raw, "session_id", "")
@@ -875,6 +897,7 @@ def normalize_event(
         event_ts_utc = created_utc
     else:
         event_ts_utc = canonical_utc(supplied_time)
+        accepted["client_ts_utc"] = event_ts_utc
         if str(supplied_ts) != event_ts_utc:
             changes.append("ts_utc: normalized to whole seconds UTC")
     event = {
@@ -894,14 +917,38 @@ def normalize_event(
     return event
 
 
-# Fields that identify one client operation behind an event_uid. ts_utc joins
-# them only when the client supplied it; created_utc never does.
-_OPERATION_FIELDS = ("actor", "session_id", "level", "action", "summary", "details", "tags")
+# What identifies one client operation behind an event_uid, compared after
+# normalization and redaction:
+# - actor, session_id, level, action, summary and tags exactly (tags are an
+#   ordered list, so their order counts);
+# - details as a JSON object: key order does not count, value spelling does
+#   (1 and 1.0 differ);
+# - the fact time only when the server accepted a client ts_utc, compared at
+#   the stored whole-second precision. A ts_utc the server replaced (invalid,
+#   or more than 5 minutes ahead) or left out is not part of the operation;
+#   server-added values (created_utc, a replacement ts_utc) never are.
+_EXACT_OPERATION_FIELDS = ("actor", "session_id", "level", "action", "summary", "tags")
 
 
-def _same_operation(existing: sqlite3.Row, event: dict[str, str], ts_supplied: bool) -> bool:
-    fields = (*_OPERATION_FIELDS, "ts_utc") if ts_supplied else _OPERATION_FIELDS
-    return all(str(existing[field]) == str(event[field]) for field in fields)
+def _details_identity(value: str) -> str:
+    try:
+        parsed = json.loads(value or "{}")
+    except json.JSONDecodeError:
+        return value
+    return json.dumps(parsed, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _same_operation(
+    existing: sqlite3.Row, event: dict[str, str], client_ts_utc: str | None
+) -> bool:
+    if any(str(existing[field]) != str(event[field]) for field in _EXACT_OPERATION_FIELDS):
+        return False
+    if _details_identity(existing["details"]) != _details_identity(event["details"]):
+        return False
+    if client_ts_utc is None:
+        return True
+    stored_time = parse_event_time(existing["ts_utc"])
+    return stored_time is not None and canonical_utc(stored_time) == client_ts_utc
 
 
 def insert_event(raw: dict[str, Any], *, conflict_on_mismatch: bool = True) -> dict[str, Any]:
@@ -911,11 +958,13 @@ def insert_event(raw: dict[str, Any], *, conflict_on_mismatch: bool = True) -> d
     for server-derived identities such as task acceptance.
     """
     changes: list[str] = []
-    event = normalize_event(raw, changes)
-    ts_supplied = bool(raw.get("ts_utc"))
+    accepted: dict[str, Any] = {}
+    event = normalize_event(raw, changes, accepted)
 
     def existing_reply(existing: sqlite3.Row) -> dict[str, Any]:
-        if conflict_on_mismatch and not _same_operation(existing, event, ts_supplied):
+        if conflict_on_mismatch and not _same_operation(
+            existing, event, accepted["client_ts_utc"]
+        ):
             raise EventConflictError(
                 "event_uid_conflict",
                 "event_uid is already bound to a different operation; nothing was stored",

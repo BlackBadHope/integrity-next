@@ -12,6 +12,7 @@ import importlib.util
 import json
 import sqlite3
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -181,3 +182,149 @@ def test_replaced_timestamp_is_reported(action_log) -> None:
     assert any(change.startswith("ts_utc:") for change in stored["transformations"])
     past = write(action_log, ts_utc="2020-01-01T00:00:00Z")
     assert past["ts_utc"] == "2020-01-01T00:00:00Z" and past["transformations"] == []
+
+
+# -- round 2 (ND-1, ND-1b, ND-2): what identifies a retried operation ----------
+
+
+def reload_runtime(action_log, tmp_path: Path):
+    """Load a fresh module over the same database, like a runtime restart."""
+    spec = importlib.util.spec_from_file_location(f"action_log_restart_{tmp_path.name}", RUNTIME)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    module.DATA_DIR, module.DB_PATH = action_log.DATA_DIR, action_log.DB_PATH
+    module.ensure_db()
+    return module
+
+
+@pytest.mark.parametrize("ts_utc", ["not-a-date", "2999-01-01T00:00:00Z"])
+@pytest.mark.parametrize("when", ["immediately", "later", "after-restart"])
+def test_retry_with_a_replaced_timestamp_is_idempotent(
+    action_log, tmp_path, ts_utc, when
+) -> None:
+    first = write(action_log, event_uid="op-clock", summary="alpha", ts_utc=ts_utc)
+    assert first["ts_utc"] == first["created_utc"]  # the server replaced the time
+    runtime = action_log
+    if when == "later":
+        time.sleep(1.1)
+    elif when == "after-restart":
+        runtime = reload_runtime(action_log, tmp_path)
+    again = write(runtime, event_uid="op-clock", summary="alpha", ts_utc=ts_utc)
+    assert again["duplicate"] is True and again["id"] == first["id"]
+    assert again["ts_utc"] == first["ts_utc"] and again["summary"] == "alpha"
+    assert rows(action_log, "SELECT COUNT(*), ts_utc, summary FROM events") == [
+        (1, first["ts_utc"], "alpha")
+    ]
+
+
+def test_racing_retries_with_a_replaced_timestamp_store_one_event(action_log) -> None:
+    barrier = threading.Barrier(8)
+    replies: list[dict] = []
+
+    def worker() -> None:
+        barrier.wait()
+        replies.append(
+            write(action_log, event_uid="op-race-clock", summary="same", ts_utc="2999-01-01")
+        )
+
+    threads = [threading.Thread(target=worker) for _ in range(8)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    assert rows(action_log, "SELECT COUNT(*) FROM events") == [(1,)]
+    assert sorted(reply["duplicate"] for reply in replies) == [False] + [True] * 7
+
+
+def test_retry_may_repeat_the_stored_time_from_the_reply(action_log) -> None:
+    first = write(action_log, event_uid="op-reply-time", summary="alpha")
+    again = write(action_log, event_uid="op-reply-time", summary="alpha", ts_utc=first["ts_utc"])
+    assert again["duplicate"] is True and again["id"] == first["id"]
+    with pytest.raises(action_log.EventConflictError):
+        write(action_log, event_uid="op-reply-time", summary="alpha", ts_utc="2020-01-01T00:00:00Z")
+
+
+def test_different_accepted_client_times_do_not_merge(action_log) -> None:
+    write(action_log, event_uid="op-fact-time", summary="alpha", ts_utc="2020-01-01T00:00:00Z")
+    again = write(
+        action_log, event_uid="op-fact-time", summary="alpha", ts_utc="2020-01-01T00:00:00.400Z"
+    )
+    assert again["duplicate"] is True  # the same second: the stored precision
+    with pytest.raises(action_log.EventConflictError):
+        write(action_log, event_uid="op-fact-time", summary="alpha", ts_utc="2020-01-02T00:00:00Z")
+
+
+def test_real_conflicts_still_conflict_after_a_replaced_timestamp(action_log) -> None:
+    write(action_log, event_uid="op-c", summary="alpha", ts_utc="2999-01-01T00:00:00Z")
+    for change in ({"summary": "beta"}, {"action": "agent_change_complete"}, {"details": {"k": 1}}):
+        with pytest.raises(action_log.EventConflictError):
+            write(action_log, event_uid="op-c", ts_utc="2999-01-01T00:00:00Z",
+                  **{"summary": "alpha", **change})
+
+
+def test_details_key_order_is_not_an_operation_difference(action_log) -> None:
+    write(action_log, event_uid="op-order", details={"a": 1, "b": {"x": 1, "y": 2}})
+    again = write(action_log, event_uid="op-order", details={"b": {"y": 2, "x": 1}, "a": 1})
+    assert again["duplicate"] is True
+
+
+@pytest.mark.parametrize(
+    ("first", "second"),
+    [({"details": {"n": 1}}, {"details": {"n": 1.0}}), ({"tags": ["a", "b"]}, {"tags": ["b", "a"]})],
+    ids=["int-vs-float", "tag-order"],
+)
+def test_number_spelling_and_tag_order_stay_significant(action_log, first, second) -> None:
+    write(action_log, event_uid="op-kept", **first)
+    with pytest.raises(action_log.EventConflictError):
+        write(action_log, event_uid="op-kept", **second)
+
+
+# -- round 2 (C-1): Authorization credentials are masked, not only the scheme -----
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("Authorization: Bearer FAKE-NOT-A-TOKEN-0001", "Authorization: Bearer [REDACTED]"),
+        ("Authorization=Basic RkFLRTpOT1QtUkVBTA==", "Authorization=Basic [REDACTED]"),
+        ("authorization:bearer FAKE-NOT-A-TOKEN-0002", "authorization:bearer [REDACTED]"),
+        ("AUTHORIZATION :  Bearer   FAKE-NOT-A-TOKEN-0003", "AUTHORIZATION :  Bearer   [REDACTED]"),
+        ("Proxy-Authorization: Basic RkFLRS1QUk9YWQ==, next", "Proxy-Authorization: Basic [REDACTED], next"),
+        ("Authorization: FAKE-SCHEMELESS-0004", "Authorization: [REDACTED]"),
+    ],
+)
+def test_authorization_credentials_are_masked(action_log, text: str, expected: str) -> None:
+    stored = write(action_log, summary=f"call failed; {text}")
+    assert stored["summary"] == f"call failed; {expected}"
+    assert stored["transformations"] == ["summary: secret-like value redacted"]
+    [(summary,)] = rows(action_log, "SELECT summary FROM events")
+    assert "FAKE" not in summary and "RkFLR" not in summary
+
+
+def test_authorization_in_details_text_and_keys_is_masked(action_log) -> None:
+    stored = write(
+        action_log,
+        details={
+            "note": "retry with Authorization: Bearer FAKE-NOT-A-TOKEN-0005",
+            "headers": {"Authorization": "Bearer FAKE-NOT-A-TOKEN-0006", "Accept": "json"},
+            "attempts": 2,
+        },
+    )
+    assert stored["details"] == {
+        "note": "retry with Authorization: Bearer [REDACTED]",
+        "headers": {"Authorization": "[REDACTED]", "Accept": "json"},
+        "attempts": 2,
+    }
+    [(raw,)] = rows(action_log, "SELECT details FROM events")
+    assert "FAKE" not in raw
+
+
+def test_masked_authorization_retry_and_distinct_uids(action_log) -> None:
+    text = "Authorization: Bearer FAKE-NOT-A-TOKEN-0007"
+    first = write(action_log, event_uid="op-auth-1", summary=text)
+    again = write(action_log, event_uid="op-auth-1", summary=text)
+    other = write(action_log, event_uid="op-auth-2", summary=text)
+    assert again["duplicate"] is True and again["id"] == first["id"]
+    assert other["duplicate"] is False and other["id"] != first["id"]
+    with pytest.raises(action_log.EventRejectedError):
+        write(action_log, event_uid="client:authorization:FAKE-0008")
