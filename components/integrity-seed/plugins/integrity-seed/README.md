@@ -14,14 +14,19 @@ What you get:
 
 Read [Limits](#limits) before you rely on this with more than one agent.
 
+**Which version this covers.** You read this guide from the repository's
+current `main`, but you install the release it names, `v6.0.0` (commit
+`b66dd68a3a2a8ad85533446a4130c5ca2f10c305`). The guide was added after that
+release, so the `v6.0.0` tag does not contain it. Its commands were checked
+against the `v6.0.0` release only. That check does not cover the code on
+`main`, which has changed since the release.
+
 ## 1. Install
 
 You need Python 3.11 or newer, Git and a POSIX shell (bash or zsh). The
 commands below were checked on Linux; a Windows variant is not covered here.
-Install the release tag `v6.0.0`, not
-the `main` branch: the tag is the reviewed release (commit
-`b66dd68a3a2a8ad85533446a4130c5ca2f10c305`). `main` also reports version
-`6.0.0` but can carry unreleased changes.
+Install the release tag `v6.0.0`, not the `main` branch: `main` also reports
+version `6.0.0` but carries changes made after the release.
 
 Keep the virtual environment outside the checkout:
 

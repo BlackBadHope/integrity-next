@@ -695,11 +695,11 @@
       "sha256": "8c6db340475136df3c1201d458fa5755698eace76e510471ecc9d857d6083dac"
     },
     {
-      "bytes": 11185,
+      "bytes": 11525,
       "mode": "0o644",
       "path": "components/integrity-seed/plugins/integrity-seed/README.md",
       "sanitization_edits": 0,
-      "sha256": "6a31635f9c4560a46c5ae6d7c19a9e6453c9b6fedc2df7d9d9d071478bac70d6"
+      "sha256": "e0b95f5dc5959c443888bfca3cfda7980126fdaf97e8b1e55db75f43d09e764e"
     },
     {
       "bytes": 1234,
@@ -3337,7 +3337,7 @@
       "sha256": "b26f7596d83095ddbee8149f1e3130ee65e3396dacdb483a00bb34157f3786a1"
     }
   ],
-  "projection_digest": "sha256:e83b31d396b792877a181332f9d9ecab15f8ed794b65650c3a57782bdb705a42",
+  "projection_digest": "sha256:9fb025155be24e7799db2ee74b2d7af516a489d6cfdd4f636fc07dd5791c3860",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
