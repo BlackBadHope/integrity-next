@@ -35,6 +35,8 @@ SEED_NAMESPACE_PATTERN = re.compile(
     r"^seed://project/[a-z0-9][a-z0-9._-]{0,127}$"
 )
 CATALOG_PROTOCOL = "integrity-guardian/seed-catalog/v1"
+# seed_metadata key holding the Action Log workspace_id this catalog follows.
+SOURCE_IDENTITY_KEY = "source_workspace_id"
 CATALOG_SCHEMA_VERSION = 1
 DOCTRINE_ACTIONS = frozenset({"seed_monument_decision", "product_rc_recorded", "seed_doctrine_declared"})
 MAX_EVENTS = 1_000_000
@@ -1704,7 +1706,14 @@ class SeedCatalog:
         profile: str = "full",
         started_at: str | None = None,
         finished_at: str | None = None,
+        source_identity: str | None = None,
     ) -> SeedCatalogReport:
+        """Import events; ``source_identity`` binds the catalog to one live source.
+
+        The first import that carries an identity records it; every later one
+        must carry the same identity, and a mismatch is refused before any row
+        changes.
+        """
         normalized = validate_seed_events(
             events,
             source_namespace=source_namespace,
@@ -1725,6 +1734,21 @@ class SeedCatalog:
                 ).fetchone()[0]
                 if metadata_namespace != source_namespace:
                     raise SeedCatalogError("catalog source namespace is immutable")
+                if source_identity is not None:
+                    bound_row = connection.execute(
+                        "SELECT value FROM seed_metadata WHERE key = ?",
+                        (SOURCE_IDENTITY_KEY,),
+                    ).fetchone()
+                    if bound_row is None:
+                        connection.execute(
+                            "INSERT INTO seed_metadata(key, value) VALUES (?, ?)",
+                            (SOURCE_IDENTITY_KEY, source_identity),
+                        )
+                    elif bound_row[0] != source_identity:
+                        raise SeedCatalogError(
+                            "catalog is bound to a different Seed source; "
+                            "nothing was imported"
+                        )
                 for event in normalized:
                     canonical_json = _canonical_text(event)
                     event_digest = _event_digest(event)
@@ -1957,6 +1981,29 @@ class SeedCatalog:
         if row is None:
             raise SeedCatalogError("catalog source namespace metadata is absent")
         return validate_seed_namespace(row[0])
+
+    def bound_source_identity(self) -> str | None:
+        """Return the live-source identity recorded by the first bound sync."""
+
+        if not self.path.is_file():
+            return None
+        with self._read_connection() as connection:
+            row = connection.execute(
+                "SELECT value FROM seed_metadata WHERE key = ?",
+                (SOURCE_IDENTITY_KEY,),
+            ).fetchone()
+        return None if row is None else str(row[0])
+
+    def minimum_event_id(self) -> int:
+        """Return the lowest stored event id, or 0 for an empty catalog."""
+
+        if not self.path.is_file():
+            return 0
+        with self._read_connection() as connection:
+            (minimum,) = connection.execute(
+                "SELECT COALESCE(MIN(event_id), 0) FROM seed_events"
+            ).fetchone()
+        return int(minimum)
 
     def event_cursor(self) -> tuple[int, int]:
         """Return the current raw event count and maximum id without projection work."""
