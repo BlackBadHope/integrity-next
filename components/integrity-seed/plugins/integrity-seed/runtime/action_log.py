@@ -118,13 +118,25 @@ SENSITIVE_PAIR_RE = re.compile(
     r"(?i)\b(password|passwd|passphrase|secret|token|api[_-]?key|cookie|credential|session)"
     r"(\s*[:=]\s*)([^\s,;]+)"
 )
-# "Authorization: <scheme> <credential>" (also Proxy-Authorization and "=").
-# The credential after a known scheme word is masked; a value without a
-# known scheme is masked as one token.
-AUTHORIZATION_PAIR_RE = re.compile(
-    r"(?i)\b(authorization)(\s*[:=]\s*)"
-    r"(?:(basic|bearer|digest|negotiate|token)(\s+))?([^\s,;]+)"
-)
+# "Authorization: <scheme> <credentials>" (also Proxy-Authorization and "="),
+# following RFC 9110 credentials: a scheme token, then either a token68 or a
+# comma-separated auth-param list whose values may be quoted strings.
+# - A scheme followed by an auth-param list keeps the scheme and masks the
+#   whole list (Digest, custom schemes).
+# - A known scheme followed by one token keeps the scheme and masks the token.
+# - Anything else masks the first token (a value without a scheme).
+# A value whose end cannot be found (an unterminated quote, text glued to
+# the masked part, or another name= fragment right after it) is refused
+# before the write rather than reported as masked.
+AUTHORIZATION_PAIR_RE = re.compile(r"(?i)\b(authorization)(\s*[:=]\s*)")
+KNOWN_AUTH_SCHEMES = frozenset({"basic", "bearer", "digest", "negotiate", "ntlm", "token"})
+_AUTH_TOKEN = r"[!#$%&'*+.^_`|~0-9A-Za-z-]+"
+_AUTH_SCHEME_RE = re.compile(rf"({_AUTH_TOKEN})(\s+)")
+_AUTH_PARAM_RE = re.compile(rf'{_AUTH_TOKEN}\s*=\s*(?:{_AUTH_TOKEN}|"(?:[^"\\]|\\.)*")')
+_AUTH_PARAM_SEPARATOR_RE = re.compile(r"\s*,\s*")
+_AUTH_SINGLE_TOKEN_RE = re.compile(r"[^\s,;]+")
+_AUTH_DANGLING_PARAM_RE = re.compile(rf"\s*,\s*{_AUTH_TOKEN}\s*=")
+_ESCAPED_CHARACTER_RE = re.compile(r"\\.")
 
 
 def bounded_env_int(name: str, default: int, minimum: int, maximum: int) -> int:
@@ -660,11 +672,63 @@ def _contains_secret_pair(value: str) -> bool:
     return bool(SENSITIVE_PAIR_RE.search(value) or AUTHORIZATION_PAIR_RE.search(value))
 
 
+def _auth_param_list_end(value: str, start: int) -> int | None:
+    param = _AUTH_PARAM_RE.match(value, start)
+    if param is None:
+        return None
+    end = param.end()
+    while (separator := _AUTH_PARAM_SEPARATOR_RE.match(value, end)) and (
+        param := _AUTH_PARAM_RE.match(value, separator.end())
+    ):
+        end = param.end()
+    return end
+
+
+def _authorization_span(value: str, start: int) -> tuple[str, int] | None:
+    """Return (kept scheme text, end) of the credentials after a header name."""
+    scheme = _AUTH_SCHEME_RE.match(value, start)
+    if scheme is not None:
+        end = _auth_param_list_end(value, scheme.end())
+        if end is not None:
+            return scheme.group(0), end
+        if scheme.group(1).lower() in KNOWN_AUTH_SCHEMES:
+            token = _AUTH_SINGLE_TOKEN_RE.match(value, scheme.end())
+            if token is not None:
+                return scheme.group(0), token.end()
+    end = _auth_param_list_end(value, start)
+    if end is not None:
+        return "", end
+    token = _AUTH_SINGLE_TOKEN_RE.match(value, start)
+    return None if token is None else ("", token.end())
+
+
+def _redact_authorization(value: str) -> str:
+    parts: list[str] = []
+    position = 0
+    while (header := AUTHORIZATION_PAIR_RE.search(value, position)) is not None:
+        parts.append(value[position : header.end()])
+        span = _authorization_span(value, header.end())
+        if span is None:
+            position = header.end()
+            continue
+        kept, end = span
+        masked = value[header.end() + len(kept) : end]
+        glued = end < len(value) and not value[end].isspace() and value[end] not in ",;"
+        unpaired_quote = _ESCAPED_CHARACTER_RE.sub("", masked).count('"') % 2
+        if unpaired_quote or glued or _AUTH_DANGLING_PARAM_RE.match(value, end):
+            raise EventRejectedError(
+                "authorization_value_unbounded",
+                "an Authorization value has no clear end, so it cannot be masked whole; "
+                "nothing was stored",
+            )
+        parts.append(f"{kept}[REDACTED]")
+        position = end
+    parts.append(value[position:])
+    return "".join(parts)
+
+
 def redact_text(value: str, changes: list[str] | None = None, field: str = "") -> str:
-    redacted = AUTHORIZATION_PAIR_RE.sub(
-        lambda m: f"{m.group(1)}{m.group(2)}{m.group(3) or ''}{m.group(4) or ''}[REDACTED]",
-        value,
-    )
+    redacted = _redact_authorization(value)
     redacted = SENSITIVE_PAIR_RE.sub(lambda m: f"{m.group(1)}{m.group(2)}[REDACTED]", redacted)
     if changes is not None and redacted != value:
         changes.append(f"{field}: secret-like value redacted")
@@ -849,6 +913,19 @@ def validate_event_uid(value: Any) -> str:
     return event_uid
 
 
+FUTURE_TS_TOLERANCE = dt.timedelta(minutes=5)
+
+
+def accepted_client_time(supplied_ts: Any, created_utc: str) -> dt.datetime | None:
+    """Return the client time the server accepts relative to one write's
+    created_utc, or None when it is absent, invalid or too far ahead."""
+    supplied_time = parse_event_time(supplied_ts)
+    created_time = parse_event_time(created_utc) or dt.datetime.now(dt.UTC)
+    if supplied_time is None or supplied_time > created_time + FUTURE_TS_TOLERANCE:
+        return None
+    return supplied_time
+
+
 def _bounded_text(raw: dict[str, Any], field: str, default: str) -> str:
     value = str(raw.get(field) or default)
     limit = EVENT_FIELD_LIMITS[field]
@@ -864,16 +941,9 @@ def _bounded_text(raw: dict[str, Any], field: str, default: str) -> str:
 
 
 def normalize_event(
-    raw: dict[str, Any],
-    changes: list[str] | None = None,
-    accepted: dict[str, Any] | None = None,
+    raw: dict[str, Any], changes: list[str] | None = None
 ) -> dict[str, str]:
-    """Normalize one write. ``accepted`` receives the client fact time the
-    server kept (``client_ts_utc``), or None when none was sent or it was
-    replaced."""
     changes = [] if changes is None else changes
-    accepted = {} if accepted is None else accepted
-    accepted["client_ts_utc"] = None
     event_uid = validate_event_uid(raw.get("event_uid"))
     actor = _bounded_text(raw, "actor", "codex")
     session_id = _bounded_text(raw, "session_id", "")
@@ -886,10 +956,9 @@ def normalize_event(
     details = normalize_details(raw.get("details"), changes)
     tags = normalize_tags(raw.get("tags"), changes)
     created_utc = utc_now()
-    created_time = parse_event_time(created_utc) or dt.datetime.now(dt.UTC)
     supplied_ts = raw.get("ts_utc")
-    supplied_time = parse_event_time(supplied_ts)
-    if supplied_time is None or supplied_time > created_time + dt.timedelta(minutes=5):
+    supplied_time = accepted_client_time(supplied_ts, created_utc)
+    if supplied_time is None:
         if supplied_ts:
             changes.append(
                 "ts_utc: invalid or more than 5 minutes in the future; replaced with created_utc"
@@ -897,7 +966,6 @@ def normalize_event(
         event_ts_utc = created_utc
     else:
         event_ts_utc = canonical_utc(supplied_time)
-        accepted["client_ts_utc"] = event_ts_utc
         if str(supplied_ts) != event_ts_utc:
             changes.append("ts_utc: normalized to whole seconds UTC")
     event = {
@@ -923,10 +991,13 @@ def normalize_event(
 #   ordered list, so their order counts);
 # - details as a JSON object: key order does not count, value spelling does
 #   (1 and 1.0 differ);
-# - the fact time only when the server accepted a client ts_utc, compared at
-#   the stored whole-second precision. A ts_utc the server replaced (invalid,
-#   or more than 5 minutes ahead) or left out is not part of the operation;
-#   server-added values (created_utc, a replacement ts_utc) never are.
+# - the fact time only when a client ts_utc is accepted, compared at the
+#   stored whole-second precision. Acceptance is judged against the stored
+#   first write's created_utc, not the retry's arrival, so an identical retry
+#   gets the same answer whenever it arrives. A ts_utc that was invalid or
+#   more than 5 minutes ahead of the first write, or left out, is not part of
+#   the operation; server-added values (created_utc, a replacement ts_utc)
+#   never are.
 _EXACT_OPERATION_FIELDS = ("actor", "session_id", "level", "action", "summary", "tags")
 
 
@@ -938,17 +1009,16 @@ def _details_identity(value: str) -> str:
     return json.dumps(parsed, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
-def _same_operation(
-    existing: sqlite3.Row, event: dict[str, str], client_ts_utc: str | None
-) -> bool:
+def _same_operation(existing: sqlite3.Row, event: dict[str, str], supplied_ts: Any) -> bool:
     if any(str(existing[field]) != str(event[field]) for field in _EXACT_OPERATION_FIELDS):
         return False
     if _details_identity(existing["details"]) != _details_identity(event["details"]):
         return False
-    if client_ts_utc is None:
+    client_time = accepted_client_time(supplied_ts, str(existing["created_utc"]))
+    if client_time is None:
         return True
     stored_time = parse_event_time(existing["ts_utc"])
-    return stored_time is not None and canonical_utc(stored_time) == client_ts_utc
+    return stored_time is not None and canonical_utc(stored_time) == canonical_utc(client_time)
 
 
 def insert_event(raw: dict[str, Any], *, conflict_on_mismatch: bool = True) -> dict[str, Any]:
@@ -958,13 +1028,10 @@ def insert_event(raw: dict[str, Any], *, conflict_on_mismatch: bool = True) -> d
     for server-derived identities such as task acceptance.
     """
     changes: list[str] = []
-    accepted: dict[str, Any] = {}
-    event = normalize_event(raw, changes, accepted)
+    event = normalize_event(raw, changes)
 
     def existing_reply(existing: sqlite3.Row) -> dict[str, Any]:
-        if conflict_on_mismatch and not _same_operation(
-            existing, event, accepted["client_ts_utc"]
-        ):
+        if conflict_on_mismatch and not _same_operation(existing, event, raw.get("ts_utc")):
             raise EventConflictError(
                 "event_uid_conflict",
                 "event_uid is already bound to a different operation; nothing was stored",
