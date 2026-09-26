@@ -8,6 +8,7 @@ because their names contained a secret word. All secrets here are synthetic.
 """
 from __future__ import annotations
 
+import datetime as dt
 import importlib.util
 import json
 import sqlite3
@@ -328,3 +329,156 @@ def test_masked_authorization_retry_and_distinct_uids(action_log) -> None:
     assert other["duplicate"] is False and other["id"] != first["id"]
     with pytest.raises(action_log.EventRejectedError):
         write(action_log, event_uid="client:authorization:FAKE-0008")
+
+
+# -- round 2.1 (R21-3): a retry's identity does not depend on when it arrives ------
+
+T0 = "2026-09-26T12:00:00.250000Z"
+
+
+def at(seconds: float) -> str:
+    moment = dt.datetime(2026, 9, 26, 12, 0, 0, 250000, tzinfo=dt.UTC)
+    moment += dt.timedelta(seconds=seconds)
+    return moment.isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+@pytest.fixture
+def clock(action_log, monkeypatch):
+    """Drive the runtime's own clock; the host clock is not touched."""
+    current = {"now": T0}
+    monkeypatch.setattr(action_log, "utc_now", lambda: current["now"])
+    return current
+
+
+def test_retry_after_a_replaced_time_enters_the_window_is_idempotent(
+    action_log, clock, tmp_path, monkeypatch
+) -> None:
+    ahead = at(305)[:19] + "Z"  # 5 min 5 s ahead of the first write, like repro-boundary.py
+    first = write(action_log, event_uid="op-boundary", summary="boundary repro", ts_utc=ahead)
+    assert first["ts_utc"] == T0 and any(c.startswith("ts_utc:") for c in first["transformations"])
+    for later in (10, 600, 3600):  # inside the window, then in the past
+        clock["now"] = at(later)
+        again = write(action_log, event_uid="op-boundary", summary="boundary repro", ts_utc=ahead)
+        assert again["duplicate"] is True and again["id"] == first["id"]
+        assert again["ts_utc"] == T0
+    restarted = reload_runtime(action_log, tmp_path)
+    monkeypatch.setattr(restarted, "utc_now", lambda: at(7200))
+    again = write(restarted, event_uid="op-boundary", summary="boundary repro", ts_utc=ahead)
+    assert again["duplicate"] is True and again["id"] == first["id"]
+    assert rows(action_log, "SELECT COUNT(*), ts_utc, created_utc FROM events") == [(1, T0, T0)]
+
+
+def test_accepted_time_near_the_window_edge_stays_the_operation_time(action_log, clock) -> None:
+    edge = at(299)[:19] + "Z"  # accepted: less than 5 minutes ahead
+    first = write(action_log, event_uid="op-edge", summary="alpha", ts_utc=edge)
+    assert first["ts_utc"] == edge and first["transformations"] == []
+    clock["now"] = at(900)
+    again = write(action_log, event_uid="op-edge", summary="alpha", ts_utc=edge)
+    assert again["duplicate"] is True and again["id"] == first["id"]
+    with pytest.raises(action_log.EventConflictError):
+        write(action_log, event_uid="op-edge", summary="alpha", ts_utc=at(298)[:19] + "Z")
+
+
+def test_first_time_acceptance_uses_the_stored_first_write(action_log, clock) -> None:
+    ahead = at(305)[:19] + "Z"
+    write(action_log, event_uid="op-ref", summary="alpha")  # no time sent; server time T0
+    clock["now"] = at(30)
+    with pytest.raises(action_log.EventConflictError):
+        # A retry that now asserts a time the first write never sent is a changed
+        # request, unless that time was out of the window at the first write.
+        write(action_log, event_uid="op-ref", summary="alpha", ts_utc=at(-3600)[:19] + "Z")
+    again = write(action_log, event_uid="op-ref", summary="alpha", ts_utc=ahead)
+    assert again["duplicate"] is True
+
+
+def test_racing_boundary_retries_store_one_event(action_log, clock) -> None:
+    ahead = at(305)[:19] + "Z"
+    barrier = threading.Barrier(6)
+    replies: list[dict] = []
+
+    def worker() -> None:
+        barrier.wait()
+        replies.append(write(action_log, event_uid="op-race-edge", summary="s", ts_utc=ahead))
+
+    threads = [threading.Thread(target=worker) for _ in range(6)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+    clock["now"] = at(20)
+    replies.append(write(action_log, event_uid="op-race-edge", summary="s", ts_utc=ahead))
+    assert rows(action_log, "SELECT COUNT(*) FROM events") == [(1,)]
+    assert sorted(reply["duplicate"] for reply in replies) == [False] + [True] * 6
+
+
+def test_row_accepted_before_this_rule_is_matched_on_its_stored_first_write(action_log) -> None:
+    """A row written by an earlier build: ts_utc replaced by created_utc at T0."""
+    with sqlite3.connect(action_log.DB_PATH) as connection:
+        connection.execute(
+            "INSERT INTO events (ts_utc, actor, session_id, level, action, summary, details,"
+            " tags, event_uid, created_utc) VALUES (?, 'agent-a', '', 'info', 'note', 's',"
+            " '{}', '[]', 'op-old-row', ?)",
+            (T0, T0),
+        )
+    again = write(action_log, event_uid="op-old-row", ts_utc=at(305)[:19] + "Z")
+    assert again["duplicate"] is True and again["id"] == 1
+
+
+# -- round 2.1 (R21-1): the whole recognized Authorization value is masked -------
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (('Authorization: Digest username="u", realm="r", nonce="n1", uri="/x", '
+          'response="FAKE-R21-A", opaque="o"'), "Authorization: Digest [REDACTED]"),
+        ('Authorization: Digest response="FAKE-R21-B", username="u", realm="r"',
+         "Authorization: Digest [REDACTED]"),
+        ('Authorization: Digest username="u, v", realm="r", response="FAKE-R21-C"',
+         "Authorization: Digest [REDACTED]"),
+        ('proxy-authorization=digest username="u" ,response="FAKE-R21-D"',
+         "proxy-authorization=digest [REDACTED]"),
+        ('Authorization: Digest username="u", response="FAKE-R21-E" and the retry failed',
+         "Authorization: Digest [REDACTED] and the retry failed"),
+        ('Authorization: Custom token="FAKE-R21-F", scope=read', "Authorization: Custom [REDACTED]"),
+        ('Authorization: Digest username="u\\"q", response="FAKE-R21-K" end',
+         "Authorization: Digest [REDACTED] end"),
+        ('Authorization: realm="r", response="FAKE-R21-G"', "Authorization: [REDACTED]"),
+        ("Authorization: Bearer FAKE-TK-21 then Proxy-Authorization=Basic RkFLRQ== too",
+         "Authorization: Bearer [REDACTED] then Proxy-Authorization=Basic [REDACTED] too"),
+    ],
+)
+def test_multi_parameter_authorization_is_masked_whole(action_log, text, expected) -> None:
+    stored = write(action_log, summary=f"call: {text}", details={"note": text, "tokens_used": 3})
+    assert stored["summary"] == f"call: {expected}"
+    assert stored["details"] == {"note": expected, "tokens_used": 3}
+    assert stored["transformations"] == [
+        "details.note: secret-like value redacted",
+        "summary: secret-like value redacted",
+    ]
+    [(summary, details)] = rows(action_log, "SELECT summary, details FROM events")
+    assert "FAKE" not in summary + details and "RkFLRQ" not in summary + details
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        'Authorization: Digest username="u, response="FAKE-R21-H',  # unterminated quote
+        'Authorization: Digest username="u", response=, realm="FAKE-R21-I"',  # unparsable param
+    ],
+)
+def test_unbounded_authorization_value_is_refused(action_log, text) -> None:
+    with pytest.raises(action_log.EventRejectedError) as refused:
+        write(action_log, summary=text)
+    assert refused.value.code == "authorization_value_unbounded"
+    assert "FAKE" not in str(refused.value) and "FAKE" not in repr(refused.value.detail)
+    assert rows(action_log, "SELECT COUNT(*) FROM events") == [(0,)]
+
+
+def test_masked_digest_retry_new_uid_and_conflict(action_log) -> None:
+    text = 'Authorization: Digest username="u", response="FAKE-R21-J"'
+    first = write(action_log, event_uid="op-digest", summary=text)
+    assert write(action_log, event_uid="op-digest", summary=text)["id"] == first["id"]
+    assert write(action_log, event_uid="op-digest-2", summary=text)["id"] != first["id"]
+    with pytest.raises(action_log.EventConflictError):
+        write(action_log, event_uid="op-digest", summary=text + " (edited)")
