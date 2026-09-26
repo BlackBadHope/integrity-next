@@ -7,8 +7,10 @@ production authority.
 
 from __future__ import annotations
 
+import dataclasses
 import ipaddress
 import json
+import re
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -25,6 +27,7 @@ from .seed_catalog import (
     SeedCatalog,
     SeedCatalogError,
     SeedCatalogReport,
+    _canonical_text,
     validate_seed_events,
     validate_seed_namespace,
 )
@@ -32,6 +35,7 @@ from .seed_catalog import (
 DEFAULT_ACTION_LOG_URL = "http://127.0.0.1:8765"
 MAX_STABILIZATION_PASSES = 3
 MAX_PAGE_SIZE = 1_000
+_WORKSPACE_ID_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 @dataclass(frozen=True)
@@ -43,6 +47,12 @@ class SeedSnapshot:
     maximum_event_id: int
     stabilization_passes: int
     full_snapshot: bool
+    # Filled by sync_action_log_seed: the source's workspace_id (None when the
+    # runtime does not report one), how the catalog binding was resolved, and
+    # the already-stored events re-read from the source and compared.
+    source_identity: str | None = None
+    source_binding: str = "not-checked"
+    compared_event_ids: tuple[int, ...] = ()
 
 
 def _validate_loopback_url(base_url: str) -> str:
@@ -171,8 +181,10 @@ def _fetch_incremental_once(
 
 
 def _tail_maximum_id(base_url: str) -> int:
+    # Order by id, like every page fetch: ordering by ts_utc would let a
+    # backdated or near-future event hide the real tail.
     query = urllib.parse.urlencode(
-        {"since": "all", "limit": 1, "offset": 0, "order": "desc"}
+        {"since": "all", "limit": 1, "offset": 0, "order": "desc", "sort": "id"}
     )
     payload = _get_json(f"{base_url}/api/events?{query}")
     events = payload.get("events")
@@ -182,6 +194,64 @@ def _tail_maximum_id(base_url: str) -> int:
     if not isinstance(event_id, int):
         raise SeedCatalogError("Seed Action Log tail id is invalid")
     return event_id
+
+
+def source_identity(base_url: str) -> str | None:
+    """Return the runtime's workspace_id, or None when it reports none.
+
+    workspace_id is derived from the Seed state location by the launcher. It
+    identifies a local state, not a person or machine, and proves nothing on
+    its own; the catalog also compares stored events with the source.
+    """
+    payload = _get_json(f"{_validate_loopback_url(base_url)}/api/health")
+    value = payload.get("workspace_id")
+    if isinstance(value, str) and _WORKSPACE_ID_RE.fullmatch(value):
+        return value
+    return None
+
+
+def _source_event(base_url: str, event_id: int) -> dict[str, Any] | None:
+    query = urllib.parse.urlencode({"since": "all", "id": event_id, "limit": 1})
+    page = _get_json(f"{base_url}/api/events?{query}").get("events")
+    if not isinstance(page, list) or len(page) > 1:
+        raise SeedCatalogError("Seed Action Log event lookup is invalid")
+    if not page:
+        return None
+    if not isinstance(page[0], dict) or page[0].get("id") != event_id:
+        raise SeedCatalogError("Seed Action Log returned a different event")
+    return page[0]
+
+
+def compare_stored_events(
+    catalog: SeedCatalog,
+    base_url: str,
+    *,
+    source_namespace: str,
+) -> tuple[int, ...]:
+    """Re-read the catalog's first and last events from the source and compare.
+
+    Refuses a source whose history differs at those ids. This is a bounded
+    spot check, not a proof that every earlier event is unchanged.
+    """
+    _, cursor = catalog.event_cursor()
+    if cursor == 0:
+        return ()
+    resolved_url = _validate_loopback_url(base_url)
+    compared = tuple(sorted({catalog.minimum_event_id(), cursor}))
+    for event_id in compared:
+        source_event = _source_event(resolved_url, event_id)
+        if source_event is None:
+            raise SeedCatalogError(
+                f"source has no event {event_id} that the catalog holds; "
+                "it is a different or rewritten Seed source"
+            )
+        [normalized] = validate_seed_events([source_event], source_namespace=source_namespace)
+        if _canonical_text(normalized) != _canonical_text(catalog.event_at(event_id)):
+            raise SeedCatalogError(
+                f"source event {event_id} differs from the catalog; "
+                "it is a different or rewritten Seed source"
+            )
+    return compared
 
 
 def fetch_seed_snapshot(
@@ -265,11 +335,37 @@ def sync_action_log_seed(
     validate_seed_namespace(selected_namespace)
     if bound_namespace is not None and selected_namespace != bound_namespace:
         raise SeedCatalogError("requested sync namespace differs from the catalogue")
+    identity = source_identity(base_url)
+    bound_identity = catalog.bound_source_identity()
+    if bound_identity is not None and identity != bound_identity:
+        raise SeedCatalogError(
+            "catalog is bound to a different Seed source; nothing was imported"
+            if identity is not None
+            else "source reports no workspace_id, so it cannot be matched to the "
+            "catalog's bound source; nothing was imported"
+        )
+    compared = compare_stored_events(
+        catalog, base_url, source_namespace=selected_namespace
+    )
     snapshot = fetch_seed_snapshot(
         base_url=base_url,
         page_size=page_size,
         after_event_id=current_cursor,
         source_namespace=selected_namespace,
+    )
+    if source_identity(base_url) != identity:
+        raise SeedCatalogError("Seed source changed during sync; nothing was imported")
+    if identity is None:
+        binding = "unavailable"
+    elif bound_identity is None:
+        binding = "established"
+    else:
+        binding = "matched"
+    snapshot = dataclasses.replace(
+        snapshot,
+        source_identity=identity,
+        source_binding=binding,
+        compared_event_ids=compared,
     )
     import_batch = snapshot.events
     if not import_batch:
@@ -280,5 +376,6 @@ def sync_action_log_seed(
         import_batch,
         source_namespace=snapshot.source_namespace,
         profile=profile,
+        source_identity=identity,
     )
     return snapshot, report

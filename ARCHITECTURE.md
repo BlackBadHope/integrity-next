@@ -49,6 +49,23 @@ Some product lines carry internal code names:
 `SeedCatalog.find_events()` gives exact, index-backed filters by actor,
 action, time and task.
 
+**Seed write contract.** The Action Log runtime stores `event_uid` exactly
+as sent or refuses it, treats a repeated `event_uid` as idempotent only for
+the same operation (otherwise `409 event_uid_conflict`), refuses over-limit
+text instead of cutting it, and lists every intentional change (secret
+redaction, `ts_utc` replacement) in the reply's `transformations`. Secret
+redaction is not a data-loss-prevention system: it masks secret-named keys
+and `key=value` pairs in text.
+
+**Catalog sync.** `guardian seed-sync` reads the source by event id and
+binds a catalog to the runtime's `workspace_id`, an identifier derived from
+the Seed state location, not an authenticated identity. Before each import
+it re-reads the catalog's first and last events from the source. That is a
+spot check: an incremental sync does not re-read earlier events, and Seed
+events are not signed, so the catalog cannot prove the source's earlier
+history unchanged. The Guardian Ledger's signed guarantees do not apply to
+Seed.
+
 ## Authorization lifecycle
 
 `reconcile()` is a pure classifier: the same signed intent classifies the

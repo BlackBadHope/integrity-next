@@ -1488,6 +1488,7 @@ def _handle_seed_sync(args: argparse.Namespace) -> None:
             args.export_events,
             list(iter_catalog_events(args.catalog)),
         )
+    fetched_ids = [int(event["id"]) for event in snapshot.events]
     _emit(
         {
             **report.to_document(),
@@ -1497,6 +1498,28 @@ def _handle_seed_sync(args: argparse.Namespace) -> None:
             "fetched_event_count": len(snapshot.events),
             "full_snapshot": snapshot.full_snapshot,
             "stabilization_passes": snapshot.stabilization_passes,
+            "source": {
+                "workspace_id": snapshot.source_identity,
+                "binding": snapshot.source_binding,
+            },
+            "verification": {
+                "source_read": {
+                    "after_event_id": snapshot.previous_event_id,
+                    "through_event_id": snapshot.maximum_event_id,
+                    "event_count": len(fetched_ids),
+                    "contiguous": fetched_ids
+                    == list(range(snapshot.previous_event_id + 1, snapshot.maximum_event_id + 1)),
+                },
+                "stored_events_rechecked_against_source": list(snapshot.compared_event_ids),
+                "catalog_gap_count": report.missing_event_id_count,
+                "catalog_self_consistency_checked": True,
+                "earlier_history_proven_unchanged": False,
+                "note": (
+                    "Events at or below after_event_id were not re-read from the source, "
+                    "except the ids in stored_events_rechecked_against_source. source_digest "
+                    "is computed from the catalog's own copy."
+                ),
+            },
             "events_exported": args.export_events is not None,
             "events_export_path": (
                 str(args.export_events.absolute()) if args.export_events is not None else None
@@ -1507,10 +1530,18 @@ def _handle_seed_sync(args: argparse.Namespace) -> None:
 
 def _handle_seed_verify(args: argparse.Namespace) -> None:
     _emit(
-        SeedCatalog(args.catalog).verify(
-            expected_source_digest=args.expected_source_digest,
-            expected_event_count=args.expected_event_count,
-        )
+        {
+            **SeedCatalog(args.catalog).verify(
+                expected_source_digest=args.expected_source_digest,
+                expected_event_count=args.expected_event_count,
+            ),
+            "verification_scope": "catalog-self-consistency",
+            "source_compared": False,
+            "note": (
+                "Checks the catalog's current bytes against themselves and any expected "
+                "digest or count you pass; it does not contact or compare the source."
+            ),
+        }
     )
 
 
