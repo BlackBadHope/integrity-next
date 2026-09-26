@@ -4,6 +4,11 @@ This guide creates an isolated Integrity installation from the reviewed public
 source tree. You choose which included component packages to install and bind
 to your own machine.
 
+Looking for local memory that agents share and continue in turn? Follow the
+[Integrity Seed guide](components/integrity-seed/plugins/integrity-seed/README.md)
+instead. It needs only the core package from the release tag, not the
+components or the local instance described below.
+
 ## Requirements
 
 - Python 3.11 or newer;
@@ -28,13 +33,16 @@ guardian capabilities
 guardian lts-contracts
 ```
 
-The expected version is `6.0.0`. The source tree contains no owner credentials,
-release signatures or deployment activation. Configure each adapter with
-credentials and authority that belong to your own environment.
+The expected version is `6.0.0`. The tag `v6.0.0` is the release; the `main`
+branch can carry unreleased changes under the same version number. The source
+tree contains no owner credentials, release signatures or deployment
+activation. Configure each adapter with credentials and authority that belong
+to your own environment.
 
 ## Install functional components
 
-Install the components needed for your test directly from their package trees:
+The components are optional. Install only the ones your test needs, directly
+from their package trees:
 
 ```bash
 python -m pip install ./components/integrity-adapter-sdk
@@ -79,15 +87,18 @@ guardian version --all
 
 ## Initialize a local instance
 
-Initialization creates local trust material and persistent state. Choose a
-private directory that is not inside the repository:
+Initialization creates local trust material and persistent state. The Seed
+memory path does not use it. Both `--state-root` and `--architecture-root` are
+directory paths; the second one receives the architecture database. Give both
+as absolute paths outside the repository, because a relative value is created
+under the current directory:
 
 ```bash
 guardian native-trust-bootstrap \
   --state-root "$HOME/.local/state/integrity-guardian" \
   --instance-id "instance:personal" \
   --device-id "device:local" \
-  --architecture-root "architecture:personal"
+  --architecture-root "$HOME/.local/state/integrity-guardian-architecture"
 ```
 
 This command does not configure credentials, production endpoints or external
