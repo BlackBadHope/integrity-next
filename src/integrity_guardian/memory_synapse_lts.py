@@ -15,7 +15,7 @@ import re
 import sqlite3
 import stat
 from collections.abc import Iterator
-from contextlib import closing, contextmanager
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -31,6 +31,7 @@ from .seed_catalog import (
     HOME_NAMESPACE,
     SeedCatalog,
     iter_catalog_events,
+    open_catalog_readonly,
     validate_seed_namespace,
 )
 from .seed_relationships import RELATIONSHIP_PROTOCOL, SeedRelationshipIndex
@@ -354,17 +355,11 @@ class MemorySynapseLtsService:
         repr=False,
     )
 
-    def _readonly_uri(self) -> str:
-        suffix = "&immutable=1" if self.immutable_catalog else ""
-        return f"file:{self.catalog_path}?mode=ro{suffix}"
-
     @contextmanager
     def _read_connection(self) -> Iterator[sqlite3.Connection]:
         retained = self.catalog_connection
         if retained is None:
-            with closing(
-                sqlite3.connect(self._readonly_uri(), uri=True)
-            ) as connection:
+            with open_catalog_readonly(self.catalog_path, immutable=self.immutable_catalog) as connection:
                 yield connection
             return
         try:
