@@ -1269,6 +1269,20 @@ def _closure_receipt_signature(
     ).hexdigest()
 
 
+def _write_refusal(exc: HTTPError) -> dict[str, Any] | None:
+    """Return the runtime's explicit write refusal (400/409), which holds no secrets."""
+    if exc.code not in {400, 409}:
+        return None
+    try:
+        value = json.loads(exc.read(64 * 1024).decode("utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(value, dict) or value.get("ok") is not False:
+        return None
+    allowed = {"ok", "error", "message", "field", "length", "limit", "max_length", "existing_id"}
+    return {key: value[key] for key in allowed if key in value}
+
+
 def remember_command(args: argparse.Namespace) -> int:
     runtime = ensure_runtime()
     base_url = f"http://127.0.0.1:{runtime['receipt']['port']}"
@@ -1291,13 +1305,20 @@ def remember_command(args: argparse.Namespace) -> int:
                     "debt_challenge_id": closure_binding["debt_challenge_id"],
                 }
             )
-    stored = request_json(
-        base_url,
-        runtime["token"],
-        "/api/events",
-        method="POST",
-        payload=payload,
-    )
+    try:
+        stored = request_json(
+            base_url,
+            runtime["token"],
+            "/api/events",
+            method="POST",
+            payload=payload,
+        )
+    except HTTPError as exc:
+        refusal = _write_refusal(exc)
+        if refusal is None:
+            raise
+        print(json.dumps(refusal, ensure_ascii=False, separators=(",", ":")), file=sys.stderr)
+        return 1
     details = stored.get("details") if isinstance(stored.get("details"), dict) else {}
     kind = str(details.get("kind") or "").strip().lower()
     if (
