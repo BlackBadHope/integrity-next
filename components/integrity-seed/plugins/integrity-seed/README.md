@@ -94,9 +94,11 @@ To leave a next step for whoever continues, record a handoff:
   "NEXT STEP: read docs/c-ceramics.txt and record the ceramic count."
 ```
 
-`task_id` is a label on the event. The CLI does not create a task lifecycle
-object, so recall reports `PRIMARY: no matching open task` even when events
-for the task exist.
+`task_id` is a label that links events to each other. It does not mean the
+task was accepted, that the writer owns it exclusively, or that it was
+formally closed: the CLI creates no task lifecycle object, so recall reports
+`PRIMARY: no matching open task` even when events for the task exist, and any
+client may write under the same `task_id`.
 
 ## 5. Brief recall versus full read
 
@@ -206,17 +208,20 @@ values the writing client declares:
 
 Neither value is checked by the runtime. The word "verified" inside a summary,
 or `--verification verified`, is the writer's claim, not independent
-verification. A closure receipt, which the CLI returns for an `observed` +
-`verified` handoff, checkpoint, completion, blocked or failure record written
-inside a session with Seed hooks, is signed with the same local runtime token
-every client uses. It binds the record to that session; it does not show that
-someone else checked the result. Independent verification in Integrity means
+verification. `remember` adds a `closure_receipt` to its reply only for an
+`observed` + `verified` handoff, checkpoint, completion, blocked or failure
+record whose session has Seed hook state; the commands in this guide create no
+such state, so they return no receipt. The receipt is an HMAC over the record
+keyed with the same local runtime token every client uses. It binds the record
+to that session; it does not show that someone else checked the result. Independent verification in Integrity means
 a separate observer's evidence (see [ARCHITECTURE.md](../../../../ARCHITECTURE.md)),
 which this path does not produce.
 
 ## Limits
 
-These limits were confirmed in local testing:
+These limits apply to the Seed path shown here — the `integrity_seed.py` CLI,
+its local runtime and `guardian seed-sync` snapshots — and were confirmed in
+local testing. They say nothing about other Integrity modules:
 
 - **One machine.** The runtime listens only on loopback. No network or
   cross-machine transport ships with this path.
@@ -226,8 +231,8 @@ These limits were confirmed in local testing:
 - **Declared identity.** `--actor` and `--session-id` are free strings. The
   runtime authenticates only the shared token of the state directory, so any
   client with access to it can write under any name.
-- **No proven coordination.** Concurrent or cross-machine coordination is not
-  provided or claimed.
+- **No coordination on this path.** Nothing on the Seed write path
+  coordinates concurrent writers or machines, and none is claimed for it.
 - **Shared OS user.** The state files are private to your OS user, and every
   process running as that user can read and write the memory.
 
@@ -235,7 +240,7 @@ These limits were confirmed in local testing:
 
 | Symptom | Cause and fix |
 | --- | --- |
-| `{"ok": false, "error": "RuntimeError"}` from `setup` or `status` | `INTEGRITY_SEED_HOME` is inside the current Git checkout or working directory, or holds unrelated files. Use a new, dedicated directory. |
+| `{"ok": false, "error": "RuntimeError"}` from `setup` or `status` | A generic failure with no single cause. Check the common ones first: `INTEGRITY_SEED_HOME` is inside the current Git checkout or working directory, holds unrelated files, or equals your home or `CODEX_HOME`. If none applies, read `$INTEGRITY_SEED_HOME/runtime/server.log`. |
 | `Seed Action Log authentication token is required` | `seed-sync` ran without `CODEX_LOG_TOKEN`. Use the one-command form in section 6. |
 | `Connection refused` from `seed-sync` | The runtime is stopped or `--source-url` is wrong. Without `--source-url`, `seed-sync` uses port 8765, not your runtime. Run `setup`, then read `PORT` again. |
 | An event you just wrote is missing from `seed-search` | The snapshot is older than the write. Run `seed-sync` again (section 7). |
