@@ -739,10 +739,118 @@ def _sign_manifest(
     )
 
 
+def _is_reparse(details: os.stat_result) -> bool:
+    attributes = getattr(details, "st_file_attributes", 0)
+    return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
+
+
+def _prepare_windows_store_root(root: Path, *, create: bool) -> Path:
+    """Windows owner boundary: current-principal owner + protected exact DACL."""
+
+    from ._windows_files import assert_private_directory_acl, create_new_private_directory
+
+    if create:
+        try:
+            create_new_private_directory(root)
+        except Exception as exc:
+            raise ToolzRouteStoreError(
+                "Toolz store root must be a new private directory"
+            ) from exc
+    try:
+        details = root.lstat()
+    except OSError as exc:
+        raise ToolzRouteStoreError("Toolz store root is absent") from exc
+    if root.is_symlink() or _is_reparse(details) or not stat.S_ISDIR(details.st_mode):
+        raise ToolzRouteStoreError("Toolz store root is unsafe")
+    try:
+        assert_private_directory_acl(root)
+    except Exception as exc:
+        raise ToolzRouteStoreError("Toolz store root owner or DACL rejected") from exc
+    return root
+
+
+def _pin_windows_store_root(root: Path) -> Any:
+    """Pin the root, then re-verify its junction-free ``real_path`` for SQLite use."""
+
+    from ._windows_files import PinnedWindowsDirectory
+
+    try:
+        pinned = PinnedWindowsDirectory(root)
+    except Exception as exc:
+        raise ToolzRouteStoreError("Toolz store root is unsafe") from exc
+    try:
+        _prepare_windows_store_root(pinned.real_path, create=False)
+    except Exception:
+        pinned.close()
+        raise
+    return pinned
+
+
+def _prepare_windows_database(path: Path, *, create: bool) -> Path:
+    with _pin_windows_store_root(path.parent) as pinned:
+        _verify_windows_database(pinned.real_path / path.name, create=create)
+    return path
+
+
+def _verify_windows_database(path: Path, *, create: bool) -> tuple[int, int]:
+    from ._windows_files import (
+        assert_private_directory_acl,
+        create_held_windows_file_descriptor,
+        set_private_directory_acl,
+    )
+
+    if create:
+        try:
+            descriptor = create_held_windows_file_descriptor(path)
+        except Exception as exc:
+            raise ToolzRouteStoreError("Toolz store database creation rejected") from exc
+        try:
+            set_private_directory_acl(path)
+            assert_private_directory_acl(path)
+        except Exception as exc:
+            raise ToolzRouteStoreError("Toolz store database is unsafe") from exc
+        finally:
+            os.close(descriptor)
+    try:
+        details = path.lstat()
+    except OSError as exc:
+        raise ToolzRouteStoreError("Toolz store database is absent") from exc
+    if (
+        path.is_symlink()
+        or _is_reparse(details)
+        or not stat.S_ISREG(details.st_mode)
+        or details.st_nlink != 1  # a second name (hard link) escapes the private root
+    ):
+        raise ToolzRouteStoreError("Toolz store database is unsafe")
+    try:
+        assert_private_directory_acl(path)
+    except Exception as exc:
+        raise ToolzRouteStoreError("Toolz store database is unsafe") from exc
+    return details.st_dev, details.st_ino
+
+
+def _open_windows_connection(path: Path) -> sqlite3.Connection:
+    # SQLite (and its journal) use the real path: its ancestors stay immovable
+    # while the database handle is open, unlike a retargetable junction ancestor.
+    with _pin_windows_store_root(path.parent) as pinned:
+        real = pinned.real_path / path.name
+        verified = _verify_windows_database(real, create=False)
+        connection = _connect_database(real)
+        try:
+            if _verify_windows_database(real, create=False) != verified:
+                raise ToolzRouteStoreError("Toolz store database identity changed")
+        except Exception:
+            connection.close()
+            raise
+    return connection
+
+
 def _prepare_store_root(root: Path, *, create: bool) -> Path:
     root = root.absolute()
     if not root.is_absolute():
         raise ToolzRouteStoreError("Toolz store root must be absolute")
+    if os.name == "nt":
+        return _prepare_windows_store_root(root, create=create)
     if create:
         try:
             root.mkdir(mode=0o700, parents=False, exist_ok=False)
@@ -770,6 +878,8 @@ def _prepare_store_root(root: Path, *, create: bool) -> Path:
 
 def _prepare_database(root: Path, *, create: bool) -> Path:
     path = root / STORE_DATABASE_NAME
+    if os.name == "nt":
+        return _prepare_windows_database(path, create=create)
     if create:
         flags = os.O_RDWR | os.O_CREAT | os.O_EXCL
         if hasattr(os, "O_CLOEXEC"):
@@ -806,6 +916,12 @@ def _prepare_database(root: Path, *, create: bool) -> Path:
 
 
 def _open_connection(path: Path) -> sqlite3.Connection:
+    if os.name == "nt":
+        return _open_windows_connection(path)
+    return _connect_database(path)
+
+
+def _connect_database(path: Path) -> sqlite3.Connection:
     try:
         connection = sqlite3.connect(path, timeout=5.0)
         connection.row_factory = sqlite3.Row

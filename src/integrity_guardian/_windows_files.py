@@ -30,6 +30,7 @@ _INVALID_HANDLE_VALUE = ctypes.c_void_p(-1).value
 _GENERIC_READ = 0x80000000
 _GENERIC_WRITE = 0x40000000
 _FILE_READ_ATTRIBUTES = 0x00000080
+_FILE_LIST_DIRECTORY = 0x00000001
 _FILE_SHARE_READ = 0x00000001
 _FILE_SHARE_WRITE = 0x00000002
 _FILE_SHARE_DELETE = 0x00000004
@@ -132,7 +133,7 @@ class _HeldDirectoryLineage(
                     continue
                 handle = _kernel32.CreateFileW(
                     str(item),
-                    _FILE_READ_ATTRIBUTES,
+                    _FILE_LIST_DIRECTORY | _FILE_READ_ATTRIBUTES,
                     _FILE_SHARE_READ | _FILE_SHARE_WRITE,
                     None,
                     _OPEN_EXISTING,
@@ -182,6 +183,107 @@ class HeldWindowsDirectory(AbstractContextManager["HeldWindowsDirectory"]):
 
     def close(self) -> None:
         self._lineage.close()
+
+    def __exit__(self, exc_type, exc, traceback) -> None:
+        self.close()
+
+
+def _final_directory_path(handle: int) -> Path:
+    """Return the normalized DOS final path of an open handle (no junctions)."""
+
+    function = ctypes.WINFUNCTYPE(
+        wintypes.DWORD,
+        wintypes.HANDLE,
+        wintypes.LPWSTR,
+        wintypes.DWORD,
+        wintypes.DWORD,
+        use_last_error=True,
+    )(("GetFinalPathNameByHandleW", _kernel32))
+    buffer = ctypes.create_unicode_buffer(32768)
+    length = function(handle, buffer, len(buffer), 0)  # NORMALIZED | VOLUME_NAME_DOS
+    if length == 0 or length >= len(buffer):
+        _raise_last_error("Windows final path unavailable")
+    text = buffer.value
+    if not text.startswith("\\\\?\\") or text.startswith("\\\\?\\UNC\\"):
+        raise WindowsFileBoundaryError("Windows final path form rejected")
+    return _anchored_fixed_path(Path(text[4:]))
+
+
+class PinnedWindowsDirectory(AbstractContextManager["PinnedWindowsDirectory"]):
+    """Pin one real directory name so it cannot be renamed, deleted or replaced.
+
+    Attribute-only handles do not take part in share-mode checks. A
+    FILE_LIST_DIRECTORY handle without delete sharing does: renaming or deleting
+    the pinned directory fails with a sharing violation, and NTFS refuses to
+    rename an ancestor while a descendant handle is open. Children can still be
+    created and removed (e.g. SQLite journals). ``identity`` is the pinned
+    (st_dev, st_ino), and the path must name it when the pin is taken.
+
+    A junction ancestor of ``path`` is NOT pinned and may be retargeted, so
+    path-based consumers (SQLite and its journals) must use ``real_path``: the
+    handle's final path, whose real ancestors cannot be renamed while the pin or
+    any descendant handle is open.
+    """
+
+    def __init__(self, path: Path) -> None:
+        _require_windows()
+        import msvcrt
+
+        self.path = _anchored_fixed_path(path)
+        self._descriptor: int | None = None
+        handle = _kernel32.CreateFileW(
+            str(self.path),
+            _FILE_LIST_DIRECTORY | _FILE_READ_ATTRIBUTES,
+            _FILE_SHARE_READ | _FILE_SHARE_WRITE,
+            None,
+            _OPEN_EXISTING,
+            _FILE_FLAG_OPEN_REPARSE_POINT | _FILE_FLAG_BACKUP_SEMANTICS,
+            None,
+        )
+        if handle == _INVALID_HANDLE_VALUE:
+            _raise_last_error("Windows directory pin rejected")
+        try:
+            information = _ByHandleFileInformation()
+            if not _kernel32.GetFileInformationByHandle(
+                handle,
+                ctypes.byref(information),
+            ):
+                _raise_last_error("Windows directory pin identity unavailable")
+            if (
+                not information.file_attributes & _FILE_ATTRIBUTE_DIRECTORY
+                or information.file_attributes & _FILE_ATTRIBUTE_REPARSE_POINT
+            ):
+                raise WindowsFileBoundaryError("Windows directory pin type rejected")
+            self._descriptor = msvcrt.open_osfhandle(int(handle), os.O_RDONLY)
+        except Exception:
+            _kernel32.CloseHandle(handle)
+            raise
+        try:
+            opened = os.fstat(self._descriptor)
+            linked = os.lstat(self.path)
+        except OSError as exc:
+            self.close()
+            raise WindowsFileBoundaryError("Windows directory pin identity unavailable") from exc
+        self.identity = (opened.st_dev, opened.st_ino)
+        if (linked.st_dev, linked.st_ino) != self.identity:
+            self.close()
+            raise WindowsFileBoundaryError("Windows directory pin identity changed")
+        try:
+            self.real_path = _local_fixed_path(
+                _final_directory_path(msvcrt.get_osfhandle(self._descriptor))
+            )
+            resolved = os.lstat(self.real_path)
+        except Exception as exc:
+            self.close()
+            raise WindowsFileBoundaryError("Windows directory pin real path rejected") from exc
+        if (resolved.st_dev, resolved.st_ino) != self.identity:
+            self.close()
+            raise WindowsFileBoundaryError("Windows directory pin real path changed")
+
+    def close(self) -> None:
+        if self._descriptor is not None:
+            os.close(self._descriptor)
+            self._descriptor = None
 
     def __exit__(self, exc_type, exc, traceback) -> None:
         self.close()
@@ -583,6 +685,34 @@ def create_private_directory(path: Path) -> Path:
     try:
         with _HeldDirectoryLineage(target.parent):
             created = _create_private_directory_atomic(target)
+            with HeldWindowsDirectory(target):
+                assert_private_directory_acl(target)
+    except Exception:
+        if created:
+            try:
+                os.rmdir(target)
+            except OSError:
+                pass
+        raise
+    return target
+
+
+def create_new_private_directory(path: Path) -> Path:
+    """Atomically create one NEW private directory; an existing path is rejected.
+
+    Windows counterpart of ``mkdir(mode=0o700, exist_ok=False)``: the directory is
+    created with the protected exact DACL in the same call, under a held parent
+    lineage, and must be owned by the current principal.
+    """
+
+    _require_windows()
+    target = _anchored_fixed_path(path)
+    created = False
+    try:
+        with _HeldDirectoryLineage(target.parent):
+            created = _create_private_directory_atomic(target)
+            if not created:
+                raise WindowsFileBoundaryError("private Windows directory already exists")
             with HeldWindowsDirectory(target):
                 assert_private_directory_acl(target)
     except Exception:

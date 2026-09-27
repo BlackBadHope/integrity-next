@@ -56,6 +56,26 @@ LEGACY_EXPECTED_TOOLS = [
     for name in PREVIOUS_EXPECTED_TOOLS
     if name not in {"integrity_memory_entity_brief", "integrity_memory_link_audit"}
 ]
+# A broker serves exactly its installed tools contract. The hook reads that same
+# contract instead of keeping its own copy, so the two can never drift apart.
+# The core below must always be present for turn registration and closure.
+REQUIRED_BROKER_CORE_TOOLS = frozenset(
+    {
+        "integrity_append_event",
+        "integrity_turn_memory_open",
+        "integrity_turn_memory_close",
+        "integrity_turn_memory_gap",
+        "integrity_turn_memory_coverage",
+        "integrity_context_admission",
+        "integrity_context_admission_current_turn",
+        "integrity_memory_capabilities",
+        "integrity_seed_snapshot",
+    }
+)
+TOOLS_CONTRACT_ARGUMENT = "--tools-contract"
+TOOLS_CONTRACT_MAX_BYTES = 4 * 1024 * 1024
+TOOL_NAME_RE = re.compile(r"^integrity_[a-z0-9_]{1,80}$")
+HEALTH_FILE = "hook-health.json"
 SERVER_NAME = "integrity-client-memory"
 BROKER_SERVER_VERSION = "1.4.1"
 SERVER_VERSION = "2.10.0"
@@ -63,7 +83,7 @@ PREVIOUS_SERVER_VERSION = "2.9.0"
 OLDER_SERVER_VERSION = "2.8.0"
 LEGACY_SERVER_VERSION = "2.7.0"
 ROLLOUT_LEGACY_SERVER_VERSION = "2.6.0"
-HOOK_VERSION = "1.7.2"
+HOOK_VERSION = "1.7.3"
 LIFECYCLE_BUDGET_SECONDS = 45
 LIFECYCLE_DEADLINE: float | None = None
 SEMANTIC_CADENCE_MAX_AGE_SECONDS = 3600
@@ -445,8 +465,12 @@ def machine_id() -> str:
 
 
 def state_root() -> Path:
-    root = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))).resolve()
-    target = root / "integrity-memory" / "state"
+    override = os.environ.get("INTEGRITY_CLIENT_STATE_ROOT")
+    if override:
+        target = Path(override).resolve()
+    else:
+        root = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))).resolve()
+        target = root / "integrity-memory" / "state"
     target.mkdir(mode=0o700, parents=True, exist_ok=True)
     if target.is_symlink():
         raise HookError("unsafe_state_root")
@@ -546,18 +570,137 @@ def save_state(identity: str, state: dict[str, Any]) -> None:
             pass
 
 
+def broker_contract_tools(arguments: list[str]) -> list[str]:
+    """Return the exact tool names of the broker's own installed contract."""
+
+    if arguments.count(TOOLS_CONTRACT_ARGUMENT) != 1:
+        raise HookError("tool_contract_unavailable")
+    index = arguments.index(TOOLS_CONTRACT_ARGUMENT)
+    if index + 1 >= len(arguments):
+        raise HookError("tool_contract_unavailable")
+    path = Path(arguments[index + 1])
+    try:
+        if path.is_symlink() or not path.is_file():
+            raise HookError("tool_contract_unavailable")
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise HookError("tool_contract_unavailable") from exc
+    if len(raw) > TOOLS_CONTRACT_MAX_BYTES:
+        raise HookError("tool_contract_invalid")
+    try:
+        contract = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise HookError("tool_contract_invalid") from exc
+    if not isinstance(contract, list) or not contract:
+        raise HookError("tool_contract_invalid")
+    names = []
+    for item in contract:
+        name = item.get("name") if isinstance(item, dict) else None
+        if not isinstance(name, str) or TOOL_NAME_RE.fullmatch(name) is None:
+            raise HookError("tool_contract_invalid")
+        names.append(name)
+    if len(set(names)) != len(names):
+        raise HookError("tool_contract_invalid")
+    if not REQUIRED_BROKER_CORE_TOOLS <= set(names):
+        raise HookError("tool_contract_core_missing")
+    return names
+
+
+def record_hook_health(operation: str, error: BaseException | None) -> None:
+    """Keep one machine-visible record of lifecycle success and failure.
+
+    A failing registration used to be visible only to the model, which could
+    carry on without memory. SessionStart reports this record loudly.
+    """
+
+    try:
+        path = state_root().parent / HEALTH_FILE
+        health: dict[str, Any] = {}
+        if path.is_file() and not path.is_symlink():
+            loaded = json.loads(path.read_text(encoding="utf-8"))
+            health = loaded if isinstance(loaded, dict) else {}
+        now = utc_now()
+        health.update(
+            {
+                "protocol": "integrity-memory/hook-health/v1",
+                "hook_version": HOOK_VERSION,
+                "last_operation": operation,
+            }
+        )
+        if error is None:
+            health["last_success_utc"] = now
+            health["consecutive_failures"] = 0
+        else:
+            previous = health.get("consecutive_failures")
+            health["consecutive_failures"] = (
+                previous + 1 if isinstance(previous, int) and previous >= 0 else 1
+            )
+            health["last_failure_utc"] = now
+            health["last_failure"] = f"{type(error).__name__}: {str(error)[:200]}"
+        temporary = path.with_name(f".health-{uuid.uuid4().hex}.tmp")
+        try:
+            descriptor = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8") as stream:
+                stream.write(compact(health) + "\n")
+            os.replace(temporary, path)
+        finally:
+            try:
+                temporary.unlink()
+            except FileNotFoundError:
+                pass
+    except Exception:  # noqa: BLE001 - health is advisory and never blocks a turn
+        return
+
+
+def health_path() -> Path:
+    """Locate the health record without creating any state at SessionStart."""
+
+    root = Path(os.environ.get("CODEX_HOME", str(Path.home() / ".codex"))).resolve()
+    return root / "integrity-memory" / HEALTH_FILE
+
+
+def degraded_health_notice() -> str | None:
+    try:
+        path = health_path()
+        if not path.is_file() or path.is_symlink():
+            return None
+        health = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    failures = health.get("consecutive_failures") if isinstance(health, dict) else None
+    if not isinstance(failures, int) or failures < 1:
+        return None
+    return (
+        "INTEGRITY MEMORY DEGRADED: the last "
+        f"{failures} memory lifecycle call(s) failed since {health.get('last_failure_utc')} "
+        f"({health.get('last_failure')}); turns are not being registered and events are "
+        "not being recorded. Tell the owner before continuing."
+    )
+
+
+def registered_transport() -> dict[str, Any]:
+    """The client MCP registration: an installer-written file for Claude Code, Codex's own registry otherwise."""
+    explicit = os.environ.get("INTEGRITY_CLIENT_MCP_TRANSPORT")
+    if explicit:
+        try:
+            return json.loads(Path(explicit).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as exc:
+            raise HookError("mcp_registration_unavailable") from exc
+    completed = subprocess.run(
+        ["codex", "mcp", "get", "integrity_client_memory", "--json"],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=remaining_lifecycle_seconds(15),
+    )
+    if completed.returncode != 0:
+        raise HookError("mcp_registration_unavailable")
+    return json.loads(completed.stdout)
+
+
 class McpClient:
     def __init__(self) -> None:
-        completed = subprocess.run(
-            ["codex", "mcp", "get", "integrity_client_memory", "--json"],
-            check=False,
-            capture_output=True,
-            text=True,
-            timeout=remaining_lifecycle_seconds(15),
-        )
-        if completed.returncode != 0:
-            raise HookError("mcp_registration_unavailable")
-        entry = json.loads(completed.stdout)
+        entry = registered_transport()
         transport = entry.get("transport")
         if not isinstance(transport, dict) or transport.get("type") != "stdio":
             raise HookError("transport_type_mismatch")
@@ -571,6 +714,7 @@ class McpClient:
             or not isinstance(environment, dict)
         ):
             raise HookError("invalid_mcp_transport")
+        self.broker_contract_arguments = list(arguments)
         child_environment = dict(os.environ)
         child_environment.update({str(key): str(value) for key, value in environment.items()})
         self.process = subprocess.Popen(
@@ -621,7 +765,7 @@ class McpClient:
         tools = listed.get("tools")
         server_version = server.get("version")
         expected_tools = (
-            EXPECTED_TOOLS
+            broker_contract_tools(self.broker_contract_arguments)
             if server_version in {BROKER_SERVER_VERSION, "1.4.0"}
             else LEGACY_EXPECTED_TOOLS
             if server_version in {ROLLOUT_LEGACY_SERVER_VERSION, LEGACY_SERVER_VERSION}
@@ -704,11 +848,16 @@ def lifecycle_call(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     client = None
     try:
         client = McpClient()
-        return client.call(name, arguments)
+        result = client.call(name, arguments)
+    except BaseException as exc:
+        record_hook_health(name, exc)
+        raise
     finally:
         if client is not None:
             client.close()
         LIFECYCLE_DEADLINE = previous_deadline
+    record_hook_health(name, None)
+    return result
 
 
 def tool_name(payload: dict[str, Any]) -> str:
@@ -1712,16 +1861,27 @@ def main() -> int:
             "SubagentStop",
         ),
     )
+    # Claude Code has no CODEX_HOME or Codex MCP registry: its installer passes explicit roots.
+    parser.add_argument("--state-root")
+    parser.add_argument("--envelope-root")
+    parser.add_argument("--transport")
     args = parser.parse_args()
+    for value, name in ((args.state_root, "INTEGRITY_CLIENT_STATE_ROOT"),
+                        (args.envelope_root, "INTEGRITY_CLIENT_ENVELOPE_ROOT"),
+                        (args.transport, "INTEGRITY_CLIENT_MCP_TRANSPORT")):
+        if value:
+            os.environ[name] = value
     raw = sys.stdin.read()
     payload = json.loads(raw) if raw.strip() else {}
     if not isinstance(payload, dict):
         raise HookError("invalid_hook_payload")
     identity = session_id(payload)
     if args.event == "SessionStart":
+        notice = degraded_health_notice()
         output_context(
             args.event,
-            "INTEGRITY client SESSION PENDING INTENT ADMISSION. No Seed snapshot was opened at startup.",
+            (notice + "\n" if notice else "")
+            + "INTEGRITY client SESSION PENDING INTENT ADMISSION. No Seed snapshot was opened at startup.",
         )
         return 0
     with session_state_lock(identity):

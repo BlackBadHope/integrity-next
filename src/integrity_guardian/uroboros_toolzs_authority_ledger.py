@@ -129,8 +129,134 @@ def _assert_root_binding(candidate: Path, descriptor: int) -> os.stat_result:
     return opened
 
 
-def _prepare_root(root: Path, *, create: bool) -> tuple[Path, int]:
+def _is_reparse(details: os.stat_result) -> bool:
+    attributes = getattr(details, "st_file_attributes", 0)
+    return bool(attributes & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0))
+
+
+def _release(guard: Any) -> None:
+    """Close a POSIX descriptor or a held Windows directory guard."""
+
+    if isinstance(guard, int):
+        os.close(guard)
+    elif guard is not None:
+        guard.close()
+
+
+class _WindowsRootGuard:
+    """Windows counterpart of the POSIX root descriptor binding.
+
+    Pins the root name (no rename/delete/replacement of it or its ancestors while
+    held, see ``PinnedWindowsDirectory``) so SQLite cannot be redirected outside the
+    verified root, and re-asserts path identity plus the current-principal owner /
+    protected exact DACL before database use and after the store opens -- the same
+    bind-and-recheck semantics as ``_assert_root_binding``.
+    """
+
+    def __init__(self, path: Path, identity: tuple[int, int], held: Any) -> None:
+        self.path, self.identity, self._held = path, identity, held
+
+    def assert_bound(self) -> None:
+        from ._windows_files import assert_private_directory_acl
+
+        try:
+            details = self.path.lstat()
+            assert_private_directory_acl(self.path)
+        except Exception as exc:
+            raise ToolzAuthorityError("Toolzs authority ledger root is unsafe") from exc
+        if (
+            stat.S_ISLNK(details.st_mode)
+            or _is_reparse(details)
+            or not stat.S_ISDIR(details.st_mode)
+            or (details.st_dev, details.st_ino) != self.identity
+        ):
+            raise ToolzAuthorityError("Toolzs authority ledger root is unsafe")
+
+    def close(self) -> None:
+        self._held.close()
+
+
+def _prepare_windows_root(candidate: Path, *, create: bool) -> tuple[Path, Any]:
+    """Windows owner boundary: current-principal owner + protected exact DACL."""
+
+    from ._windows_files import PinnedWindowsDirectory, create_new_private_directory
+
+    try:
+        if create:
+            if not candidate.parent.exists():
+                raise ToolzAuthorityError("Toolzs authority ledger root rejected")
+            create_new_private_directory(candidate)
+        details = candidate.lstat()
+    except ToolzAuthorityError:
+        raise
+    except Exception as exc:
+        raise ToolzAuthorityError("Toolzs authority ledger root rejected") from exc
+    try:
+        pinned = PinnedWindowsDirectory(candidate)
+    except Exception as exc:
+        raise ToolzAuthorityError("Toolzs authority ledger root is unsafe") from exc
+    # Bind the junction-free real path: SQLite and its journal must not follow a
+    # retargetable junction ancestor of the requested path.
+    guard = _WindowsRootGuard(pinned.real_path, (details.st_dev, details.st_ino), pinned)
+    try:
+        if pinned.identity != guard.identity:
+            raise ToolzAuthorityError("Toolzs authority ledger root is unsafe")
+        guard.assert_bound()
+    except Exception:
+        guard.close()
+        raise
+    return pinned.real_path, guard
+
+
+def _assert_windows_database(path: Path, descriptor: int) -> None:
+    from ._windows_files import assert_private_directory_acl
+
+    try:
+        linked = path.lstat()
+        opened = os.fstat(descriptor)
+        assert_private_directory_acl(path)
+    except Exception as exc:
+        raise ToolzAuthorityError("Toolzs authority ledger database is unsafe") from exc
+    if (
+        stat.S_ISLNK(linked.st_mode)
+        or _is_reparse(linked)
+        or not stat.S_ISREG(linked.st_mode)
+        or not stat.S_ISREG(opened.st_mode)
+        or linked.st_nlink != 1  # a second name (hard link) escapes the private root
+        or (linked.st_dev, linked.st_ino) != (opened.st_dev, opened.st_ino)
+    ):
+        raise ToolzAuthorityError("Toolzs authority ledger database is unsafe")
+
+
+def _prepare_windows_database(path: Path, guard: Any, *, create: bool) -> tuple[Path, int]:
+    from ._windows_files import create_held_windows_file_descriptor, set_private_directory_acl
+
+    if not isinstance(guard, _WindowsRootGuard):
+        raise ToolzAuthorityError("Toolzs authority ledger root binding required")
+    descriptor: int | None = None
+    try:
+        guard.assert_bound()
+        if create:
+            descriptor = create_held_windows_file_descriptor(path)
+            set_private_directory_acl(path)
+        else:
+            flags = os.O_RDWR | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOINHERIT", 0)
+            descriptor = os.open(path, flags)
+        _assert_windows_database(path, descriptor)
+        guard.assert_bound()
+    except Exception as exc:
+        if descriptor is not None:
+            os.close(descriptor)
+        if isinstance(exc, ToolzAuthorityError):
+            raise
+        raise ToolzAuthorityError("Toolzs authority ledger database rejected") from exc
+    return path, descriptor
+
+
+def _prepare_root(root: Path, *, create: bool) -> tuple[Path, Any]:
     candidate = Path(root).absolute()
+    if os.name == "nt":
+        return _prepare_windows_root(candidate, create=create)
     try:
         if create:
             candidate.mkdir(mode=0o700, parents=True, exist_ok=False)
@@ -165,11 +291,13 @@ def _prepare_root(root: Path, *, create: bool) -> tuple[Path, int]:
 
 def _prepare_database(
     root: Path,
-    root_descriptor: int,
+    root_descriptor: Any,
     *,
     create: bool,
 ) -> tuple[Path, int]:
     path = root / AUTHORITY_LEDGER_DATABASE_NAME
+    if os.name == "nt":
+        return _prepare_windows_database(path, root_descriptor, create=create)
     flags = os.O_RDWR
     if create:
         flags |= os.O_CREAT | os.O_EXCL
@@ -216,7 +344,14 @@ def _prepare_database(
     return path, descriptor
 
 
-def _descriptor_path(descriptor: int) -> Path:
+def _descriptor_path(descriptor: int, path: Path | None = None) -> Path:
+    if os.name == "nt":
+        # No procfs: SQLite opens the verified real path while the root name is
+        # pinned and the file identity is re-checked after the store opens it.
+        if path is None:
+            raise ToolzAuthorityError("Toolzs authority ledger database path required")
+        _assert_windows_database(path, descriptor)
+        return path
     proc = Path("/proc/self/fd")
     if not proc.is_dir():
         raise ToolzAuthorityError("Toolzs authority ledger requires Linux procfs")
@@ -278,10 +413,15 @@ class ToolzAuthorityLedger:
                 create=True,
             )
             store = LedgerStore(
-                _descriptor_path(database_descriptor),
+                _descriptor_path(database_descriptor, prepared_root / AUTHORITY_LEDGER_DATABASE_NAME),
                 tenant_id="tenant:public-6e3cdbebaafc8efa",
                 ledger_id=policy.ledger_id,
             )
+            if os.name == "nt":
+                _assert_windows_database(
+                    prepared_root / AUTHORITY_LEDGER_DATABASE_NAME, database_descriptor
+                )
+                root_descriptor.assert_bound()
             ledger = cls(
                 root=prepared_root,
                 root_descriptor=root_descriptor,
@@ -313,7 +453,7 @@ class ToolzAuthorityLedger:
             if database_descriptor is not None:
                 os.close(database_descriptor)
             if root_descriptor is not None:
-                os.close(root_descriptor)
+                _release(root_descriptor)
             raise
 
     @classmethod
@@ -342,10 +482,15 @@ class ToolzAuthorityLedger:
                 create=False,
             )
             store = LedgerStore(
-                _descriptor_path(database_descriptor),
+                _descriptor_path(database_descriptor, prepared_root / AUTHORITY_LEDGER_DATABASE_NAME),
                 tenant_id="tenant:public-6e3cdbebaafc8efa",
                 ledger_id=policy.ledger_id,
             )
+            if os.name == "nt":
+                _assert_windows_database(
+                    prepared_root / AUTHORITY_LEDGER_DATABASE_NAME, database_descriptor
+                )
+                root_descriptor.assert_bound()
             ledger = cls(
                 root=prepared_root,
                 root_descriptor=root_descriptor,
@@ -362,7 +507,7 @@ class ToolzAuthorityLedger:
             if database_descriptor is not None:
                 os.close(database_descriptor)
             if root_descriptor is not None:
-                os.close(root_descriptor)
+                _release(root_descriptor)
             raise
 
     @staticmethod
@@ -392,7 +537,7 @@ class ToolzAuthorityLedger:
                 self._store.close()
             finally:
                 os.close(self._database_descriptor)
-                os.close(self._root_descriptor)
+                _release(self._root_descriptor)
                 self._closed = True
 
     def __enter__(self) -> Self:

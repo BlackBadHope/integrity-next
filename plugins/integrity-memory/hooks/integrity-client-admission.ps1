@@ -43,7 +43,21 @@ $LegacyExpectedTools = @($PreviousExpectedTools | Where-Object {
     $_ -notin @('integrity_memory_entity_brief','integrity_memory_link_audit')
 })
 $script:Connector = $null
-$script:HookVersion = '1.7.2'
+$script:HookVersion = '1.7.3'
+# A broker serves exactly its installed tools contract. The hook reads that same
+# contract instead of keeping its own copy, so the two can never drift apart.
+$RequiredBrokerCoreTools = @(
+    'integrity_append_event',
+    'integrity_turn_memory_open',
+    'integrity_turn_memory_close',
+    'integrity_turn_memory_gap',
+    'integrity_turn_memory_coverage',
+    'integrity_context_admission',
+    'integrity_context_admission_current_turn',
+    'integrity_memory_capabilities',
+    'integrity_seed_snapshot'
+)
+$script:BrokerToolsContractArguments = @()
 $script:LifecycleDeadline = [DateTimeOffset]::UtcNow.AddSeconds(45)
 $script:SemanticCadenceMaxAgeSeconds = 3600L
 $script:SemanticCadenceMaxActions = 24L
@@ -661,6 +675,91 @@ function Save-State {
     }
 }
 
+function Get-BrokerContractTools {
+    param([string[]]$Arguments)
+    $positions = @(for ($index = 0; $index -lt $Arguments.Count; $index++) {
+        if ($Arguments[$index] -ceq '--tools-contract') { $index }
+    })
+    if ($positions.Count -ne 1 -or ($positions[0] + 1) -ge $Arguments.Count) { throw 'tool_contract_unavailable' }
+    $path = [string]$Arguments[$positions[0] + 1]
+    if (-not [IO.File]::Exists($path)) { throw 'tool_contract_unavailable' }
+    $item = Get-Item -LiteralPath $path -Force
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) { throw 'tool_contract_unavailable' }
+    if ($item.Length -gt 4MB) { throw 'tool_contract_invalid' }
+    try { $contract = @([IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) | ConvertFrom-Json -Depth 64 -NoEnumerate) }
+    catch { throw 'tool_contract_invalid' }
+    if ($contract.Count -eq 1 -and $contract[0] -is [Array]) { $contract = @($contract[0]) }
+    if ($contract.Count -lt 1) { throw 'tool_contract_invalid' }
+    $names = [Collections.Generic.List[string]]::new()
+    foreach ($tool in $contract) {
+        $name = [string](Get-Value -Object $tool -Name 'name' -Default '')
+        if ($name -cnotmatch '^integrity_[a-z0-9_]{1,80}$') { throw 'tool_contract_invalid' }
+        $names.Add($name)
+    }
+    if (@($names | Select-Object -Unique).Count -ne $names.Count) { throw 'tool_contract_invalid' }
+    foreach ($required in $RequiredBrokerCoreTools) {
+        if (-not $names.Contains($required)) { throw 'tool_contract_core_missing' }
+    }
+    return ,@($names)
+}
+
+function Record-HookHealth {
+    param([string]$Operation, [string]$Failure)
+    # A failing registration used to be visible only to the model. SessionStart
+    # reports this machine-level record loudly. Health never blocks a turn.
+    try {
+        $path = Join-Path (Split-Path -Parent (Get-StateRoot)) 'hook-health.json'
+        $health = @{}
+        if ([IO.File]::Exists($path)) {
+            try { $health = [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) | ConvertFrom-Json -AsHashtable -Depth 8 } catch { $health = @{} }
+            if ($health -isnot [Collections.IDictionary]) { $health = @{} }
+        }
+        $now = [DateTimeOffset]::UtcNow.ToString('o')
+        $health['protocol'] = 'integrity-memory/hook-health/v1'
+        $health['hook_version'] = $script:HookVersion
+        $health['last_operation'] = $Operation
+        if ([string]::IsNullOrEmpty($Failure)) {
+            $health['last_success_utc'] = $now
+            $health['consecutive_failures'] = 0
+        } else {
+            $previous = $health['consecutive_failures']
+            $health['consecutive_failures'] = $(if ($previous -is [int] -or $previous -is [long]) { [int]$previous + 1 } else { 1 })
+            $health['last_failure_utc'] = $now
+            $health['last_failure'] = $Failure.Substring(0, [Math]::Min(200, $Failure.Length))
+        }
+        $temporary = Join-Path (Split-Path -Parent $path) ('.health-' + [Guid]::NewGuid().ToString('N') + '.tmp')
+        try {
+            [IO.File]::WriteAllText($temporary, ($health | ConvertTo-Json -Depth 8 -Compress) + [Environment]::NewLine, $utf8NoBom)
+            Move-Item -LiteralPath $temporary -Destination $path -Force
+        }
+        finally {
+            if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+        }
+    } catch { }
+}
+
+function Get-HealthPath {
+    # Resolve without creating any state: SessionStart must stay side-effect free.
+    $codexHome = [Environment]::GetEnvironmentVariable('CODEX_HOME')
+    if ([string]::IsNullOrWhiteSpace($codexHome)) {
+        $codexHome = Join-Path ([Environment]::GetFolderPath([Environment+SpecialFolder]::UserProfile)) '.codex'
+    }
+    return [IO.Path]::GetFullPath((Join-Path $codexHome 'integrity-memory\hook-health.json'))
+}
+
+function Get-DegradedHealthNotice {
+    try {
+        $path = Get-HealthPath
+        if (-not [IO.File]::Exists($path)) { return $null }
+        $health = [IO.File]::ReadAllText($path, [Text.Encoding]::UTF8) | ConvertFrom-Json -AsHashtable -Depth 8
+        $failures = $health['consecutive_failures']
+        if (-not ($failures -is [int] -or $failures -is [long]) -or $failures -lt 1) { return $null }
+        return ('INTEGRITY MEMORY DEGRADED: the last ' + $failures + ' memory lifecycle call(s) failed since ' +
+            [string]$health['last_failure_utc'] + ' (' + [string]$health['last_failure'] +
+            '); turns are not being registered and events are not being recorded. Tell the owner before continuing.')
+    } catch { return $null }
+}
+
 function Start-RegisteredConnector {
     $codex = Get-Command codex -CommandType Application -ErrorAction Stop | Select-Object -First 1
     # A bounded child also supports Windows codex.cmd shims without shell interpolation.
@@ -700,6 +799,7 @@ function Start-RegisteredConnector {
     $info.RedirectStandardOutput = $true
     $info.RedirectStandardError = $true
     $arguments = @(Require-Property -Object $transport -Name 'args')
+    $script:BrokerToolsContractArguments = @($arguments | ForEach-Object { [string]$_ })
     foreach ($argument in $arguments) {
         [void]$info.ArgumentList.Add([string]$argument)
     }
@@ -735,6 +835,19 @@ function Receive-Rpc {
 }
 
 function Invoke-Tool {
+    param([Diagnostics.Process]$Process, [int]$Id, [string]$Name, [hashtable]$Arguments)
+    try {
+        $value = Invoke-ToolCall -Process $Process -Id $Id -Name $Name -Arguments $Arguments
+    }
+    catch {
+        Record-HookHealth -Operation $Name -Failure ([string]$_.Exception.Message)
+        throw
+    }
+    Record-HookHealth -Operation $Name -Failure ''
+    return $value
+}
+
+function Invoke-ToolCall {
     param([Diagnostics.Process]$Process, [int]$Id, [string]$Name, [hashtable]$Arguments)
     Send-Rpc -Process $Process -Request @{
         jsonrpc = '2.0'; id = $Id; method = 'tools/call'
@@ -782,7 +895,7 @@ function Open-ConnectorSession {
         $listed = Receive-Rpc -Process $process -Id 2
         $names = @((Require-Value -Object (Require-Value -Object $listed -Name 'result') -Name 'tools') | ForEach-Object { [string]$_.name })
         $expected = if ([string]$server.version -in @('1.4.1','1.4.0')) {
-            $ExpectedTools
+            Get-BrokerContractTools -Arguments $script:BrokerToolsContractArguments
         } elseif ([string]$server.version -in @('2.6.0','2.7.0')) {
             $LegacyExpectedTools
         } elseif ([string]$server.version -eq '2.8.0') {
@@ -797,6 +910,7 @@ function Open-ConnectorSession {
         return @{ process = $process; initialize = $initialize; tool_names = $names }
     }
     catch {
+        Record-HookHealth -Operation 'connector' -Failure ([string]$_.Exception.Message)
         try { $process.StandardInput.Close() } catch {}
         if (-not $process.WaitForExit(1000)) { try { $process.Kill($true) } catch {} }
         throw
@@ -1356,7 +1470,9 @@ $turnId = Get-TurnId -Payload $payload
 
 if ($Event -eq 'SessionStart') {
     try {
+        $degraded = Get-DegradedHealthNotice
         Write-AdditionalContext -HookEvent $Event -Context (
+            $(if ($degraded) { $degraded + "`n" } else { '' }) +
             "INTEGRITY client SESSION PENDING INTENT ADMISSION`n" +
             "MEMORY AUTHORITY: provider=memory-only; target_action=not-evaluated; provider boundary is not a target denial. " +
             "Home=0. No Seed snapshot or shared admission state was opened at process startup. " +
