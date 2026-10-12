@@ -735,7 +735,7 @@ class TurnMemoryStore:
                 f"""
                 SELECT r.rowid AS registration_order, r.registration_id, r.machine_id,
                        r.thread_id, r.turn_id, {intent_projection}, r.receipt_json AS registration_receipt,
-                       t.receipt_json AS terminal_receipt,
+                       t.receipt_json AS terminal_receipt, t.request_digest AS terminal_request_digest,
                        (
                            SELECT g.receipt_json FROM turn_gap_receipts g
                            WHERE g.registration_id = r.registration_id
@@ -750,6 +750,13 @@ class TurnMemoryStore:
             ).fetchall()
         counts = {"registered": 0, "terminal": 0, "events": 0, "no_event": 0, "unresolved": 0}
         unresolved: list[dict[str, Any]] = []
+        receipt_sample: list[dict[str, Any]] = []
+        sample_budget = 262_144
+        size_limited = False
+        sample_header = {"protocol":"integrity-guardian/turn-memory-receipt-sample/v1",
+            "receipts":[],"limit":limit,"returned_count":0,"complete":False,"has_more":False,
+            "size_limited":False,"byte_budget":sample_budget,
+            "absence_is_retry_authority":False,"canonical_writes":0}
         for row in rows:
             registration_receipt = self._verify_profile_receipt('registration',json.loads(bytes(row['registration_receipt'])))
             identity = registration_receipt["identity"]
@@ -770,11 +777,25 @@ class TurnMemoryStore:
                         or terminal_receipt['identity'] != identity
                         or terminal_receipt['prompt_sha256'] != registration_receipt['prompt_sha256']):
                     raise TurnMemoryError("turn-memory terminal index mismatch")
+                request = {"registration_id":row["registration_id"], "outcome":terminal_receipt["outcome"],
+                    **({"events":terminal_receipt["events"]} if terminal_receipt["outcome"] == "events" else {}),
+                    **({"no_event_reason":terminal_receipt["no_event_reason"]} if terminal_receipt["outcome"] == "no-event" else {})}
+                request_digest = _digest(request, domain="turn-memory-terminal-request-v1")
+                if row["terminal_request_digest"] != request_digest:
+                    raise TurnMemoryError("terminal request digest mismatch")
+                if len(receipt_sample) < limit:
+                    entry = {"registration_id":row["registration_id"],
+                        "registration_receipt":registration_receipt,"terminal_receipt":terminal_receipt,
+                        "terminal_request_digest":request_digest,"gap_receipt":None,"status":"closed"}
+                    proposed = {**sample_header,"receipts":receipt_sample+[entry],"returned_count":len(receipt_sample)+1}
+                    if len(canonical_bytes(proposed)) <= sample_budget: receipt_sample.append(entry)
+                    else: size_limited = True
                 counts["terminal"] += 1
                 counts["events" if terminal_receipt["outcome"] == "events" else "no_event"] += 1
                 continue
             counts["unresolved"] += 1
             latest_gap_receipt_id = None
+            gap_receipt = None
             if row["latest_gap_receipt"] is not None:
                 gap_receipt = self._verify_profile_receipt('gap-receipt',json.loads(bytes(row['latest_gap_receipt'])))
                 if (gap_receipt['registration_id'] != row['registration_id']
@@ -783,6 +804,13 @@ class TurnMemoryStore:
                         or gap_receipt['prompt_sha256'] != registration_receipt['prompt_sha256']):
                     raise TurnMemoryError("turn-memory gap index mismatch")
                 latest_gap_receipt_id = gap_receipt["receipt_id"]
+            if len(receipt_sample) < limit:
+                entry = {"registration_id":row["registration_id"],
+                    "registration_receipt":registration_receipt,"terminal_receipt":None,
+                    "terminal_request_digest":None,"gap_receipt":gap_receipt,"status":"open"}
+                proposed = {**sample_header,"receipts":receipt_sample+[entry],"returned_count":len(receipt_sample)+1}
+                if len(canonical_bytes(proposed)) <= sample_budget: receipt_sample.append(entry)
+                else: size_limited = True
             if len(unresolved) < limit:
                 unresolved.append(
                     {
@@ -800,5 +828,10 @@ class TurnMemoryStore:
             "counts": counts,
             "unresolved": unresolved,
             "returned_count": len(unresolved),
+            "receipt_sample":{"protocol":"integrity-guardian/turn-memory-receipt-sample/v1",
+                "receipts":receipt_sample,"limit":limit,"returned_count":len(receipt_sample),
+                "complete":counts["registered"] == len(receipt_sample),"has_more":counts["registered"] > len(receipt_sample),
+                "size_limited":size_limited,"byte_budget":sample_budget,
+                "absence_is_retry_authority":False,"canonical_writes":0},
             "production_authority": False,
         }

@@ -131,7 +131,9 @@ class VersionedTurnMemoryService:
         if isinstance(limit,bool) or not isinstance(limit,int) or not 1<=limit<=500:
             raise TurnMemoryError('coverage limit is invalid')
         known={key:0 for key in ('registered','terminal','events','no_event','unresolved')}
-        stores=[];unresolved=[];complete=True
+        from datetime import datetime,timezone
+        stores=[];unresolved=[];complete=True;receipt_sample=[];size_limited=False
+        sample_budget=262_144
         for profile in PROFILES:
             try:
                 observed=self._store(profile).coverage(machine_id=machine_id,thread_id=thread_id,limit=limit)
@@ -140,6 +142,11 @@ class VersionedTurnMemoryService:
                 policy=self._store(profile).creation_policy() if profile=='native-intent-v1' else None
                 for key in known:known[key]+=observed['counts'][key]
                 unresolved.extend({**entry,'store_id':profile} for entry in observed['unresolved'])
+                sample=observed['receipt_sample']
+                if sample['absence_is_retry_authority'] is not False or sample['canonical_writes'] != 0 or len(canonical_bytes(sample)) > sample_budget:
+                    raise TurnMemoryError('receipt sample validation failed')
+                size_limited=size_limited or sample['size_limited']
+                receipt_sample.extend({**entry,'store_id':profile} for entry in sample['receipts'])
                 stores.append({'store_id':profile,'status':'ready','counts':observed['counts'],
                     'namespace_fingerprint':self.namespace})
                 if policy is not None:stores[-1]['creation_policy']=policy
@@ -150,10 +157,32 @@ class VersionedTurnMemoryService:
                     'failure_digest':'sha256:'+sha256((type(exc).__name__+':'+str(exc)).encode()).hexdigest()})
         # Stable bounded union; each registration belongs to one signed profile.
         unresolved=sorted(unresolved,key=lambda item:(item['registration_id'],item['store_id']))[:limit]
+        # Per-profile samples are newest-first and bounded before the union.
+        # A signed positive match remains usable; omission never authorizes replay.
+        sample_ids=[entry['registration_id'] for entry in receipt_sample]
+        if len(set(sample_ids)) != len(sample_ids):
+            raise TurnMemoryError('ambiguous receipt profile sample')
+        receipt_sample=sorted(receipt_sample,key=lambda entry:(datetime.fromisoformat(entry['registration_receipt']['opened_at'].replace('Z','+00:00')).astimezone(timezone.utc),entry['registration_id'],entry['store_id']),reverse=True)
+        bounded=[]
+        sample_header={'protocol':'integrity-guardian/turn-memory-receipt-sample/v1',
+            'receipts':[],'limit':limit,'returned_count':0,'complete':False,'has_more':False,
+            'size_limited':False,'byte_budget':sample_budget,
+            'absence_is_retry_authority':False,'canonical_writes':0}
+        for entry in receipt_sample:
+            if len(bounded) >= limit:break
+            proposed={**sample_header,'receipts':bounded+[entry],'returned_count':len(bounded)+1}
+            if len(canonical_bytes(proposed)) <= sample_budget:bounded.append(entry)
+            else:size_limited=True
+        receipt_sample=bounded
         policy=next((row.get('creation_policy') for row in stores if row['store_id']=='native-intent-v1'),None)
         return {'protocol':COVERAGE_PROTOCOL,'namespace_fingerprint':self.namespace,
             'complete':complete,'counts':known if complete else None,'known_counts':known,
             'stores':stores,'unresolved':unresolved,'returned_count':len(unresolved),
+            'receipt_sample':{'protocol':'integrity-guardian/turn-memory-receipt-sample/v1',
+                'receipts':receipt_sample,'limit':limit,'returned_count':len(receipt_sample),
+                'complete':complete and known['registered']==len(receipt_sample),'has_more':(known['registered']>len(receipt_sample)) if complete else None,
+                'size_limited':size_limited,'byte_budget':sample_budget,
+                'absence_is_retry_authority':False,'canonical_writes':0},
             'modern_creation_enabled':(self.modern_creation_enabled and policy['mode']=='enabled') if policy is not None else None,
             'production_authority':False}
 

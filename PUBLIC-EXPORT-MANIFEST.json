@@ -2837,18 +2837,18 @@
       "sha256": "d87c3d9da4a8fce940c72f3efd53b3b624f2a766b46c1ebe61e434d6321603be"
     },
     {
-      "bytes": 38024,
+      "bytes": 40726,
       "mode": "0o644",
       "path": "components/integrity-installed-runtime/sources/client-memory/integrity_guardian/turn_memory.py",
       "sanitization_edits": 0,
-      "sha256": "fc41f4a5669865cf21eb75f60eb716690c71632dcff4753e5ab17b3227bf9b37"
+      "sha256": "2f3e53fcd74fde0a173e4f88748742e3ffddc60b0f7785b9a07e8d5ae846a980"
     },
     {
-      "bytes": 9963,
+      "bytes": 12268,
       "mode": "0o644",
       "path": "components/integrity-installed-runtime/sources/client-memory/integrity_guardian/turn_memory_profiles.py",
       "sanitization_edits": 0,
-      "sha256": "b6be77743f71a1d31f3c8b0acbef3eac94e21a4bbc383b025f03e936f7c4eecd"
+      "sha256": "520da4d0852fc34d7ddc8c33ffe473aad29fd4e09dd3915027153c30908fd832"
     },
     {
       "bytes": 24614,
@@ -10540,7 +10540,7 @@
       "sha256": "b26f7596d83095ddbee8149f1e3130ee65e3396dacdb483a00bb34157f3786a1"
     }
   ],
-  "projection_digest": "sha256:54f43e112061b45e7d2d5bf1b13169321c2ed7af7c0470a94a37570640cfa48c",
+  "projection_digest": "sha256:433f460ea41e9576f824cc3701e9790556c43db39ffaab28777040c482045436",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 654,
   "schema": "integrity.public-export-manifest/v3",
