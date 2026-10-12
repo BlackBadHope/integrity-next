@@ -1,0 +1,184 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/passive-controller-checkpoint.schema.json",
+  "title": "Integrity Passive Controller Checkpoint v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "checkpoint_id",
+    "tenant_id",
+    "platform_family",
+    "platform_instance_id",
+    "boot_identity_digest",
+    "source_epoch",
+    "collector_artifact_digest",
+    "source_policy_digest",
+    "cohort_policy_digest",
+    "source_key_id",
+    "source_key_fingerprint",
+    "controller_key_id",
+    "controller_key_fingerprint",
+    "generation",
+    "previous_checkpoint_digest",
+    "capture_id",
+    "capture_completed_at",
+    "next_capture_sequence",
+    "cohort_receipt_digest",
+    "output_cursors",
+    "boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/passive-controller-checkpoint/v1"
+    },
+    "checkpoint_id": {
+      "type": "string",
+      "pattern": "^passive-controller-checkpoint:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "platform_family": {
+      "enum": [
+        "linux",
+        "windows",
+        "macos",
+        "bsd",
+        "posix-other",
+        "unknown"
+      ]
+    },
+    "platform_instance_id": { "$ref": "#/$defs/id" },
+    "boot_identity_digest": { "$ref": "#/$defs/digest" },
+    "source_epoch": { "$ref": "#/$defs/id" },
+    "collector_artifact_digest": { "$ref": "#/$defs/digest" },
+    "source_policy_digest": { "$ref": "#/$defs/digest" },
+    "cohort_policy_digest": { "$ref": "#/$defs/digest" },
+    "source_key_id": { "$ref": "#/$defs/id" },
+    "source_key_fingerprint": { "$ref": "#/$defs/digest" },
+    "controller_key_id": { "$ref": "#/$defs/id" },
+    "controller_key_fingerprint": { "$ref": "#/$defs/digest" },
+    "generation": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000000
+    },
+    "previous_checkpoint_digest": {
+      "oneOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "null" }
+      ]
+    },
+    "capture_id": { "$ref": "#/$defs/id" },
+    "capture_completed_at": { "$ref": "#/$defs/timestamp" },
+    "next_capture_sequence": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1000000001
+    },
+    "cohort_receipt_digest": { "$ref": "#/$defs/digest" },
+    "output_cursors": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/cursor" }
+    },
+    "boundary": { "$ref": "#/$defs/boundary" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "generation": { "const": 0 } },
+        "required": ["generation"]
+      },
+      "then": {
+        "properties": { "previous_checkpoint_digest": { "type": "null" } }
+      },
+      "else": {
+        "properties": {
+          "previous_checkpoint_digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cursor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_id",
+        "source_epoch",
+        "next_sequence",
+        "previous_record_digest"
+      ],
+      "properties": {
+        "source_id": { "$ref": "#/$defs/id" },
+        "source_epoch": { "$ref": "#/$defs/id" },
+        "next_sequence": { "type": "integer", "minimum": 1 },
+        "previous_record_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "active_probe",
+        "atlas_admission",
+        "checkpoint_commit",
+        "collection_inside_core",
+        "execution",
+        "external_checkpoint_required",
+        "memory_admission",
+        "model_calls",
+        "mutation",
+        "network",
+        "production_authority",
+        "raw_rows_present"
+      ],
+      "properties": {
+        "active_probe": { "const": false },
+        "atlas_admission": { "const": false },
+        "checkpoint_commit": { "const": false },
+        "collection_inside_core": { "const": false },
+        "execution": { "const": false },
+        "external_checkpoint_required": { "const": true },
+        "memory_admission": { "const": false },
+        "model_calls": { "const": 0 },
+        "mutation": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "raw_rows_present": { "const": false }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

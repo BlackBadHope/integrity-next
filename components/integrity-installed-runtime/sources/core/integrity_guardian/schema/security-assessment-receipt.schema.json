@@ -1,0 +1,283 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/security-assessment-receipt.schema.json",
+  "title": "Integrity Security Assessment Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "subject",
+    "policy_digest",
+    "environment",
+    "harness",
+    "scope",
+    "coverage",
+    "findings",
+    "history",
+    "budgets",
+    "private_evidence",
+    "created_at",
+    "expires_at",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/security-assessment-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^security-assessment-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "const": "tenant:public-6e3cdbebaafc8efa" },
+    "subject": { "$ref": "#/$defs/subject" },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "environment": { "$ref": "#/$defs/environment" },
+    "harness": { "$ref": "#/$defs/harness" },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "selectors",
+        "exclusions",
+        "threat_model_digest",
+        "knowledge_base_digests"
+      ],
+      "properties": {
+        "mode": { "enum": ["path", "diff", "full"] },
+        "selectors": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "exclusions": {
+          "type": "array",
+          "maxItems": 128,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          }
+        },
+        "threat_model_digest": { "$ref": "#/$defs/digest" },
+        "knowledge_base_digests": {
+          "type": "array",
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "examined_count",
+        "omitted_count",
+        "termination_reason"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "complete",
+            "partial",
+            "failed",
+            "cancelled",
+            "unsupported"
+          ]
+        },
+        "examined_count": { "$ref": "#/$defs/count" },
+        "omitted_count": { "$ref": "#/$defs/count" },
+        "termination_reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "findings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sealed_set_digest",
+        "total_count",
+        "unresolved",
+        "validation_state"
+      ],
+      "properties": {
+        "sealed_set_digest": { "$ref": "#/$defs/digest" },
+        "total_count": { "$ref": "#/$defs/count" },
+        "unresolved": { "$ref": "#/$defs/severity_counts" },
+        "validation_state": {
+          "enum": ["unvalidated", "validated-partial", "validated-complete"]
+        }
+      }
+    },
+    "history": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "previous_receipt_id",
+        "new",
+        "persisting",
+        "reopened",
+        "resolved",
+        "unknown"
+      ],
+      "properties": {
+        "previous_receipt_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^security-assessment-receipt:[a-f0-9]{64}$"
+            },
+            { "type": "null" }
+          ]
+        },
+        "new": { "$ref": "#/$defs/count" },
+        "persisting": { "$ref": "#/$defs/count" },
+        "reopened": { "$ref": "#/$defs/count" },
+        "resolved": { "$ref": "#/$defs/count" },
+        "unknown": { "$ref": "#/$defs/count" }
+      }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tool_calls", "model_calls", "elapsed_ms"],
+      "properties": {
+        "tool_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "model_calls": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100000
+        },
+        "elapsed_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 604800000
+        }
+      }
+    },
+    "private_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reference", "retained_until"],
+      "properties": {
+        "reference": {
+          "type": "string",
+          "pattern": "^private-evidence:[A-Za-z0-9._:/-]{1,240}$"
+        },
+        "retained_until": { "type": "string", "format": "date-time" }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "authority_boundary": { "$ref": "#/$defs/authority_boundary" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000000
+    },
+    "severity_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["critical", "high", "medium", "low"],
+      "properties": {
+        "critical": { "$ref": "#/$defs/count" },
+        "high": { "$ref": "#/$defs/count" },
+        "medium": { "$ref": "#/$defs/count" },
+        "low": { "$ref": "#/$defs/count" }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "artifact_digest"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/synthetic_id" },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "fingerprint_digest"],
+      "properties": {
+        "profile_id": { "$ref": "#/$defs/synthetic_id" },
+        "fingerprint_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["harness_id", "revision", "artifact_digest"],
+      "properties": {
+        "harness_id": { "$ref": "#/$defs/synthetic_id" },
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority",
+        "promotion_authority",
+        "production_authority",
+        "remediation_authority"
+      ],
+      "properties": {
+        "execution_authority": { "const": false },
+        "promotion_authority": { "const": false },
+        "production_authority": { "const": false },
+        "remediation_authority": { "const": false }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

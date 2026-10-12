@@ -1,0 +1,343 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-entity-brief.schema.json",
+  "title": "Optional bounded Integrity entity article",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "graph_digest", "source_namespace", "query", "normalized_query",
+    "result", "identity", "candidate_count", "candidates", "candidate_omitted_count",
+    "definition", "whereabouts", "relationships", "activity", "freshness", "tasks",
+    "discovery_candidates", "unknowns", "limits", "invocation",
+    "persistent_derived_state", "production_authority", "route_authority", "receipt_id"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/memory-entity-brief/v1"},
+    "graph_digest": {"$ref": "#/$defs/digest"},
+    "source_namespace": {"type": "string", "pattern": "^seed://project/[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "query": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "normalized_query": {"type": "string", "minLength": 1, "maxLength": 4096},
+    "result": {"enum": ["READY", "AMBIGUOUS", "NOT_FOUND"]},
+    "identity": {"oneOf": [{"$ref": "#/$defs/node"}, {"type": "null"}]},
+    "candidate_count": {"type": "integer", "minimum": 0},
+    "candidates": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/node"}},
+    "candidate_omitted_count": {"type": "integer", "minimum": 0},
+    "definition": {"$ref": "#/$defs/definition"},
+    "whereabouts": {"$ref": "#/$defs/link_section"},
+    "relationships": {"$ref": "#/$defs/relationship_section"},
+    "activity": {"$ref": "#/$defs/activity"},
+    "freshness": {"$ref": "#/$defs/freshness"},
+    "tasks": {"$ref": "#/$defs/tasks"},
+    "discovery_candidates": {"$ref": "#/$defs/discovery"},
+    "unknowns": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "activity-truncated", "canonical-task-card-missing", "context-bytes",
+          "definition-contradicted", "definition-unknown", "definitions-truncated",
+          "discovery-candidates-truncated", "freshness-policy-absent",
+          "freshness-policy-partial", "legacy-discovery-candidates",
+          "legacy-self-link-ignored",
+          "relationships-truncated", "resolution-candidates-truncated",
+          "task-search-truncated", "tasks-truncated", "whereabouts-truncated",
+          "whereabouts-unknown"
+        ]
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relationship_limit", "activity_limit", "task_limit", "discovery_limit",
+        "max_context_bytes"
+      ],
+      "properties": {
+        "relationship_limit": {"type": "integer", "minimum": 1, "maximum": 100},
+        "activity_limit": {"type": "integer", "minimum": 1, "maximum": 20},
+        "task_limit": {"type": "integer", "minimum": 1, "maximum": 20},
+        "discovery_limit": {"type": "integer", "minimum": 1, "maximum": 20},
+        "max_context_bytes": {"type": "integer", "minimum": 8192, "maximum": 262144}
+      }
+    },
+    "invocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "auto_inject", "autonomous_crawl"],
+      "properties": {
+        "mode": {"const": "on-demand"},
+        "auto_inject": {"const": false},
+        "autonomous_crawl": {"const": false}
+      }
+    },
+    "persistent_derived_state": {"const": false},
+    "production_authority": {"const": false},
+    "route_authority": {"const": false},
+    "receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "uri": {"type": "string", "pattern": "^integrity://seed/project/"},
+    "relation": {
+      "enum": [
+        "blocks", "child-of", "cites", "concerns", "contradicts", "defines",
+        "depends-on", "derived-from", "located-at", "preempts", "records-task",
+        "refers-to", "related-to", "supports", "supersedes", "tagged-with"
+      ]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "uri", "kind", "key", "title", "aliases", "alias_count",
+        "omitted_alias_count", "source_event_ids", "source_event_count",
+        "omitted_source_event_count"
+      ],
+      "properties": {
+        "uri": {"$ref": "#/$defs/uri"},
+        "kind": {"enum": ["artifact", "component", "concept", "decision", "event", "evidence", "location", "release", "subsystem", "system", "task", "term"]},
+        "key": {"type": "string", "minLength": 1, "maxLength": 512},
+        "title": {"type": "string", "minLength": 1, "maxLength": 512},
+        "aliases": {"type": "array", "maxItems": 16, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
+        "alias_count": {"type": "integer", "minimum": 1, "maximum": 64},
+        "omitted_alias_count": {"type": "integer", "minimum": 0},
+        "source_event_ids": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "source_event_count": {"type": "integer", "minimum": 1},
+        "omitted_source_event_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "definition_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["text", "language", "source_event_ids", "source_event_count", "omitted_source_event_count"],
+      "properties": {
+        "text": {"type": "string", "minLength": 1, "maxLength": 2048},
+        "language": {"type": "string", "pattern": "^(?:[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*|und)$", "maxLength": 35},
+        "source_event_ids": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "source_event_count": {"type": "integer", "minimum": 1},
+        "omitted_source_event_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "definition_count", "values", "omitted_count"],
+      "properties": {
+        "status": {"enum": ["DECLARED", "UNKNOWN", "CONTRADICTED"]},
+        "definition_count": {"type": "integer", "minimum": 0},
+        "values": {"type": "array", "maxItems": 5, "items": {"$ref": "#/$defs/definition_value"}},
+        "omitted_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "claim_freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "basis", "latest_supporting_event_id", "latest_supporting_event_at", "stale_after"],
+      "properties": {
+        "state": {"enum": ["CURRENT", "STALE", "SUPERSEDED", "CONTRADICTED", "UNKNOWN"]},
+        "basis": {"enum": ["none", "stale-after-policy", "conflicting-stale-after-policy", "explicit-claim-state", "conflicting-explicit-claim-state", "explicit-state-policy-conflict"]},
+        "latest_supporting_event_id": {"type": "integer", "minimum": 1},
+        "latest_supporting_event_at": {"type": "string", "maxLength": 64},
+        "stale_after": {"type": "string", "maxLength": 64}
+      }
+    },
+    "entity_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_uri", "relation", "target_uri", "provenance", "source_event_ids",
+        "source_event_count", "omitted_source_event_count", "freshness", "direction", "neighbor"
+      ],
+      "properties": {
+        "source_uri": {"$ref": "#/$defs/uri"},
+        "relation": {"$ref": "#/$defs/relation"},
+        "target_uri": {"$ref": "#/$defs/uri"},
+        "provenance": {"enum": ["structured-seed", "explicit-memory-node", "explicit-memory-link"]},
+        "source_event_ids": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "source_event_count": {"type": "integer", "minimum": 1},
+        "omitted_source_event_count": {"type": "integer", "minimum": 0},
+        "freshness": {"$ref": "#/$defs/claim_freshness"},
+        "direction": {"enum": ["outbound", "inbound"]},
+        "neighbor": {"$ref": "#/$defs/node"}
+      }
+    },
+    "link_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligible_count", "links", "returned_count", "omitted_count"],
+      "properties": {
+        "eligible_count": {"type": "integer", "minimum": 0},
+        "links": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/entity_link"}},
+        "returned_count": {"type": "integer", "minimum": 0, "maximum": 100},
+        "omitted_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "relationship_section": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "eligible_count", "groups", "returned_count", "omitted_count", "truncated_by",
+        "continuation"
+      ],
+      "properties": {
+        "eligible_count": {"type": "integer", "minimum": 0},
+        "groups": {"type": "array", "maxItems": 16, "items": {"$ref": "#/$defs/relationship_group"}},
+        "returned_count": {"type": "integer", "minimum": 0, "maximum": 100},
+        "omitted_count": {"type": "integer", "minimum": 0},
+        "truncated_by": {"enum": ["none", "limit", "context-bytes"]},
+        "continuation": {"$ref": "#/$defs/continuation"}
+      }
+    },
+    "relationship_group": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["relation", "eligible_count", "links", "returned_count", "omitted_count"],
+      "properties": {
+        "relation": {"$ref": "#/$defs/relation"},
+        "eligible_count": {"type": "integer", "minimum": 1},
+        "links": {"type": "array", "maxItems": 100, "items": {"$ref": "#/$defs/entity_link"}},
+        "returned_count": {"type": "integer", "minimum": 0, "maximum": 100},
+        "omitted_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "continuation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "cli_command", "endpoint", "anchor_uri", "direction"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "cli_command": {"const": "memory-link-navigate"},
+        "endpoint": {"const": "/v1/seed/memory-links/navigate"},
+        "anchor_uri": {"type": "string", "maxLength": 4096},
+        "direction": {"const": "both"}
+      }
+    },
+    "activity_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "ts_utc", "action", "summary", "summary_truncated", "task_id", "redacted", "reasons"],
+      "properties": {
+        "event_id": {"type": "integer", "minimum": 1},
+        "ts_utc": {"type": "string", "maxLength": 64},
+        "action": {"type": "string", "maxLength": 128},
+        "summary": {"type": "string", "maxLength": 1024},
+        "summary_truncated": {"type": "boolean"},
+        "task_id": {"type": "string", "maxLength": 512},
+        "redacted": {"type": "boolean"},
+        "reasons": {"type": "array", "uniqueItems": true, "items": {"enum": ["ENTITY_SOURCE", "LINK_PROVENANCE", "TASK_LIFECYCLE", "LEXICAL_DISCOVERY"]}}
+      }
+    },
+    "activity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_count", "events", "returned_count", "omitted_count"],
+      "properties": {
+        "event_count": {"type": "integer", "minimum": 0},
+        "events": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/activity_event"}},
+        "returned_count": {"type": "integer", "minimum": 0, "maximum": 20},
+        "omitted_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_state", "source_max_event_id", "source_max_event_time", "entity_latest_event_id", "entity_latest_event_time", "policy_status", "claim_counts"],
+      "properties": {
+        "snapshot_state": {"const": "SNAPSHOT_BOUND"},
+        "source_max_event_id": {"type": "integer", "minimum": 1},
+        "source_max_event_time": {"type": "string", "maxLength": 64},
+        "entity_latest_event_id": {"oneOf": [{"type": "integer", "minimum": 1}, {"type": "null"}]},
+        "entity_latest_event_time": {"type": "string", "maxLength": 64},
+        "policy_status": {"enum": ["EXPLICIT", "PARTIAL", "ABSENT"]},
+        "claim_counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["CURRENT", "STALE", "SUPERSEDED", "CONTRADICTED", "UNKNOWN"],
+          "properties": {
+            "CURRENT": {"type": "integer", "minimum": 0},
+            "STALE": {"type": "integer", "minimum": 0},
+            "SUPERSEDED": {"type": "integer", "minimum": 0},
+            "CONTRADICTED": {"type": "integer", "minimum": 0},
+            "UNKNOWN": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "task_card": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["task_id", "status", "owner", "priority", "summary", "scope", "first_event_id", "last_event_id"],
+      "properties": {
+        "task_id": {"type": "string", "minLength": 1, "maxLength": 512},
+        "status": {"enum": ["active", "pending", "blocked", "unknown", "complete", "failed"]},
+        "owner": {"type": "string", "maxLength": 512},
+        "priority": {"type": "string", "maxLength": 32},
+        "summary": {"type": "string", "maxLength": 1024},
+        "scope": {"type": "string", "maxLength": 2048},
+        "first_event_id": {"type": "integer", "minimum": 1},
+        "last_event_id": {"type": "integer", "minimum": 1}
+      }
+    },
+    "status_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["active", "pending", "blocked", "unknown", "complete", "failed"],
+      "properties": {
+        "active": {"type": "integer", "minimum": 0},
+        "pending": {"type": "integer", "minimum": 0},
+        "blocked": {"type": "integer", "minimum": 0},
+        "unknown": {"type": "integer", "minimum": 0},
+        "complete": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0}
+      }
+    },
+    "tasks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_count", "cards", "returned_count", "omitted_count", "missing_card_count", "search_truncated", "status_counts"],
+      "properties": {
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "cards": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/task_card"}},
+        "returned_count": {"type": "integer", "minimum": 0, "maximum": 20},
+        "omitted_count": {"type": "integer", "minimum": 0},
+        "missing_card_count": {"type": "integer", "minimum": 0},
+        "search_truncated": {"type": "boolean"},
+        "status_counts": {"$ref": "#/$defs/status_counts"}
+      }
+    },
+    "discovery_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id", "ts_utc", "action", "summary", "summary_truncated", "task_id",
+        "redacted", "reasons", "matched_terms", "admission_status", "canonical_link",
+        "follow_allowed"
+      ],
+      "properties": {
+        "event_id": {"type": "integer", "minimum": 1},
+        "ts_utc": {"type": "string", "maxLength": 64},
+        "action": {"type": "string", "maxLength": 128},
+        "summary": {"type": "string", "maxLength": 1024},
+        "summary_truncated": {"type": "boolean"},
+        "task_id": {"type": "string", "maxLength": 512},
+        "redacted": {"type": "boolean"},
+        "reasons": {"type": "array", "uniqueItems": true, "items": {"const": "LEXICAL_DISCOVERY"}},
+        "matched_terms": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "admission_status": {"const": "UNADMITTED"},
+        "canonical_link": {"const": false},
+        "follow_allowed": {"const": false}
+      }
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["candidate_count", "candidates", "returned_count", "omitted_count"],
+      "properties": {
+        "candidate_count": {"type": "integer", "minimum": 0},
+        "candidates": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/discovery_candidate"}},
+        "returned_count": {"type": "integer", "minimum": 0, "maximum": 20},
+        "omitted_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

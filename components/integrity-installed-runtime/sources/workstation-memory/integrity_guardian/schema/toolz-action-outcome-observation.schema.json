@@ -1,0 +1,609 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-action-outcome-observation.schema.json",
+  "title": "Integrity Uroboros Toolzs Independent Action Outcome Observation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "observation_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "authorization",
+    "tool_context",
+    "intent",
+    "observer",
+    "outcome",
+    "reason_code",
+    "before_observation",
+    "after_observation",
+    "gap_evidence_digest",
+    "timing",
+    "privacy_boundary",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-action-outcome-observation/v1"
+    },
+    "observation_id": {
+      "type": "string",
+      "pattern": "^toolz-action-outcome-observation:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "request_digest",
+        "readiness_receipt_digest",
+        "start_witness_id",
+        "start_witness_digest",
+        "decision_id",
+        "decision_digest",
+        "grant_id",
+        "consumption_id",
+        "consumption_digest",
+        "ledger_event_digest",
+        "checkpoint_digest"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^toolz-authorization-request:[a-f0-9]{64}$"
+        },
+        "request_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "readiness_receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "start_witness_id": {
+          "type": "string",
+          "pattern": "^toolz-start-state-witness:[a-f0-9]{64}$"
+        },
+        "start_witness_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "decision_id": {
+          "type": "string",
+          "pattern": "^toolz-authority-decision:[a-f0-9]{64}$"
+        },
+        "decision_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "grant_id": {
+          "type": "string",
+          "pattern": "^toolz-single-use-grant:[a-f0-9]{64}$"
+        },
+        "consumption_id": {
+          "type": "string",
+          "pattern": "^toolz-grant-consumption:[a-f0-9]{64}$"
+        },
+        "consumption_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "ledger_event_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "checkpoint_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "tool_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact_id",
+        "artifact_digest",
+        "environment_profile_id",
+        "environment_fingerprint_digest",
+        "ui_context_digest"
+      ],
+      "properties": {
+        "artifact_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "environment_profile_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "environment_fingerprint_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "ui_context_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "intent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "route_proposal_id",
+        "route_digest",
+        "hop_index",
+        "action_class",
+        "operation_digest",
+        "relation_id",
+        "from_entity_id",
+        "to_entity_id",
+        "from_zone_id",
+        "to_zone_id"
+      ],
+      "properties": {
+        "route_proposal_id": {
+          "type": "string",
+          "pattern": "^discovery-(?:theory|feedback-ranked)-route:[a-f0-9]{64}$"
+        },
+        "route_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "hop_index": {
+          "const": 0
+        },
+        "action_class": {
+          "enum": [
+            "observe",
+            "navigate",
+            "activate",
+            "input",
+            "submit",
+            "wait",
+            "external-call"
+          ]
+        },
+        "operation_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "relation_id": {
+          "$ref": "#/$defs/id"
+        },
+        "from_entity_id": {
+          "$ref": "#/$defs/id"
+        },
+        "to_entity_id": {
+          "$ref": "#/$defs/id"
+        },
+        "from_zone_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "to_zone_id": {
+          "$ref": "#/$defs/synthetic_id"
+        }
+      }
+    },
+    "observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observer_id",
+        "observer_artifact_digest",
+        "key_id",
+        "key_fingerprint"
+      ],
+      "properties": {
+        "observer_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "observer_artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "key_fingerprint": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "outcome": {
+      "enum": [
+        "expected-transition-observed",
+        "pre-state-retained",
+        "unexpected-state-observed",
+        "outcome-unknown"
+      ]
+    },
+    "reason_code": {
+      "enum": [
+        "expected-transition",
+        "pre-state-retained",
+        "unexpected-state",
+        "observer-unavailable",
+        "observation-timeout",
+        "executor-crash-reported",
+        "transport-loss-reported"
+      ]
+    },
+    "before_observation": {
+      "$ref": "#/$defs/state_observation"
+    },
+    "after_observation": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/state_observation"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "gap_evidence_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "consumed_at",
+        "observation_started_at",
+        "observation_completed_at",
+        "created_at"
+      ],
+      "properties": {
+        "consumed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "observation_started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "observation_completed_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "privacy_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cookies",
+        "credentials",
+        "dom",
+        "form_values",
+        "free_text",
+        "operation_parameters",
+        "screenshots",
+        "selectors",
+        "urls"
+      ],
+      "properties": {
+        "cookies": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "dom": {
+          "const": false
+        },
+        "form_values": {
+          "const": false
+        },
+        "free_text": {
+          "const": false
+        },
+        "operation_parameters": {
+          "const": false
+        },
+        "screenshots": {
+          "const": false
+        },
+        "selectors": {
+          "const": false
+        },
+        "urls": {
+          "const": false
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authorization_granted",
+        "browser_control",
+        "credentials",
+        "execution_performed",
+        "external_action_attempt_proven",
+        "external_action_causality_proven",
+        "feedback_promotion",
+        "grant_consumption_proven",
+        "independent_observation",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "route_memory_store_write",
+        "state_change_observed",
+        "tool_invocation"
+      ],
+      "properties": {
+        "authorization_granted": {
+          "const": true
+        },
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution_performed": {
+          "const": false
+        },
+        "external_action_attempt_proven": {
+          "const": false
+        },
+        "external_action_causality_proven": {
+          "const": false
+        },
+        "feedback_promotion": {
+          "const": false
+        },
+        "grant_consumption_proven": {
+          "const": true
+        },
+        "independent_observation": {
+          "const": true
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "route_memory_store_write": {
+          "const": false
+        },
+        "state_change_observed": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "expected-transition-observed"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "const": "expected-transition"
+          },
+          "after_observation": {
+            "$ref": "#/$defs/state_observation"
+          },
+          "gap_evidence_digest": {
+            "type": "null"
+          },
+          "authority_boundary": {
+            "properties": {
+              "state_change_observed": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "pre-state-retained"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "const": "pre-state-retained"
+          },
+          "after_observation": {
+            "$ref": "#/$defs/state_observation"
+          },
+          "gap_evidence_digest": {
+            "type": "null"
+          },
+          "authority_boundary": {
+            "properties": {
+              "state_change_observed": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "unexpected-state-observed"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "const": "unexpected-state"
+          },
+          "after_observation": {
+            "$ref": "#/$defs/state_observation"
+          },
+          "gap_evidence_digest": {
+            "type": "null"
+          },
+          "authority_boundary": {
+            "properties": {
+              "state_change_observed": {
+                "const": true
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "outcome-unknown"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "enum": [
+              "observer-unavailable",
+              "observation-timeout",
+              "executor-crash-reported",
+              "transport-loss-reported"
+            ]
+          },
+          "after_observation": {
+            "type": "null"
+          },
+          "gap_evidence_digest": {
+            "$ref": "#/$defs/digest"
+          },
+          "authority_boundary": {
+            "properties": {
+              "state_change_observed": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "state_observation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state_digest",
+        "zone_id",
+        "state_entity_id",
+        "evidence_digest",
+        "observed_at"
+      ],
+      "properties": {
+        "state_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "zone_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "state_entity_id": {
+          "$ref": "#/$defs/id"
+        },
+        "evidence_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "observed_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

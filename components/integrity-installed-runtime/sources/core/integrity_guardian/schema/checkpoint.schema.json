@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/checkpoint.schema.json",
+  "title": "Guardian Checkpoint v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "checkpoint_id",
+    "tenant_id",
+    "ledger_id",
+    "tree_size",
+    "root_digest",
+    "last_event_digest",
+    "created_at",
+    "signer_id",
+    "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/checkpoint/v1" },
+    "checkpoint_id": { "$ref": "#/$defs/id" },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "ledger_id": { "$ref": "#/$defs/id" },
+    "tree_size": { "type": "integer", "minimum": 1 },
+    "root_digest": { "$ref": "#/$defs/digest" },
+    "last_event_digest": { "$ref": "#/$defs/digest" },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

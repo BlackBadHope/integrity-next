@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/discovery-conformance-receipt.schema.json",
+  "title": "Integrity Fog of War Discovery Conformance Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "profile_id",
+    "profile_digest",
+    "tenant_id",
+    "source_id",
+    "source_epoch",
+    "source_artifact_digest",
+    "fixture_scope_digest",
+    "records_digest",
+    "index_receipt_digest",
+    "record_count",
+    "assertion_counts",
+    "gap_classes",
+    "cross_zone_relation_count",
+    "tombstone_count",
+    "checks",
+    "harness_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/discovery-conformance-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^discovery-conformance-receipt:[a-f0-9]{64}$"
+    },
+    "profile_id": { "$ref": "#/$defs/id" },
+    "profile_digest": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "source_id": { "$ref": "#/$defs/id" },
+    "source_epoch": { "$ref": "#/$defs/id" },
+    "source_artifact_digest": { "$ref": "#/$defs/digest" },
+    "fixture_scope_digest": { "$ref": "#/$defs/digest" },
+    "records_digest": { "$ref": "#/$defs/digest" },
+    "index_receipt_digest": { "$ref": "#/$defs/digest" },
+    "record_count": { "$ref": "#/$defs/count" },
+    "assertion_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entity", "gap", "relation"],
+      "properties": {
+        "entity": { "$ref": "#/$defs/count" },
+        "gap": { "$ref": "#/$defs/count" },
+        "relation": { "$ref": "#/$defs/count" }
+      }
+    },
+    "gap_classes": {
+      "type": "array",
+      "maxItems": 9,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "unknown-entity",
+          "unknown-relation",
+          "conflicting-identity",
+          "unobserved-zone",
+          "unsupported-protocol",
+          "denied-coverage",
+          "stale-source",
+          "ambiguous-owner",
+          "model-gap"
+        ]
+      }
+    },
+    "cross_zone_relation_count": { "$ref": "#/$defs/count" },
+    "tombstone_count": { "$ref": "#/$defs/count" },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cross_zone_requirement",
+        "gap_requirements",
+        "kind_requirements",
+        "source_binding",
+        "source_chain",
+        "synthetic_scope",
+        "tombstone_requirement"
+      ],
+      "properties": {
+        "cross_zone_requirement": { "const": true },
+        "gap_requirements": { "const": true },
+        "kind_requirements": { "const": true },
+        "source_binding": { "const": true },
+        "source_chain": { "const": true },
+        "synthetic_scope": { "const": true },
+        "tombstone_requirement": { "const": true }
+      }
+    },
+    "harness_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "collector_execution",
+        "credentials",
+        "model_calls",
+        "network",
+        "production_authority",
+        "tool_calls"
+      ],
+      "properties": {
+        "collector_execution": { "const": false },
+        "credentials": { "const": false },
+        "model_calls": { "const": 0 },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "tool_calls": { "const": 0 }
+      }
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/cognitive-run-request.schema.json",
+  "title": "Atlas Cognitive Run Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "request_id",
+    "package_id",
+    "package_digest",
+    "tenant_id",
+    "module_id",
+    "agent_id",
+    "agent_key_id",
+    "generation",
+    "lease_id",
+    "route_id",
+    "target_model_id",
+    "target_reasoning",
+    "output_contract_digest",
+    "budgets",
+    "execution_limits",
+    "requested_at",
+    "deadline_at",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/cognitive-run-request/v1" },
+    "request_id": {
+      "type": "string",
+      "pattern": "^cognitive-run:[a-f0-9]{64}$"
+    },
+    "package_id": { "$ref": "#/$defs/id" },
+    "package_digest": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "module_id": { "$ref": "#/$defs/id" },
+    "agent_id": { "$ref": "#/$defs/id" },
+    "agent_key_id": { "$ref": "#/$defs/id" },
+    "generation": { "type": "integer", "minimum": 0 },
+    "lease_id": { "$ref": "#/$defs/id" },
+    "route_id": { "$ref": "#/$defs/id" },
+    "target_model_id": { "$ref": "#/$defs/id" },
+    "target_reasoning": {
+      "enum": ["minimal", "low", "medium", "high", "maximum"]
+    },
+    "output_contract_digest": { "$ref": "#/$defs/digest" },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_input_tokens",
+        "max_output_tokens",
+        "max_model_calls",
+        "max_specialist_agents"
+      ],
+      "properties": {
+        "max_input_tokens": { "type": "integer", "minimum": 1 },
+        "max_output_tokens": { "type": "integer", "minimum": 1 },
+        "max_model_calls": { "const": 1 },
+        "max_specialist_agents": { "type": "integer", "minimum": 0, "maximum": 16 }
+      }
+    },
+    "execution_limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_elapsed_ms", "max_attempts"],
+      "properties": {
+        "max_elapsed_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3600000
+        },
+        "max_attempts": { "type": "integer", "minimum": 1, "maximum": 3 }
+      }
+    },
+    "requested_at": { "type": "string", "format": "date-time" },
+    "deadline_at": { "type": "string", "format": "date-time" },
+    "production_authority": { "const": false }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

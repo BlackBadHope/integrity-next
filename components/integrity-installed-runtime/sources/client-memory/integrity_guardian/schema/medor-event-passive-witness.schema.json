@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/medor-event-passive-witness.schema.json",
+  "title": "Medor signed passive canonical Seed event witness v1",
+  "type": "object", "additionalProperties": false,
+  "required": [
+    "receipt_id", "protocol", "phase", "status", "event_uid", "event_id",
+    "request_sha256", "observed_record_digest", "production_authority",
+    "causality_proven", "action_invoked_by_observer", "signature"
+  ],
+  "properties": {
+    "receipt_id": {"$ref": "#/$defs/digest"},
+    "protocol": {"const": "integrity-client-memory-mcp/v3/passive-event-witness/v1"},
+    "phase": {"enum": ["before-action", "after-action"]},
+    "status": {"enum": ["absent", "exact", "collision", "observer-unavailable"]},
+    "event_uid": {"type": "string", "pattern": "^client:[A-Za-z0-9][A-Za-z0-9._:-]{7,154}$"},
+    "event_id": {"type": "integer", "minimum": 0},
+    "request_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "observed_record_digest": {"$ref": "#/$defs/digest"},
+    "production_authority": {"const": false},
+    "causality_proven": {"const": false},
+    "action_invoked_by_observer": {"const": false},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"enum": ["absent", "observer-unavailable"]}}}, "then": {"properties": {"event_id": {"const": 0}}}},
+    {"if": {"properties": {"status": {"enum": ["exact", "collision"]}}}, "then": {"properties": {"event_id": {"minimum": 1}}}}
+  ],
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"},
+        "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$"}
+      }
+    }
+  }
+}

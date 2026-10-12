@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://integrity.guardian.invalid/schema/v1/turn-memory-creation-policy.schema.json",
+  "type":"object","additionalProperties":false,
+  "required":["protocol","namespace_fingerprint","mode","generation","updated_at","production_authority","receipt_id","signature"],
+  "properties":{
+    "protocol":{"const":"integrity-guardian/turn-memory-creation-policy/v1"},
+    "namespace_fingerprint":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "mode":{"enum":["enabled","rollback-read-close"]},
+    "generation":{"type":"integer","minimum":0},
+    "updated_at":{"type":"string","format":"date-time"},
+    "production_authority":{"const":false},
+    "receipt_id":{"type":"string","pattern":"^sha256:[a-f0-9]{64}$"},
+    "signature":{"type":"object","additionalProperties":false,
+      "required":["algorithm","key_id","value"],
+      "properties":{"algorithm":{"const":"ed25519"},"key_id":{"type":"string","minLength":1},"value":{"type":"string","minLength":1}}}
+  }
+}

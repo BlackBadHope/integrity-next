@@ -36,7 +36,7 @@ agent stacks and external targets are the main purpose of this public project.
 
 ## Try it in five minutes
 
-Open **Code → Local → HTTPS** on this repository and copy its URL. Install the
+Open **Code в†’ Local в†’ HTTPS** on this repository and copy its URL. Install the
 exact stable release by replacing `<copied-url>` below:
 
 ```bash
@@ -86,7 +86,7 @@ local instance.
 Linux, macOS and Windows users need Python 3.11 or newer:
 
 ```bash
-git clone <URL copied from Code → Local → HTTPS>
+git clone <URL copied from Code в†’ Local в†’ HTTPS>
 cd integrity-next
 python -m venv .venv
 ```
@@ -169,7 +169,7 @@ that host binding, credentials or production actions are configured.
 - [Changelog](CHANGELOG.md)
 - [Public export boundary](PUBLIC-EXPORT-NOTICE.md)
 
-Security-sensitive reports should use **Security → Advisories → Report a
+Security-sensitive reports should use **Security в†’ Advisories в†’ Report a
 vulnerability** in this repository, not a public issue.
 
 Questions, use-case proposals and first-user feedback are welcome in
@@ -180,3 +180,10 @@ Reproducible defects belong in the repository's **Issues** tab.
 
 Copyright 2026 Integrity Project contributors. Licensed under the
 [Apache License 2.0](LICENSE).
+
+## Runtime source reference
+
+[Installed runtime source variants](components/integrity-installed-runtime/README.md)
+retain the implementation of additional package, memory, synchronization and
+client hook variants. This code-only reference is separate from the
+main package contract and does not activate or certify a deployment.

@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/network-http-action-manifest.schema.json",
+  "title": "Integrity peer-authenticated loopback HTTP action manifest v2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["action_id", "protocol", "sdk_version", "tenant_id", "manifest", "intent_operation_digest", "target", "destination", "request", "expected_response", "witness", "limits", "controls", "created_at", "signer_id", "signature"],
+  "properties": {
+    "action_id": { "type": "string", "pattern": "^network-action:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/network-http-action-manifest/v2" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "tenant_id": { "const": "tenant:public-6e3cdbebaafc8efa" },
+    "manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_id", "manifest_digest", "adapter_id", "adapter_artifact_digest"],
+      "properties": {
+        "manifest_id": { "type": "string", "pattern": "^manifest:[a-f0-9]{64}$" },
+        "manifest_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "intent_operation_digest": { "$ref": "#/$defs/digest" },
+    "target": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node_id", "zone_id", "environment_digest"],
+      "properties": {
+        "node_id": { "$ref": "#/$defs/id" },
+        "zone_id": { "$ref": "#/$defs/id" },
+        "environment_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "destination": {
+      "type": "object", "additionalProperties": false,
+      "required": ["scheme", "transport", "address_family", "host", "port", "authority", "peer"],
+      "properties": {
+        "scheme": { "const": "http" },
+        "transport": { "const": "tcp" },
+        "address_family": { "const": "ipv4" },
+        "host": { "const": "127.0.0.1" },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+        "authority": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9.-]{0,252}\\.invalid$", "maxLength": 255 },
+        "peer": { "$ref": "#/$defs/peer" }
+      }
+    },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "path", "content_type", "body_digest", "body_byte_count"],
+      "properties": {
+        "method": { "const": "POST" },
+        "path": { "const": "/apply" },
+        "content_type": { "const": "application/json" },
+        "body_digest": { "$ref": "#/$defs/digest" },
+        "body_byte_count": { "type": "integer", "minimum": 1, "maximum": 4096 }
+      }
+    },
+    "expected_response": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "content_type", "body_digest", "maximum_body_bytes"],
+      "properties": {
+        "status": { "const": 204 },
+        "content_type": { "const": "application/json" },
+        "body_digest": { "$ref": "#/$defs/digest" },
+        "maximum_body_bytes": { "const": 4096 }
+      }
+    },
+    "witness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "path", "status", "content_type", "expected_body_digest", "maximum_body_bytes"],
+      "properties": {
+        "method": { "const": "GET" },
+        "path": { "const": "/state" },
+        "status": { "const": 200 },
+        "content_type": { "const": "text/plain; charset=utf-8" },
+        "expected_body_digest": { "$ref": "#/$defs/digest" },
+        "maximum_body_bytes": { "const": 4096 }
+      }
+    },
+    "limits": {
+      "type": "object", "additionalProperties": false,
+      "required": ["timeout_seconds", "maximum_connection_count", "maximum_request_count"],
+      "properties": {
+        "timeout_seconds": { "type": "integer", "minimum": 1, "maximum": 30 },
+        "maximum_connection_count": { "const": 1 },
+        "maximum_request_count": { "const": 2 }
+      }
+    },
+    "controls": {
+      "type": "object", "additionalProperties": false,
+      "required": ["numeric_destination_only", "dns_resolution", "proxy", "redirects", "tls", "credential_reference", "peer_authentication", "action_preflight_required", "fresh_response_challenge_required", "home_input", "raw_body_retained", "production_authority", "max_invocations", "automatic_retry_after_unknown"],
+      "properties": {
+        "numeric_destination_only": { "const": true },
+        "dns_resolution": { "const": false },
+        "proxy": { "const": false },
+        "redirects": { "const": false },
+        "tls": { "const": false },
+        "credential_reference": { "type": "null" },
+        "peer_authentication": { "const": "ed25519-challenge-v1" },
+        "action_preflight_required": { "const": true },
+        "fresh_response_challenge_required": { "const": true },
+        "home_input": { "const": false },
+        "raw_body_retained": { "const": false },
+        "production_authority": { "const": false },
+        "max_invocations": { "const": 1 },
+        "automatic_retry_after_unknown": { "const": false }
+      }
+    },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "peer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "key_fingerprint"],
+      "properties": {
+        "key_id": { "$ref": "#/$defs/id" },
+        "key_fingerprint": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

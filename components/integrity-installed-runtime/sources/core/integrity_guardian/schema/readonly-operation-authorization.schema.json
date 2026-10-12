@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/readonly-operation-authorization.schema.json",
+  "title": "Signed exact-scope read-only operation authorization v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "authorization_id", "manifest_id", "manifest_digest",
+    "tenant_id", "adapter_id", "target_node_id", "operation_ids",
+    "authority_id", "authority_key_fingerprint", "valid_from", "valid_until",
+    "read_only_intent_only", "max_executions", "production_authority", "signature"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/readonly-operation-authorization/v1"},
+    "authorization_id": {"type": "string", "pattern": "^operation-authorization:[a-f0-9]{64}$"},
+    "manifest_id": {"type": "string", "pattern": "^operation-manifest:[a-f0-9]{64}$"},
+    "manifest_digest": {"$ref": "#/$defs/digest"},
+    "tenant_id": {"$ref": "#/$defs/id"},
+    "adapter_id": {"$ref": "#/$defs/id"},
+    "target_node_id": {"$ref": "#/$defs/id"},
+    "operation_ids": {
+      "type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/id"}
+    },
+    "authority_id": {"$ref": "#/$defs/id"},
+    "authority_key_fingerprint": {"$ref": "#/$defs/digest"},
+    "valid_from": {"type": "string", "format": "date-time"},
+    "valid_until": {"type": "string", "format": "date-time"},
+    "read_only_intent_only": {"const": true},
+    "max_executions": {"const": 1},
+    "production_authority": {"const": false},
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"$ref": "#/$defs/id"},
+        "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$"}
+      }
+    }
+  },
+  "$defs": {
+    "id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

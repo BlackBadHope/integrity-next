@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/cognitive-run-result.schema.json",
+  "title": "Atlas Cognitive Run Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "result_id",
+    "request_id",
+    "request_digest",
+    "tenant_id",
+    "module_id",
+    "agent_id",
+    "generation",
+    "lease_id",
+    "route_id",
+    "target_model_id",
+    "target_reasoning",
+    "executor_id",
+    "executor_version",
+    "observed_model_id",
+    "status",
+    "output_digest",
+    "error_code",
+    "usage",
+    "attempt_count",
+    "started_at",
+    "finished_at",
+    "agent_key_id",
+    "production_authority",
+    "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/cognitive-run-result/v1" },
+    "result_id": {
+      "type": "string",
+      "pattern": "^cognitive-result:[a-f0-9]{64}$"
+    },
+    "request_id": { "$ref": "#/$defs/id" },
+    "request_digest": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "module_id": { "$ref": "#/$defs/id" },
+    "agent_id": { "$ref": "#/$defs/id" },
+    "generation": { "type": "integer", "minimum": 0 },
+    "lease_id": { "$ref": "#/$defs/id" },
+    "route_id": { "$ref": "#/$defs/id" },
+    "target_model_id": { "$ref": "#/$defs/id" },
+    "target_reasoning": {
+      "enum": ["minimal", "low", "medium", "high", "maximum"]
+    },
+    "executor_id": { "$ref": "#/$defs/id" },
+    "executor_version": { "$ref": "#/$defs/id" },
+    "observed_model_id": { "$ref": "#/$defs/id" },
+    "status": { "enum": ["completed", "failed", "cancelled"] },
+    "output_digest": {
+      "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }]
+    },
+    "error_code": {
+      "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+    },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_tokens",
+        "output_tokens",
+        "model_calls",
+        "specialist_agents"
+      ],
+      "properties": {
+        "input_tokens": { "type": "integer", "minimum": 0 },
+        "output_tokens": { "type": "integer", "minimum": 0 },
+        "model_calls": { "type": "integer", "minimum": 0 },
+        "specialist_agents": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "attempt_count": { "type": "integer", "minimum": 1 },
+    "started_at": { "type": "string", "format": "date-time" },
+    "finished_at": { "type": "string", "format": "date-time" },
+    "agent_key_id": { "$ref": "#/$defs/id" },
+    "production_authority": { "const": false },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

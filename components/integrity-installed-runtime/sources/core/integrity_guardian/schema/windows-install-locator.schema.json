@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/windows-install-locator.schema.json",
+  "title": "Integrity Windows install locator v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "version",
+    "target",
+    "guardian",
+    "guardian_digest",
+    "assets_manifest",
+    "assets_manifest_digest",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/windows-install-locator/v1" },
+    "version": { "type": "string", "pattern": "^[0-9A-Za-z.!+-]+$" },
+    "target": { "$ref": "#/$defs/path" },
+    "guardian": { "$ref": "#/$defs/path" },
+    "guardian_digest": { "$ref": "#/$defs/digest" },
+    "assets_manifest": { "$ref": "#/$defs/path" },
+    "assets_manifest_digest": { "$ref": "#/$defs/digest" },
+    "production_authority": { "const": false }
+  },
+  "$defs": {
+    "path": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

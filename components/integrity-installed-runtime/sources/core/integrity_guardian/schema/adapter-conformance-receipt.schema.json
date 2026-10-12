@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/adapter-conformance-receipt.schema.json",
+  "title": "Integrity ASDK conformance admission receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_id", "protocol", "sdk_version", "profile", "evidence", "coverage", "target", "result", "authority_boundary", "created_at", "signer_id", "signature"],
+  "properties": {
+    "receipt_id": { "type": "string", "pattern": "^adapter-conformance-receipt:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/adapter-conformance-receipt/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "profile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["profile_id", "profile_digest", "adapter_id", "adapter_artifact_digest"],
+      "properties": {
+        "profile_id": { "type": "string", "pattern": "^adapter-proof-profile:[a-f0-9]{64}$" },
+        "profile_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "evidence": {
+      "type": "array", "maxItems": 128,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["evidence_id", "evidence_digest", "scope", "test_count"],
+        "properties": {
+          "evidence_id": { "type": "string", "pattern": "^adapter-conformance-evidence:[a-f0-9]{64}$" },
+          "evidence_digest": { "$ref": "#/$defs/digest" },
+          "scope": { "enum": ["source-test", "synthetic-local", "target-live-non-production", "portfolio-live-non-production"] },
+          "test_count": { "type": "integer", "minimum": 1, "maximum": 1000000 }
+        }
+      }
+    },
+    "coverage": {
+      "type": "array", "minItems": 1, "maxItems": 128,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["proof_id", "tier", "status", "evidence_id"],
+        "properties": {
+          "proof_id": { "$ref": "#/$defs/proof_id" },
+          "tier": { "enum": ["source", "target", "portfolio"] },
+          "status": { "enum": ["verified", "external-required", "not-applicable", "missing"] },
+          "evidence_id": {
+            "oneOf": [
+              { "type": "string", "pattern": "^adapter-conformance-evidence:[a-f0-9]{64}$" },
+              { "type": "null" }
+            ]
+          }
+        }
+      }
+    },
+    "target": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["target_id", "target_kind", "target_zone_id", "environment_digest", "non_production"],
+          "properties": {
+            "target_id": { "$ref": "#/$defs/id" },
+            "target_kind": { "enum": ["workspace", "host", "browser", "network", "service", "custom"] },
+            "target_zone_id": { "$ref": "#/$defs/id" },
+            "environment_digest": { "$ref": "#/$defs/digest" },
+            "non_production": { "const": true }
+          }
+        },
+        { "type": "null" }
+      ]
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["readiness", "verified_count", "external_required_count", "not_applicable_count", "missing_count", "all_source_requirements_verified", "all_target_requirements_verified", "all_portfolio_requirements_verified"],
+      "properties": {
+        "readiness": { "enum": ["rejected", "source-ready", "target-live-ready", "portfolio-ready"] },
+        "verified_count": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "external_required_count": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "not_applicable_count": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "missing_count": { "type": "integer", "minimum": 0, "maximum": 128 },
+        "all_source_requirements_verified": { "type": "boolean" },
+        "all_target_requirements_verified": { "type": "boolean" },
+        "all_portfolio_requirements_verified": { "type": "boolean" }
+      }
+    },
+    "authority_boundary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["capability_is_authority", "conformance_is_execution_authority", "issues_grants", "memory_write", "production_authority"],
+      "properties": {
+        "capability_is_authority": { "const": false },
+        "conformance_is_execution_authority": { "const": false },
+        "issues_grants": { "const": false },
+        "memory_write": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "proof_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}\\.[a-z][a-z0-9-]{0,63}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

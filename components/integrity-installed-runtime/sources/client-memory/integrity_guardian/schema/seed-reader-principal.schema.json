@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/seed-reader-principal.schema.json",
+  "title": "Integrity Seed reader principal v1",
+  "description": "A named reader of Seed/Action Log. Loopback is not a principal. This is not mutation authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "principal_id",
+    "kind",
+    "vendor",
+    "product",
+    "token_fingerprint",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/seed-reader-principal/v1" },
+    "principal_id": {
+      "type": "string",
+      "pattern": "^reader:[a-f0-9]{64}$"
+    },
+    "kind": { "const": "reader" },
+    "vendor": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+    },
+    "product": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+    },
+    "token_fingerprint": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "production_authority": { "const": false }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-link-resolution.schema.json",
+  "title": "Bounded canonical memory-link resolution",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "graph_digest", "source_namespace", "query", "normalized_query",
+    "result", "candidate_count", "matches", "pagination", "max_context_bytes",
+    "production_authority", "route_authority", "receipt_id"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/memory-link-resolution/v1"},
+    "graph_digest": {"$ref": "#/$defs/digest"},
+    "source_namespace": {"type": "string", "pattern": "^seed://project/[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"},
+    "query": {"type": "string", "minLength": 1},
+    "normalized_query": {"type": "string", "minLength": 1},
+    "result": {"enum": ["EXACT", "AMBIGUOUS", "NOT_FOUND"]},
+    "candidate_count": {"type": "integer", "minimum": 0},
+    "matches": {"type": "array", "maxItems": 200, "items": {"$ref": "#/$defs/node"}},
+    "pagination": {
+      "type": "object", "additionalProperties": false,
+      "required": ["returned_count", "has_more", "next_cursor", "omitted_count", "truncated_by"],
+      "properties": {
+        "returned_count": {"type": "integer", "minimum": 0, "maximum": 200},
+        "has_more": {"type": "boolean"},
+        "next_cursor": {"type": "string", "maxLength": 4096},
+        "omitted_count": {"type": "integer", "minimum": 0},
+        "truncated_by": {"enum": ["none", "limit", "context-bytes"]}
+      }
+    },
+    "max_context_bytes": {"type": "integer", "minimum": 8192, "maximum": 262144},
+    "production_authority": {"const": false},
+    "route_authority": {"const": false},
+    "receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "node": {
+      "type": "object", "additionalProperties": false,
+      "required": ["uri", "kind", "key", "title", "aliases", "alias_count", "omitted_alias_count", "source_event_ids", "source_event_count", "omitted_source_event_count"],
+      "properties": {
+        "uri": {"type": "string", "pattern": "^integrity://seed/project/"},
+        "kind": {"enum": ["artifact", "component", "concept", "decision", "event", "evidence", "location", "release", "subsystem", "system", "task", "term"]},
+        "key": {"type": "string", "minLength": 1, "maxLength": 512},
+        "title": {"type": "string", "minLength": 1, "maxLength": 512},
+        "aliases": {"type": "array", "maxItems": 16, "items": {"type": "string", "minLength": 1, "maxLength": 256}},
+        "alias_count": {"type": "integer", "minimum": 1, "maximum": 64},
+        "omitted_alias_count": {"type": "integer", "minimum": 0},
+        "source_event_ids": {"type": "array", "minItems": 1, "maxItems": 64, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "source_event_count": {"type": "integer", "minimum": 1},
+        "omitted_source_event_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
