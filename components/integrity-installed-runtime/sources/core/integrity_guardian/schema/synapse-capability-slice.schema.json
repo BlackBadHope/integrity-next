@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/synapse-capability-slice.schema.json",
+  "title": "Integrity Synapse Capability Slice v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "slice_id",
+    "graph_id",
+    "tenant_id",
+    "current_node_id",
+    "as_of",
+    "nodes",
+    "edges",
+    "bounds",
+    "truncated",
+    "control_plane_calls",
+    "execution_authority"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/synapse-capability-slice/v1"
+    },
+    "slice_id": { "$ref": "#/$defs/digest" },
+    "graph_id": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "current_node_id": { "$ref": "#/$defs/node_id" },
+    "as_of": { "type": "string", "format": "date-time" },
+    "nodes": {
+      "type": "array",
+      "maxItems": 512,
+      "items": {
+        "type": "object",
+        "required": ["node_id"],
+        "properties": {
+          "node_id": { "$ref": "#/$defs/node_id" }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "maxItems": 2048,
+      "items": {
+        "type": "object",
+        "required": ["edge_id", "from_node_id", "to_node_id"],
+        "properties": {
+          "edge_id": { "$ref": "#/$defs/edge_id" },
+          "from_node_id": { "$ref": "#/$defs/node_id" },
+          "to_node_id": { "$ref": "#/$defs/node_id" }
+        }
+      }
+    },
+    "bounds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["max_depth", "max_nodes", "max_edges"],
+      "properties": {
+        "max_depth": { "type": "integer", "minimum": 0, "maximum": 32 },
+        "max_nodes": { "type": "integer", "minimum": 1, "maximum": 512 },
+        "max_edges": { "type": "integer", "minimum": 0, "maximum": 2048 }
+      }
+    },
+    "truncated": { "type": "boolean" },
+    "control_plane_calls": { "$ref": "#/$defs/control_plane_calls" },
+    "execution_authority": { "const": false }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "node_id": {
+      "type": "string",
+      "pattern": "^synapse-node:[a-f0-9]{64}$"
+    },
+    "edge_id": {
+      "type": "string",
+      "pattern": "^synapse-edge:[a-f0-9]{64}$"
+    },
+    "control_plane_calls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "tool_calls"],
+      "properties": {
+        "model_calls": { "const": 0 },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  }
+}

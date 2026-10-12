@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/perpetual-dialogue-continuation-checkpoint.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "checkpoint_id",
+    "tenant_id",
+    "conversation_id",
+    "work_item_id",
+    "source_baton_id",
+    "expected_fence",
+    "state_digest",
+    "outstanding_work_digest",
+    "required_scope_digest",
+    "authority_required",
+    "wake_budget",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/perpetual-dialogue-continuation-checkpoint/v1"
+    },
+    "checkpoint_id": {"$ref": "#/$defs/id"},
+    "tenant_id": {"$ref": "#/$defs/tenant"},
+    "conversation_id": {"$ref": "#/$defs/id"},
+    "work_item_id": {"$ref": "#/$defs/id"},
+    "source_baton_id": {"$ref": "#/$defs/id"},
+    "expected_fence": {"type": "integer", "minimum": 1},
+    "state_digest": {"$ref": "#/$defs/digest"},
+    "outstanding_work_digest": {"$ref": "#/$defs/digest"},
+    "required_scope_digest": {"$ref": "#/$defs/digest"},
+    "authority_required": {"type": "boolean"},
+    "wake_budget": {"type": "integer", "minimum": 1, "maximum": 1024},
+    "production_authority": {"const": false}
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"
+    },
+    "tenant": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/\\-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}

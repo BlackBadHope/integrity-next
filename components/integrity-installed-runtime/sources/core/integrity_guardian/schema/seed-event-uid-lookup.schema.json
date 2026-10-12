@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/seed-event-uid-lookup.schema.json",
+  "title": "Canonical Seed event UID lookup v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "snapshot_id", "event_uid", "outcome", "event", "event_digest", "receipt"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/seed-event-uid-lookup/v1"},
+    "snapshot_id": {"$ref": "#/$defs/digest"},
+    "event_uid": {"type": "string", "minLength": 1, "maxLength": 256},
+    "outcome": {"enum": ["found", "not-found"]},
+    "event": {"type": ["object", "null"]},
+    "event_digest": {"anyOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]},
+    "receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "snapshot_id", "source_digest", "catalog_digest", "event_uid_digest", "outcome", "event_id", "event_digest", "home_record_count", "production_authority", "route_authority", "receipt_id"],
+      "properties": {
+        "protocol": {"const": "integrity-guardian/seed-event-uid-lookup/v1/receipt/v1"},
+        "snapshot_id": {"$ref": "#/$defs/digest"},
+        "source_digest": {"$ref": "#/$defs/digest"},
+        "catalog_digest": {"$ref": "#/$defs/digest"},
+        "event_uid_digest": {"$ref": "#/$defs/digest"},
+        "outcome": {"enum": ["found", "not-found"]},
+        "event_id": {"type": "integer", "minimum": 0},
+        "event_digest": {"anyOf": [{"$ref": "#/$defs/digest"}, {"type": "null"}]},
+        "home_record_count": {"const": 0},
+        "production_authority": {"const": false},
+        "route_authority": {"const": false},
+        "receipt_id": {"$ref": "#/$defs/digest"}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"outcome": {"const": "found"}}},
+      "then": {
+        "properties": {
+          "event": {"type": "object"},
+          "event_digest": {"$ref": "#/$defs/digest"},
+          "receipt": {
+            "properties": {
+              "outcome": {"const": "found"},
+              "event_id": {"type": "integer", "minimum": 1},
+              "event_digest": {"$ref": "#/$defs/digest"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"outcome": {"const": "not-found"}}},
+      "then": {
+        "properties": {
+          "event": {"type": "null"},
+          "event_digest": {"type": "null"},
+          "receipt": {
+            "properties": {
+              "outcome": {"const": "not-found"},
+              "event_id": {"const": 0},
+              "event_digest": {"type": "null"}
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

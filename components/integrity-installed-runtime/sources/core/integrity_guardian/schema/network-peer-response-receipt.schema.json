@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/network-peer-response-receipt.schema.json",
+  "title": "Integrity challenge-bound network peer response receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_id", "protocol", "sdk_version", "action", "challenge_nonce", "request", "response", "peer", "signer_id", "signature"],
+  "properties": {
+    "receipt_id": { "type": "string", "pattern": "^network-peer-response:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/network-peer-response-receipt/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "action": {
+      "type": "object", "additionalProperties": false,
+      "required": ["action_id", "action_manifest_digest"],
+      "properties": {
+        "action_id": { "type": "string", "pattern": "^network-action:[a-f0-9]{64}$" },
+        "action_manifest_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "challenge_nonce": { "type": "string", "pattern": "^nonce:[a-f0-9]{64}$" },
+    "request": {
+      "type": "object", "additionalProperties": false,
+      "required": ["method", "path", "content_type", "body_digest", "body_byte_count"],
+      "properties": {
+        "method": { "enum": ["HEAD", "POST", "GET"] },
+        "path": { "type": "string", "pattern": "^/[^\\r\\n]{0,255}$" },
+        "content_type": { "type": "string", "maxLength": 128 },
+        "body_digest": { "$ref": "#/$defs/digest" },
+        "body_byte_count": { "type": "integer", "minimum": 0, "maximum": 4096 }
+      }
+    },
+    "response": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "content_type", "body_digest", "body_byte_count"],
+      "properties": {
+        "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "content_type": { "type": "string", "maxLength": 128 },
+        "body_digest": { "$ref": "#/$defs/digest" },
+        "body_byte_count": { "type": "integer", "minimum": 0, "maximum": 4096 }
+      }
+    },
+    "peer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["key_id", "key_fingerprint"],
+      "properties": {
+        "key_id": { "$ref": "#/$defs/id" },
+        "key_fingerprint": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

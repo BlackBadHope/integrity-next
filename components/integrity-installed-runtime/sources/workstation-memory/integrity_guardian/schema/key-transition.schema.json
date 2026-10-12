@@ -1,0 +1,221 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/key-transition.schema.json",
+  "title": "Integrity Guardian Key Transition v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "transition_id",
+    "tenant_id",
+    "purpose",
+    "sequence",
+    "operation",
+    "predecessor_key_id",
+    "successor",
+    "recorded_at",
+    "reason",
+    "authorization"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/key-transition/v1"
+    },
+    "transition_id": {
+      "type": "string",
+      "pattern": "^key-transition:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[a-z0-9][a-z0-9._-]{0,63}$"
+    },
+    "purpose": {
+      "enum": [
+        "authority",
+        "sensor",
+        "ledger",
+        "checkpoint",
+        "release",
+        "external-store",
+        "executor"
+      ]
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "operation": {
+      "enum": [
+        "enroll",
+        "rotate",
+        "revoke",
+        "recover"
+      ]
+    },
+    "predecessor_key_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+    },
+    "successor": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/key"
+        }
+      ]
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512
+    },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_id",
+        "decision",
+        "signature"
+      ],
+      "properties": {
+        "authority_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "decision": {
+          "const": "approved"
+        },
+        "signature": {
+          "$ref": "#/$defs/signature"
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "enum": [
+              "enroll",
+              "recover"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "predecessor_key_id": {
+            "type": "null"
+          },
+          "successor": {
+            "$ref": "#/$defs/key"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "rotate"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "predecessor_key_id": {
+            "type": "string"
+          },
+          "successor": {
+            "$ref": "#/$defs/key"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "operation": {
+            "const": "revoke"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "predecessor_key_id": {
+            "type": "string"
+          },
+          "successor": {
+            "type": "null"
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "key": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key_id",
+        "algorithm",
+        "public_key",
+        "valid_from",
+        "valid_until"
+      ],
+      "properties": {
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "public_key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43}$"
+        },
+        "valid_from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

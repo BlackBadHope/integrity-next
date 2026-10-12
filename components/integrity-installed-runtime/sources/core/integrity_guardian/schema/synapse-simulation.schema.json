@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/synapse-simulation.schema.json",
+  "title": "Integrity Synapse Simulation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "simulation_id",
+    "graph_id",
+    "route_id",
+    "tenant_id",
+    "start_node_id",
+    "target_node_id",
+    "start_facts_digest",
+    "final_facts_digest",
+    "trace",
+    "rollback_edge_ids",
+    "status",
+    "execution_performed",
+    "production_mutated",
+    "control_plane_calls"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/synapse-simulation/v1" },
+    "simulation_id": { "$ref": "#/$defs/digest" },
+    "graph_id": { "$ref": "#/$defs/digest" },
+    "route_id": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "start_node_id": { "$ref": "#/$defs/node_id" },
+    "target_node_id": { "$ref": "#/$defs/node_id" },
+    "start_facts_digest": { "$ref": "#/$defs/digest" },
+    "final_facts_digest": { "$ref": "#/$defs/digest" },
+    "trace": {
+      "type": "array",
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "index",
+          "edge_id",
+          "from_node_id",
+          "to_node_id",
+          "verifier_id",
+          "rollback_edge_id",
+          "facts_digest"
+        ],
+        "properties": {
+          "index": { "type": "integer", "minimum": 0, "maximum": 31 },
+          "edge_id": { "$ref": "#/$defs/edge_id" },
+          "from_node_id": { "$ref": "#/$defs/node_id" },
+          "to_node_id": { "$ref": "#/$defs/node_id" },
+          "verifier_id": {
+            "oneOf": [
+              { "$ref": "#/$defs/id" },
+              { "type": "null" }
+            ]
+          },
+          "rollback_edge_id": {
+            "oneOf": [
+              { "$ref": "#/$defs/edge_id" },
+              { "type": "null" }
+            ]
+          },
+          "facts_digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "rollback_edge_ids": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/edge_id" }
+    },
+    "status": { "const": "simulated" },
+    "execution_performed": { "const": false },
+    "production_mutated": { "const": false },
+    "control_plane_calls": { "$ref": "#/$defs/control_plane_calls" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "node_id": {
+      "type": "string",
+      "pattern": "^synapse-node:[a-f0-9]{64}$"
+    },
+    "edge_id": {
+      "type": "string",
+      "pattern": "^synapse-edge:[a-f0-9]{64}$"
+    },
+    "control_plane_calls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "tool_calls"],
+      "properties": {
+        "model_calls": { "const": 0 },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  }
+}

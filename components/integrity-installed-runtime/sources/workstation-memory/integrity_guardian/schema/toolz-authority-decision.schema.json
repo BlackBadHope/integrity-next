@@ -1,0 +1,349 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-authority-decision.schema.json",
+  "title": "Integrity Uroboros Toolzs Authority Decision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "decision_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "request",
+    "authority",
+    "ledger_binding",
+    "outcome",
+    "reason_code",
+    "grant",
+    "timing",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-authority-decision/v1"
+    },
+    "decision_id": {
+      "type": "string",
+      "pattern": "^toolz-authority-decision:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "request_digest",
+        "policy_digest",
+        "expires_at"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^toolz-authorization-request:[a-f0-9]{64}$"
+        },
+        "request_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_id",
+        "authority_artifact_digest",
+        "key_id",
+        "key_fingerprint"
+      ],
+      "properties": {
+        "authority_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "authority_artifact_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "key_fingerprint": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "ledger_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ledger_id",
+        "authority_id",
+        "authority_artifact_digest"
+      ],
+      "properties": {
+        "ledger_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "authority_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "authority_artifact_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "outcome": {
+      "enum": [
+        "approved",
+        "denied"
+      ]
+    },
+    "reason_code": {
+      "enum": [
+        "owner-approved",
+        "owner-denied",
+        "policy-denied"
+      ]
+    },
+    "grant": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/grant"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decided_at",
+        "created_at",
+        "expires_at"
+      ],
+      "properties": {
+        "decided_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "authority_ledger_append_required",
+        "authorization_decided",
+        "authorization_granted",
+        "consumption_recorded",
+        "execution_performed",
+        "external_effect_performed",
+        "ledger_proof_required",
+        "network",
+        "production_authority",
+        "request_transport_performed",
+        "single_use_grant_issued",
+        "route_memory_store_write",
+        "tool_invocation"
+      ],
+      "properties": {
+        "authority_ledger_append_required": {
+          "const": true
+        },
+        "authorization_decided": {
+          "const": true
+        },
+        "authorization_granted": {
+          "type": "boolean"
+        },
+        "consumption_recorded": {
+          "const": false
+        },
+        "execution_performed": {
+          "const": false
+        },
+        "external_effect_performed": {
+          "const": false
+        },
+        "ledger_proof_required": {
+          "const": true
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "request_transport_performed": {
+          "const": false
+        },
+        "single_use_grant_issued": {
+          "type": "boolean"
+        },
+        "route_memory_store_write": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "outcome": {
+            "const": "approved"
+          }
+        },
+        "required": [
+          "outcome"
+        ]
+      },
+      "then": {
+        "properties": {
+          "reason_code": {
+            "const": "owner-approved"
+          },
+          "grant": {
+            "$ref": "#/$defs/grant"
+          },
+          "authority_boundary": {
+            "properties": {
+              "authorization_granted": {
+                "const": true
+              },
+              "single_use_grant_issued": {
+                "const": true
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "reason_code": {
+            "enum": [
+              "owner-denied",
+              "policy-denied"
+            ]
+          },
+          "grant": {
+            "type": "null"
+          },
+          "authority_boundary": {
+            "properties": {
+              "authorization_granted": {
+                "const": false
+              },
+              "single_use_grant_issued": {
+                "const": false
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    },
+    "grant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "grant_id",
+        "status",
+        "requested_capability",
+        "max_transitions",
+        "single_use",
+        "consumption_required",
+        "expires_at"
+      ],
+      "properties": {
+        "grant_id": {
+          "type": "string",
+          "pattern": "^toolz-single-use-grant:[a-f0-9]{64}$"
+        },
+        "status": {
+          "const": "issued"
+        },
+        "requested_capability": {
+          "const": "single-toolz-transition"
+        },
+        "max_transitions": {
+          "const": 1
+        },
+        "single_use": {
+          "const": true
+        },
+        "consumption_required": {
+          "const": true
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    }
+  }
+}

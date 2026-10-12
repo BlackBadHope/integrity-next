@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/lts-support-contracts.schema.json",
+  "title": "Integrity LTS support contracts v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "status", "activation_rule", "policy", "tracks"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/lts-support-contracts/v1"},
+    "status": {"const": "lts-candidate"},
+    "activation_rule": {"const": "first-signed-non-prerelease-release-per-track"},
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "minimum_support_months", "minimum_deprecation_months",
+        "supported_stable_minors", "security_backports",
+        "schema_breaks_require_new_major", "unknown_evidence_fails_closed",
+        "production_authority", "memory_grants_authority"
+      ],
+      "properties": {
+        "minimum_support_months": {"type": "integer", "minimum": 24},
+        "minimum_deprecation_months": {"type": "integer", "minimum": 12},
+        "supported_stable_minors": {"type": "integer", "minimum": 2},
+        "security_backports": {"const": true},
+        "schema_breaks_require_new_major": {"const": true},
+        "unknown_evidence_fails_closed": {"const": true},
+        "production_authority": {"const": false},
+        "memory_grants_authority": {"const": false}
+      }
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"$ref": "#/$defs/track"}
+    }
+  },
+  "$defs": {
+    "name": {"type": "string", "pattern": "^[a-z][a-z0-9-]{1,99}$"},
+    "track": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "track_id", "component", "contract_version", "support_window_months",
+        "stable_python_exports", "stable_schemas", "stable_commands",
+        "invariants", "excluded_modules"
+      ],
+      "properties": {
+        "track_id": {"$ref": "#/$defs/name"},
+        "component": {"$ref": "#/$defs/name"},
+        "contract_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+-candidate\\.[0-9]+$"},
+        "support_window_months": {"type": "integer", "minimum": 24},
+        "stable_python_exports": {"$ref": "#/$defs/nonempty_unique_strings"},
+        "stable_schemas": {"$ref": "#/$defs/nonempty_unique_strings"},
+        "stable_commands": {"$ref": "#/$defs/nonempty_unique_strings"},
+        "invariants": {"$ref": "#/$defs/nonempty_unique_names"},
+        "excluded_modules": {"$ref": "#/$defs/nonempty_unique_names"}
+      }
+    },
+    "nonempty_unique_strings": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1, "maxLength": 200}
+    },
+    "nonempty_unique_names": {
+      "type": "array", "minItems": 1, "uniqueItems": true,
+      "items": {"$ref": "#/$defs/name"}
+    }
+  }
+}

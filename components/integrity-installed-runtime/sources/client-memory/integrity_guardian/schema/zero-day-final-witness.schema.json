@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/zero-day-final-witness.schema.json",
+  "title": "Integrity bounded zero-day final witness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "scope",
+    "result",
+    "local_acceptance",
+    "observed_at",
+    "profile_id",
+    "tenant",
+    "seed",
+    "seed_build",
+    "runtime",
+    "credential_custody",
+    "operation_audit",
+    "persistence",
+    "context_isolation",
+    "acceptance_claims",
+    "unsatisfied_claims",
+    "unproven_external_claims",
+    "operational_ready",
+    "production_ready",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/zero-day-final-witness/v2" },
+    "scope": { "const": "LOCAL_READONLY_ZERO_DAY" },
+    "result": {
+      "enum": [
+        "BOUNDED_PASS_NOT_PRODUCTION_READY",
+        "PARTIAL_NOT_PRODUCTION_READY"
+      ]
+    },
+    "local_acceptance": { "enum": ["PASS", "PARTIAL"] },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "profile_id": { "type": "string", "pattern": "^local-profile:[a-f0-9]{64}$" },
+    "tenant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["tenant_id", "namespace", "enrollment", "local_readonly_ready"],
+      "properties": {
+        "tenant_id": { "type": "string", "pattern": "^tenant:[a-z0-9][a-z0-9._-]{0,63}$" },
+        "namespace": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "enrollment": { "enum": ["ENROLLED", "UNENROLLED"] },
+        "local_readonly_ready": { "const": true }
+      }
+    },
+    "seed": { "$ref": "#/$defs/seed" },
+    "seed_build": {
+      "oneOf": [
+        { "$ref": "#/$defs/not_assessed" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "receipt_id",
+            "event_count",
+            "evidence_binding_count",
+            "production_authority",
+            "imports_remote_memory"
+          ],
+          "properties": {
+            "status": { "enum": ["PASS", "FAIL"] },
+            "receipt_id": { "type": "string", "pattern": "^zero-day-seed:[a-f0-9]{64}$" },
+            "event_count": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+            "evidence_binding_count": { "type": "integer", "minimum": 4, "maximum": 72 },
+            "production_authority": { "const": false },
+            "imports_remote_memory": { "const": false }
+          }
+        }
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "observed", "stable_two_read_witness", "health"],
+      "properties": {
+        "required": { "type": "boolean" },
+        "observed": { "type": "boolean" },
+        "stable_two_read_witness": { "type": "boolean" },
+        "health": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "ok",
+                "service",
+                "version",
+                "status",
+                "source_namespace",
+                "event_count",
+                "event_cursor",
+                "source_digest",
+                "catalog_digest",
+                "home_record_count",
+                "production_authority"
+              ],
+              "properties": {
+                "ok": { "const": true },
+                "service": { "const": "integrity-seed" },
+                "version": { "type": "string", "minLength": 1, "maxLength": 128 },
+                "status": { "const": "READY" },
+                "source_namespace": { "$ref": "#/$defs/seed_namespace" },
+                "event_count": { "type": "integer", "minimum": 1 },
+                "event_cursor": { "type": "integer", "minimum": 1 },
+                "source_digest": { "$ref": "#/$defs/digest" },
+                "catalog_digest": { "$ref": "#/$defs/digest" },
+                "home_record_count": { "const": 0 },
+                "production_authority": { "const": false }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "credential_custody": {
+      "oneOf": [
+        { "$ref": "#/$defs/not_assessed" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "protocol",
+            "status",
+            "audited_at",
+            "state_root",
+            "state_inventory_digest",
+            "source_file_count",
+            "secret_candidate_count",
+            "scanned_file_count",
+            "scanned_byte_count",
+            "credential_named_file_count",
+            "secret_value_match_count",
+            "values_emitted",
+            "value_digests_emitted",
+            "bounded",
+            "production_authority"
+          ],
+          "properties": {
+            "protocol": { "const": "integrity-guardian/credential-custody-receipt/v1" },
+            "status": { "enum": ["PASS", "FAIL"] },
+            "audited_at": { "type": "string", "format": "date-time" },
+            "state_root": { "type": "string", "minLength": 1, "maxLength": 4096 },
+            "state_inventory_digest": { "$ref": "#/$defs/digest" },
+            "source_file_count": { "type": "integer", "minimum": 1, "maximum": 32 },
+            "secret_candidate_count": { "type": "integer", "minimum": 0 },
+            "scanned_file_count": { "type": "integer", "minimum": 0, "maximum": 4096 },
+            "scanned_byte_count": { "type": "integer", "minimum": 0, "maximum": 67108864 },
+            "credential_named_file_count": { "type": "integer", "minimum": 0 },
+            "secret_value_match_count": { "type": "integer", "minimum": 0 },
+            "values_emitted": { "const": false },
+            "value_digests_emitted": { "const": false },
+            "bounded": { "const": true },
+            "production_authority": { "const": false }
+          }
+        }
+      ]
+    },
+    "operation_audit": {
+      "oneOf": [
+        { "$ref": "#/$defs/not_assessed" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "manifest_id",
+            "operation_count",
+            "outcome_counts",
+            "unknown_outcome_count",
+            "all_operations_confirmed_success",
+            "evidence_artifact_count",
+            "receipt_id",
+            "production_authority"
+          ],
+          "properties": {
+            "status": { "enum": ["PASS", "FAIL"] },
+            "manifest_id": { "type": "string", "pattern": "^operation-manifest:[a-f0-9]{64}$" },
+            "operation_count": { "type": "integer", "minimum": 1, "maximum": 64 },
+            "outcome_counts": { "$ref": "#/$defs/outcome_counts" },
+            "unknown_outcome_count": { "type": "integer", "minimum": 0, "maximum": 64 },
+            "all_operations_confirmed_success": { "type": "boolean" },
+            "evidence_artifact_count": { "type": "integer", "minimum": 0, "maximum": 128 },
+            "receipt_id": { "type": "string", "pattern": "^operation-receipt:[a-f0-9]{64}$" },
+            "production_authority": { "const": false }
+          }
+        }
+      ]
+    },
+    "persistence": {
+      "oneOf": [
+        { "$ref": "#/$defs/not_assessed" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "task_name",
+            "task_path",
+            "mode",
+            "trigger_user_id",
+            "task_state",
+            "task_ran_this_boot",
+            "reboot_since_install",
+            "cold_start_required",
+            "production_authority"
+          ],
+          "properties": {
+            "status": { "enum": ["PASS", "FAIL"] },
+            "task_name": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+            "task_path": { "const": "\\" },
+            "mode": { "enum": ["CurrentUser", "System"] },
+            "trigger_user_id": { "type": "string", "minLength": 1, "maxLength": 512 },
+            "task_state": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "task_ran_this_boot": { "type": "boolean" },
+            "reboot_since_install": { "type": "boolean" },
+            "cold_start_required": { "type": "boolean" },
+            "production_authority": { "const": false }
+          }
+        }
+      ]
+    },
+    "context_isolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "endpoints", "imports_remote_memory", "production_authority"],
+      "properties": {
+        "status": { "enum": ["PASS", "FAIL"] },
+        "endpoints": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["host", "port", "listener_absent"],
+            "properties": {
+              "host": { "enum": ["127.0.0.1", "::1"] },
+              "port": { "type": "integer", "minimum": 1, "maximum": 65535 },
+              "listener_absent": { "type": "boolean" }
+            }
+          }
+        },
+        "imports_remote_memory": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "acceptance_claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "local_bootstrap",
+        "local_host_observation",
+        "exact_operation_execution",
+        "post_action_seed",
+        "loopback_runtime",
+        "credential_custody",
+        "persistence",
+        "cold_start",
+        "full_external_topology",
+        "multi_agent_coordination",
+        "blast_radius_coverage",
+        "production_causality"
+      ],
+      "properties": {
+        "local_bootstrap": { "$ref": "#/$defs/proof" },
+        "local_host_observation": { "$ref": "#/$defs/proof" },
+        "exact_operation_execution": { "$ref": "#/$defs/proof" },
+        "post_action_seed": { "$ref": "#/$defs/proof" },
+        "loopback_runtime": { "$ref": "#/$defs/proof" },
+        "credential_custody": { "$ref": "#/$defs/proof" },
+        "persistence": { "$ref": "#/$defs/proof" },
+        "cold_start": { "enum": ["PROVEN", "NOT_PROVEN", "NOT_REQUIRED"] },
+        "full_external_topology": { "const": "NOT_PROVEN" },
+        "multi_agent_coordination": { "const": "NOT_PROVEN" },
+        "blast_radius_coverage": { "const": "NOT_PROVEN" },
+        "production_causality": { "const": "NOT_PROVEN" }
+      }
+    },
+    "unsatisfied_claims": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+      "uniqueItems": true
+    },
+    "unproven_external_claims": {
+      "const": [
+        "blast_radius_coverage",
+        "full_external_topology",
+        "multi_agent_coordination",
+        "production_causality"
+      ]
+    },
+    "operational_ready": { "const": false },
+    "production_ready": { "const": false },
+    "production_authority": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "local_acceptance": { "const": "PASS" } } },
+      "then": {
+        "properties": {
+          "result": { "const": "BOUNDED_PASS_NOT_PRODUCTION_READY" },
+          "unsatisfied_claims": { "maxItems": 0 }
+        }
+      },
+      "else": {
+        "properties": {
+          "result": { "const": "PARTIAL_NOT_PRODUCTION_READY" },
+          "unsatisfied_claims": { "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "seed_namespace": { "type": "string", "pattern": "^seed://project/[a-z0-9][a-z0-9._-]{0,127}$" },
+    "proof": { "enum": ["PROVEN", "NOT_PROVEN"] },
+    "not_assessed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": { "status": { "const": "NOT_ASSESSED" } }
+    },
+    "seed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "source_namespace",
+        "event_count",
+        "minimum_event_id",
+        "maximum_event_id",
+        "source_digest",
+        "catalog_digest",
+        "home_record_count",
+        "production_authority"
+      ],
+      "properties": {
+        "status": { "const": "READY" },
+        "source_namespace": { "$ref": "#/$defs/seed_namespace" },
+        "event_count": { "type": "integer", "minimum": 1, "maximum": 1000000 },
+        "minimum_event_id": { "type": "integer", "minimum": 1 },
+        "maximum_event_id": { "type": "integer", "minimum": 1 },
+        "source_digest": { "$ref": "#/$defs/digest" },
+        "catalog_digest": { "$ref": "#/$defs/digest" },
+        "home_record_count": { "const": 0 },
+        "production_authority": { "const": false }
+      }
+    },
+    "outcome_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["not-started", "confirmed-success", "confirmed-failure", "unknown-outcome"],
+      "properties": {
+        "not-started": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "confirmed-success": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "confirmed-failure": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "unknown-outcome": { "type": "integer", "minimum": 0, "maximum": 64 }
+      }
+    }
+  }
+}

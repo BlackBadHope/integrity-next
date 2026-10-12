@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/artifact-provenance-receipt.schema.json",
+  "title": "Integrity Artifact Provenance Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "subject",
+    "policy_digest",
+    "environment",
+    "harness",
+    "source",
+    "outcome",
+    "created_at",
+    "expires_at",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/artifact-provenance-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^artifact-provenance-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "const": "tenant:public-6e3cdbebaafc8efa" },
+    "subject": { "$ref": "#/$defs/subject" },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "environment": { "$ref": "#/$defs/environment" },
+    "harness": { "$ref": "#/$defs/harness" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_revision",
+        "source_tree_digest",
+        "dependency_lock_digest",
+        "build_digest"
+      ],
+      "properties": {
+        "source_revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "source_tree_digest": { "$ref": "#/$defs/digest" },
+        "dependency_lock_digest": { "$ref": "#/$defs/digest" },
+        "build_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "reproducible", "artifact_count"],
+      "properties": {
+        "state": {
+          "enum": ["exact", "non-reproducible", "partial", "failed"]
+        },
+        "reproducible": { "type": "boolean" },
+        "artifact_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 10000
+        }
+      }
+    },
+    "created_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "authority_boundary": { "$ref": "#/$defs/authority_boundary" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "artifact_digest"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/synthetic_id" },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "fingerprint_digest"],
+      "properties": {
+        "profile_id": { "$ref": "#/$defs/synthetic_id" },
+        "fingerprint_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["harness_id", "revision", "artifact_digest"],
+      "properties": {
+        "harness_id": { "$ref": "#/$defs/synthetic_id" },
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_authority",
+        "promotion_authority",
+        "production_authority",
+        "remediation_authority"
+      ],
+      "properties": {
+        "execution_authority": { "const": false },
+        "promotion_authority": { "const": false },
+        "production_authority": { "const": false },
+        "remediation_authority": { "const": false }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

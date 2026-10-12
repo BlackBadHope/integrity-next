@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/discovery-theory-feedback.schema.json",
+  "title": "Integrity Fog of War Discovery Theory Feedback v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "snapshot_id",
+    "proposal_id",
+    "proposal_digest",
+    "observer_id",
+    "observed_at",
+    "outcome",
+    "evidence_digest",
+    "affected_record_ids",
+    "invalidated_zone_ids",
+    "feedback_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/discovery-theory-feedback/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^discovery-theory-feedback:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^discovery-index-snapshot:[a-f0-9]{64}$"
+    },
+    "proposal_id": {
+      "type": "string",
+      "pattern": "^discovery-theory-route:[a-f0-9]{64}$"
+    },
+    "proposal_digest": { "$ref": "#/$defs/digest" },
+    "observer_id": { "$ref": "#/$defs/id" },
+    "observed_at": { "$ref": "#/$defs/timestamp" },
+    "outcome": {
+      "enum": ["confirmed", "refuted", "inconclusive", "stale"]
+    },
+    "evidence_digest": {
+      "oneOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "null" }
+      ]
+    },
+    "affected_record_ids": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^discovery-record:[a-f0-9]{64}$"
+      }
+    },
+    "invalidated_zone_ids": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "feedback_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credentials",
+        "execution",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "source_evidence_mutated"
+      ],
+      "properties": {
+        "credentials": { "const": false },
+        "execution": { "const": false },
+        "model_sdk": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "source_evidence_mutated": { "const": false }
+      }
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

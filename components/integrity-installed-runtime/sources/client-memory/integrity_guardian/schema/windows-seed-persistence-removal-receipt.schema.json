@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/windows-seed-persistence-removal-receipt.schema.json",
+  "title": "Windows Seed persistence removal receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "status",
+    "task_name",
+    "task_path",
+    "mode",
+    "action_digest",
+    "trigger_user_id",
+    "listener",
+    "removed_at",
+    "task_removed",
+    "runtime_listener_absent",
+    "state_removed",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/windows-seed-persistence-removal/v1" },
+    "status": { "const": "PASS" },
+    "task_name": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+    "task_path": { "const": "\\" },
+    "mode": { "enum": ["CurrentUser", "System"] },
+    "action_digest": { "$ref": "#/$defs/digest" },
+    "trigger_user_id": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "listener": { "type": "string", "pattern": "^127[.]0[.]0[.]1:[1-9][0-9]{0,4}$" },
+    "removed_at": { "type": "string", "format": "date-time" },
+    "task_removed": { "const": true },
+    "runtime_listener_absent": { "const": true },
+    "state_removed": { "const": false },
+    "production_authority": { "const": false }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+  }
+}

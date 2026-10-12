@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/medor-event-append-decision.schema.json",
+  "title": "Externally authorized Medor canonical Seed append decision v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "decision_id", "architecture_admission_id",
+    "security_admission_id", "request_digest", "scope", "max_transitions",
+    "decision", "authority_id", "authority_key_fingerprint", "valid_from",
+    "valid_until", "automatic_retry_allowed", "production_authority", "signature"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/medor-event-append-decision/v1"},
+    "decision_id": {"$ref": "#/$defs/digest"},
+    "architecture_admission_id": {"$ref": "#/$defs/digest"},
+    "security_admission_id": {"$ref": "#/$defs/digest"},
+    "request_digest": {"$ref": "#/$defs/digest"},
+    "scope": {"const": "single-canonical-seed-append"},
+    "max_transitions": {"const": 1},
+    "decision": {"const": "approved"},
+    "authority_id": {"const": "authority:medor-event-append-one-use"},
+    "authority_key_fingerprint": {"$ref": "#/$defs/digest"},
+    "valid_from": {"type": "string", "format": "date-time"},
+    "valid_until": {"type": "string", "format": "date-time"},
+    "automatic_retry_allowed": {"const": false},
+    "production_authority": {"const": false},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "minLength": 1, "maxLength": 200},
+        "value": {"type": "string", "pattern": "^[A-Za-z0-9_-]{86}$"}
+      }
+    }
+  }
+}

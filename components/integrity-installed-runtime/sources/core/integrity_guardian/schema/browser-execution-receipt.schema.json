@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/browser-execution-receipt.schema.json",
+  "title": "Integrity Browser execution receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["receipt_id", "protocol", "sdk_version", "envelope", "operation", "executor", "observed", "result", "controls", "recorded_at", "signer_id", "signature"],
+  "properties": {
+    "receipt_id": { "type": "string", "pattern": "^browser-execution:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/browser-execution-receipt/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "envelope": {
+      "type": "object", "additionalProperties": false,
+      "required": ["envelope_id", "envelope_digest"],
+      "properties": {
+        "envelope_id": { "type": "string", "pattern": "^envelope:[a-f0-9]{64}$" },
+        "envelope_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["target_operation_id", "target_operation_digest", "action_id", "action_manifest_digest"],
+      "properties": {
+        "target_operation_id": { "type": "string", "pattern": "^adapter-target-operation:[a-f0-9]{64}$" },
+        "target_operation_digest": { "$ref": "#/$defs/digest" },
+        "action_id": { "type": "string", "pattern": "^browser-action:[a-f0-9]{64}$" },
+        "action_manifest_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "executor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["executor_id", "executor_artifact_digest", "key_id"],
+      "properties": {
+        "executor_id": { "$ref": "#/$defs/id" },
+        "executor_artifact_digest": { "$ref": "#/$defs/digest" },
+        "key_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "observed": {
+      "type": "object", "additionalProperties": false,
+      "required": ["start_url", "final_url", "initial_match_count", "final_match_count", "final_text_digest", "browser_version", "temporary_profile", "webdriver_request_count", "raw_page_content_retained"],
+      "properties": {
+        "start_url": { "type": ["string", "null"], "maxLength": 512 },
+        "final_url": { "type": ["string", "null"], "maxLength": 512 },
+        "initial_match_count": { "type": ["integer", "null"], "minimum": 0, "maximum": 64 },
+        "final_match_count": { "type": ["integer", "null"], "minimum": 0, "maximum": 64 },
+        "final_text_digest": { "oneOf": [{ "$ref": "#/$defs/digest" }, { "type": "null" }] },
+        "browser_version": { "type": ["string", "null"], "maxLength": 64 },
+        "temporary_profile": { "type": "boolean" },
+        "webdriver_request_count": { "type": "integer", "minimum": 0, "maximum": 1024 },
+        "raw_page_content_retained": { "const": false }
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["reported_outcome", "reason_code", "click_request_sent", "expected_url_observed", "expected_text_observed", "action_replayed", "automatic_retry_allowed"],
+      "properties": {
+        "reported_outcome": { "enum": ["reported-success", "reported-failure", "outcome-unknown"] },
+        "reason_code": { "enum": ["expected-page-state-observed", "pre-action-browser-failure", "post-action-page-state-mismatch", "post-click-observation-unknown"] },
+        "click_request_sent": { "type": "boolean" },
+        "expected_url_observed": { "type": "boolean" },
+        "expected_text_observed": { "type": "boolean" },
+        "action_replayed": { "const": false },
+        "automatic_retry_allowed": { "const": false }
+      }
+    },
+    "controls": {
+      "type": "object", "additionalProperties": false,
+      "required": ["loopback_webdriver", "all_browser_traffic_proxy", "external_egress", "credentials", "home_profile", "downloads", "production_authority"],
+      "properties": {
+        "loopback_webdriver": { "const": true },
+        "all_browser_traffic_proxy": { "const": true },
+        "external_egress": { "const": false },
+        "credentials": { "const": false },
+        "home_profile": { "const": false },
+        "downloads": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "recorded_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

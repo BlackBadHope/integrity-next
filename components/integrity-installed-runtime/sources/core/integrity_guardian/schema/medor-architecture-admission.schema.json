@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/medor-architecture-admission.schema.json",
+  "title": "Medor architecture admission v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "admission_id",
+    "protocol",
+    "mind_admission",
+    "guardian_event",
+    "guardian_checkpoint",
+    "atlas_projection",
+    "connectome_manifest",
+    "connectome_compilation",
+    "atlas_synapse_plan",
+    "summary",
+    "invariants"
+  ],
+  "properties": {
+    "admission_id": {"$ref": "#/$defs/digest"},
+    "protocol": {"const": "integrity-guardian/medor-architecture-admission/v1"},
+    "mind_admission": {"type": "object"},
+    "guardian_event": {"type": "object"},
+    "guardian_checkpoint": {"type": "object"},
+    "atlas_projection": {"type": "object"},
+    "connectome_manifest": {"type": "object"},
+    "connectome_compilation": {"type": "object"},
+    "atlas_synapse_plan": {"type": "object"},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mind_admission_receipt_id",
+        "concept_recovery_digest",
+        "coordination_digest",
+        "coordination_stop_required",
+        "route_disposition",
+        "ledger_event_id",
+        "ledger_event_digest",
+        "checkpoint_id",
+        "checkpoint_digest",
+        "checkpoint_tree_size",
+        "atlas_projection_id",
+        "atlas_projection_digest",
+        "connectome_manifest_id",
+        "connectome_compilation_id",
+        "synapse_graph_id",
+        "synapse_plan_id",
+        "synapse_route_id",
+        "synapse_edge_ids",
+        "synapse_blast_radius_rank",
+        "simulation_id",
+        "simulation_status"
+      ],
+      "properties": {
+        "mind_admission_receipt_id": {"$ref": "#/$defs/digest"},
+        "concept_recovery_digest": {"$ref": "#/$defs/digest"},
+        "coordination_digest": {"$ref": "#/$defs/digest"},
+        "coordination_stop_required": {"type": "boolean"},
+        "route_disposition": {"enum": ["ready", "stopped"]},
+        "ledger_event_id": {"$ref": "#/$defs/event_id"},
+        "ledger_event_digest": {"$ref": "#/$defs/digest"},
+        "checkpoint_id": {"const": "checkpoint:medor-architecture"},
+        "checkpoint_digest": {"$ref": "#/$defs/digest"},
+        "checkpoint_tree_size": {"const": 1},
+        "atlas_projection_id": {"type": "string", "pattern": "^atlas:[a-f0-9]{64}$"},
+        "atlas_projection_digest": {"$ref": "#/$defs/digest"},
+        "connectome_manifest_id": {"$ref": "#/$defs/digest"},
+        "connectome_compilation_id": {"$ref": "#/$defs/digest"},
+        "synapse_graph_id": {"$ref": "#/$defs/digest"},
+        "synapse_plan_id": {"$ref": "#/$defs/digest"},
+        "synapse_route_id": {"$ref": "#/$defs/digest"},
+        "synapse_edge_ids": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"type": "string", "pattern": "^synapse-edge:[a-f0-9]{64}$"}
+        },
+        "synapse_blast_radius_rank": {"const": 0},
+        "simulation_id": {"$ref": "#/$defs/digest"},
+        "simulation_status": {"const": "simulated"}
+      }
+    },
+    "invariants": {
+      "const": {
+        "execution_performed": false,
+        "home_admitted": false,
+        "memory_source": "canonical-seed-action-log",
+        "model_side_route_invention": false,
+        "production_authority": false,
+        "route_authority": false,
+        "winops_authorized": false
+      }
+    }
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "event_id": {"type": "string", "pattern": "^event:[a-f0-9]{64}$"}
+  }
+}

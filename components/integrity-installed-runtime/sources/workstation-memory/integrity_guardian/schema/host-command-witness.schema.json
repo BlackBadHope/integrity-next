@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/host-command-witness.schema.json",
+  "title": "Integrity HostCommand independent result witness v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["witness_id", "protocol", "sdk_version", "manifest", "operation", "receipt", "executor", "observer", "observed", "result", "controls", "observed_at", "signer_id", "signature"],
+  "properties": {
+    "witness_id": { "type": "string", "pattern": "^host-command-witness:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/host-command-witness/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "manifest": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_id", "manifest_digest", "adapter_id", "target_node_id"],
+      "properties": {
+        "manifest_id": { "type": "string", "pattern": "^operation-manifest:[a-f0-9]{64}$" },
+        "manifest_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "target_node_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "operation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["operation_id", "executable_digest", "argv_digest", "environment_digest", "working_directory_digest", "containment_executable_digest"],
+      "properties": {
+        "operation_id": { "$ref": "#/$defs/id" },
+        "executable_digest": { "$ref": "#/$defs/digest" },
+        "argv_digest": { "$ref": "#/$defs/digest" },
+        "environment_digest": { "$ref": "#/$defs/digest" },
+        "working_directory_digest": { "$ref": "#/$defs/digest" },
+        "containment_executable_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "receipt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["receipt_id", "receipt_digest"],
+      "properties": {
+        "receipt_id": { "type": "string", "pattern": "^operation-receipt:[a-f0-9]{64}$" },
+        "receipt_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "executor": { "$ref": "#/$defs/actor" },
+    "observer": { "$ref": "#/$defs/actor" },
+    "observed": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_id", "stdout_digest", "stdout_byte_count", "content_retained"],
+      "properties": {
+        "source_id": { "$ref": "#/$defs/id" },
+        "stdout_digest": { "$ref": "#/$defs/digest" },
+        "stdout_byte_count": { "type": "integer", "minimum": 0, "maximum": 4194304 },
+        "content_retained": { "const": false }
+      }
+    },
+    "result": {
+      "type": "object", "additionalProperties": false,
+      "required": ["executor_confirmed_success", "independent_output_match", "executor_claim_trusted", "external_causality_proven"],
+      "properties": {
+        "executor_confirmed_success": { "const": true },
+        "independent_output_match": { "const": true },
+        "executor_claim_trusted": { "const": false },
+        "external_causality_proven": { "const": false }
+      }
+    },
+    "controls": {
+      "type": "object", "additionalProperties": false,
+      "required": ["shell_expansion", "network", "host_filesystem_write", "host_filesystem_visibility", "home_visible", "credentials", "automatic_retry", "production_authority"],
+      "properties": {
+        "shell_expansion": { "const": false },
+        "network": { "const": false },
+        "host_filesystem_write": { "const": false },
+        "host_filesystem_visibility": { "const": "runtime-only" },
+        "home_visible": { "const": false },
+        "credentials": { "const": false },
+        "automatic_retry": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "observed_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "actor": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actor_id", "artifact_digest", "key_id"],
+      "properties": {
+        "actor_id": { "$ref": "#/$defs/id" },
+        "artifact_digest": { "$ref": "#/$defs/digest" },
+        "key_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

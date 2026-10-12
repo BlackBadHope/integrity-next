@@ -1,0 +1,425 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-feedback-resume-receipt.schema.json",
+  "title": "Integrity Uroboros Toolzs Feedback Resume Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "recovery_policy_digest",
+    "install_policy_digest",
+    "feedback",
+    "recovery",
+    "installation",
+    "store",
+    "timing",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-feedback-resume-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^toolz-feedback-resume-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "recovery_policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "install_policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "feedback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_digest",
+        "policy_id",
+        "policy_digest",
+        "decision",
+        "created_at"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^toolz-post-route-feedback-receipt:[a-f0-9]{64}$"
+        },
+        "receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy_id": {
+          "$ref": "#/$defs/synthetic_id"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "decision": {
+          "const": "admit-observed-success"
+        },
+        "created_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "recovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_digest",
+        "policy_digest",
+        "status",
+        "retained_cursor",
+        "recovered_cursor"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^toolz-feedback-recovery-receipt:[a-f0-9]{64}$"
+        },
+        "receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "status": {
+          "enum": [
+            "retained-head",
+            "recovered-feedback-install"
+          ]
+        },
+        "retained_cursor": {
+          "$ref": "#/$defs/store_cursor"
+        },
+        "recovered_cursor": {
+          "$ref": "#/$defs/store_cursor"
+        }
+      }
+    },
+    "installation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "performed",
+        "receipt_id",
+        "receipt_digest",
+        "transition"
+      ],
+      "properties": {
+        "performed": {
+          "type": "boolean"
+        },
+        "receipt_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^toolz-feedback-install-receipt:[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "receipt_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "transition": {
+          "enum": [
+            "promoted",
+            null
+          ]
+        }
+      }
+    },
+    "store": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "store_id",
+        "retained_cursor",
+        "recovery_cursor",
+        "final_cursor",
+        "status",
+        "maximum_descendant_distance"
+      ],
+      "properties": {
+        "store_id": {
+          "$ref": "#/$defs/store_id"
+        },
+        "retained_cursor": {
+          "$ref": "#/$defs/store_cursor"
+        },
+        "recovery_cursor": {
+          "$ref": "#/$defs/store_cursor"
+        },
+        "final_cursor": {
+          "$ref": "#/$defs/store_cursor"
+        },
+        "status": {
+          "enum": [
+            "installed",
+            "recovered"
+          ]
+        },
+        "maximum_descendant_distance": {
+          "const": 1
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recovery_evaluated_at",
+        "resume_started_at",
+        "resume_completed_at"
+      ],
+      "properties": {
+        "recovery_evaluated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "resume_started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "resume_completed_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bounded_cross_process_recovery",
+        "browser_control",
+        "credentials",
+        "execution",
+        "generic_newest_head",
+        "global_publish",
+        "historical_install_receipt_reconstruction",
+        "local_storage",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "rollback_bypass",
+        "store_write",
+        "tool_invocation"
+      ],
+      "properties": {
+        "bounded_cross_process_recovery": {
+          "const": true
+        },
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution": {
+          "const": false
+        },
+        "generic_newest_head": {
+          "const": false
+        },
+        "global_publish": {
+          "const": false
+        },
+        "historical_install_receipt_reconstruction": {
+          "const": false
+        },
+        "local_storage": {
+          "const": true
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "rollback_bypass": {
+          "const": false
+        },
+        "store_write": {
+          "const": true
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "store": {
+            "properties": {
+              "status": {
+                "const": "installed"
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "recovery": {
+            "properties": {
+              "status": {
+                "const": "retained-head"
+              }
+            }
+          },
+          "installation": {
+            "properties": {
+              "performed": {
+                "const": true
+              },
+              "receipt_id": {
+                "type": "string",
+                "pattern": "^toolz-feedback-install-receipt:[a-f0-9]{64}$"
+              },
+              "receipt_digest": {
+                "$ref": "#/$defs/digest"
+              },
+              "transition": {
+                "const": "promoted"
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "recovery": {
+            "properties": {
+              "status": {
+                "const": "recovered-feedback-install"
+              }
+            }
+          },
+          "installation": {
+            "properties": {
+              "performed": {
+                "const": false
+              },
+              "receipt_id": {
+                "type": "null"
+              },
+              "receipt_digest": {
+                "type": "null"
+              },
+              "transition": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "store_id": {
+      "type": "string",
+      "pattern": "^toolz-store:[A-Za-z0-9][A-Za-z0-9._:/-]{0,242}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "store_cursor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "store_id",
+        "tenant_id",
+        "sequence",
+        "manifest_id",
+        "manifest_digest"
+      ],
+      "properties": {
+        "store_id": {
+          "$ref": "#/$defs/store_id"
+        },
+        "tenant_id": {
+          "const": "tenant:public-6e3cdbebaafc8efa"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "manifest_id": {
+          "type": "string",
+          "pattern": "^toolz-route-store-manifest:[a-f0-9]{64}$"
+        },
+        "manifest_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}
