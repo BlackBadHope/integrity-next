@@ -5351,14 +5351,14 @@
     },
     {
       "bytes": 10559,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/seed-sync/seed_catalog_read_seal.py",
       "sanitization_edits": 0,
       "sha256": "51802f50d8ea99080546edcdf98b8d291c3544180fb3e6b7de84bc5c14f6db76"
     },
     {
       "bytes": 24204,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/seed-sync/seed_delta_sync.py",
       "sanitization_edits": 0,
       "sha256": "d8b14deea7b4d14154e7ce706e4f7626057c3f5cbee390931c7bf55688c9985d"
@@ -5372,21 +5372,21 @@
     },
     {
       "bytes": 72408,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/server-hooks/integrity-client-admission.py",
       "sanitization_edits": 0,
       "sha256": "2392c5176eee65464b7bdf4caa53081964d5b41d1555ca8c8f81a690e60a602d"
     },
     {
       "bytes": 296,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/server-hooks/integrity-client-admission.sh",
       "sanitization_edits": 0,
       "sha256": "ec5e279df3418fdfe6d56cf1ec61f82dccfe23b868464af70e525fead6355cce"
     },
     {
       "bytes": 11907,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/server-hooks/integrity-client-turn-broker.py",
       "sanitization_edits": 0,
       "sha256": "9269d20d7c8b47c907e34dba4a83a6016d94d80569b33f3f7e2cfd45107086a8"
@@ -5400,21 +5400,21 @@
     },
     {
       "bytes": 737,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/server-hooks/integrity-scope-synapse.sh",
       "sanitization_edits": 0,
       "sha256": "c428d9de1b0064cf24268574766ca4c87ba7546c6c0f3368b63ae34f13750ef0"
     },
     {
       "bytes": 61182,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/server-hooks/integrity_client_turn_envelope.py",
       "sanitization_edits": 1,
       "sha256": "a0914e1c562f89b896a324fbe91baa0cd2a43406f9893137aa84c0136e2e5c77"
     },
     {
       "bytes": 18056,
-      "mode": "0o644",
+      "mode": "0o755",
       "path": "components/integrity-installed-runtime/sources/server-hooks/integrity_scope_synapse.py",
       "sanitization_edits": 0,
       "sha256": "fede40c4159c900805b1d24e41225eec876d07f077f0c016081a75de9bc292b8"
@@ -7709,11 +7709,11 @@
       "sha256": "3d6516360bf8b093e700f14806f521e967ff6a066cb2d20210e63d4de82e3fb3"
     },
     {
-      "bytes": 2819,
+      "bytes": 4685,
       "mode": "0o644",
       "path": "components/integrity-installed-runtime/verify_sources.py",
       "sanitization_edits": 0,
-      "sha256": "245646d3d5668de71c73e38934ab61cf1d7c7e46f8dcf25e2a71aea68a7acf44"
+      "sha256": "409430dfd4a60c7826669225a545aca2862b4a55e30ec9441fc3c736f7e24a7c"
     },
     {
       "bytes": 14,
@@ -10505,11 +10505,11 @@
       "sha256": "46b726c3322c17fdb492e0633b74b90779443e9f6c2728620f396a4906b34792"
     },
     {
-      "bytes": 6316,
+      "bytes": 6286,
       "mode": "0o644",
       "path": "README.md",
       "sanitization_edits": 0,
-      "sha256": "b4f2957f04f00468bd680e7deeb75cdae49ca623ca3c23a521b6e492b083bd19"
+      "sha256": "aaf286bb2f9dade69be5e688ebee7b97e1f8df5d12ef8a9370482a4d166dd17b"
     },
     {
       "bytes": 1132,
@@ -10540,7 +10540,7 @@
       "sha256": "b26f7596d83095ddbee8149f1e3130ee65e3396dacdb483a00bb34157f3786a1"
     }
   ],
-  "projection_digest": "sha256:433f460ea41e9576f824cc3701e9790556c43db39ffaab28777040c482045436",
+  "projection_digest": "sha256:fce2b60899758cb5f7a206ae1aaa409392fa22f4fe754fb7147044b9b0d7cd98",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 654,
   "schema": "integrity.public-export-manifest/v3",
