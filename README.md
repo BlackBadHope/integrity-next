@@ -36,7 +36,7 @@ agent stacks and external targets are the main purpose of this public project.
 
 ## Try it in five minutes
 
-Open **Code в†’ Local в†’ HTTPS** on this repository and copy its URL. Install the
+Open **Code → Local → HTTPS** on this repository and copy its URL. Install the
 exact stable release by replacing `<copied-url>` below:
 
 ```bash
@@ -86,7 +86,7 @@ local instance.
 Linux, macOS and Windows users need Python 3.11 or newer:
 
 ```bash
-git clone <URL copied from Code в†’ Local в†’ HTTPS>
+git clone <URL copied from Code → Local → HTTPS>
 cd integrity-next
 python -m venv .venv
 ```
@@ -169,7 +169,7 @@ that host binding, credentials or production actions are configured.
 - [Changelog](CHANGELOG.md)
 - [Public export boundary](PUBLIC-EXPORT-NOTICE.md)
 
-Security-sensitive reports should use **Security в†’ Advisories в†’ Report a
+Security-sensitive reports should use **Security → Advisories → Report a
 vulnerability** in this repository, not a public issue.
 
 Questions, use-case proposals and first-user feedback are welcome in
