@@ -1,0 +1,388 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-route-store-manifest.schema.json",
+  "title": "Integrity Uroboros Local Toolz Route Store Manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "manifest_id",
+    "store_id",
+    "tenant_id",
+    "sequence",
+    "previous_manifest_digest",
+    "entries",
+    "feedback_heads",
+    "created_at",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-route-store-manifest/v1"
+    },
+    "manifest_id": {
+      "type": "string",
+      "pattern": "^toolz-route-store-manifest:[a-f0-9]{64}$"
+    },
+    "store_id": {
+      "type": "string",
+      "pattern": "^toolz-store:[A-Za-z0-9][A-Za-z0-9._:/-]{0,242}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "sequence": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9223372036854775807
+    },
+    "previous_manifest_digest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/digest"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "entries": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "feedback_heads": {
+      "type": "array",
+      "maxItems": 4096,
+      "items": {
+        "$ref": "#/$defs/feedback_head"
+      }
+    },
+    "created_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "browser_control",
+        "credentials",
+        "execution",
+        "global_publish",
+        "local_storage",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "tool_invocation"
+      ],
+      "properties": {
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution": {
+          "const": false
+        },
+        "global_publish": {
+          "const": false
+        },
+        "local_storage": {
+          "const": true
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "route_id": {
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^discovery-theory-route:[a-f0-9]{64}$"
+        },
+        {
+          "type": "string",
+          "pattern": "^discovery-feedback-ranked-route:[a-f0-9]{64}$"
+        }
+      ]
+    },
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_id",
+        "generation",
+        "receipt_id",
+        "receipt_digest",
+        "previous_receipt_digest",
+        "route_proposal_id",
+        "lifecycle",
+        "decision",
+        "dependency_record_ids",
+        "dependency_zone_ids",
+        "source_proposal_ids",
+        "feedback_chain_id",
+        "feedback_overlay_id",
+        "feedback_overlay_digest",
+        "last_delta_sequence",
+        "last_delta_digest",
+        "invalidation_reason",
+        "updated_at"
+      ],
+      "properties": {
+        "context_id": {
+          "type": "string",
+          "pattern": "^toolz-store-context:[a-f0-9]{64}$"
+        },
+        "generation": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^toolz-route-memory-receipt:[a-f0-9]{64}$"
+        },
+        "receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "previous_receipt_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "route_proposal_id": {
+          "$ref": "#/$defs/route_id"
+        },
+        "lifecycle": {
+          "enum": [
+            "theoretical",
+            "reusable",
+            "rediscover",
+            "blocked",
+            "invalidated"
+          ]
+        },
+        "decision": {
+          "enum": [
+            "explore",
+            "reuse-candidate",
+            "rediscover",
+            "blocked"
+          ]
+        },
+        "dependency_record_ids": {
+          "type": "array",
+          "maxItems": 1024,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^discovery-record:[a-f0-9]{64}$"
+          }
+        },
+        "dependency_zone_ids": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/id"
+          }
+        },
+        "source_proposal_ids": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 1024,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^discovery-theory-route:[a-f0-9]{64}$"
+          }
+        },
+        "feedback_chain_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^toolz-feedback-chain:[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "feedback_overlay_id": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^discovery-feedback-overlay:[a-f0-9]{64}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "feedback_overlay_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_delta_sequence": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9223372036854775807
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "last_delta_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "invalidation_reason": {
+          "oneOf": [
+            {
+              "const": "fog-feedback-delta"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "updated_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "feedback_head": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "feedback_chain_id",
+        "tenant_id",
+        "snapshot_id",
+        "theory_policy_digest",
+        "feedback_policy_digest",
+        "next_sequence",
+        "current_overlay_id",
+        "current_overlay_digest",
+        "previous_delta_digest"
+      ],
+      "properties": {
+        "feedback_chain_id": {
+          "type": "string",
+          "pattern": "^toolz-feedback-chain:[a-f0-9]{64}$"
+        },
+        "tenant_id": {
+          "const": "tenant:public-6e3cdbebaafc8efa"
+        },
+        "snapshot_id": {
+          "type": "string",
+          "pattern": "^discovery-index-snapshot:[a-f0-9]{64}$"
+        },
+        "theory_policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "feedback_policy_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "next_sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "current_overlay_id": {
+          "type": "string",
+          "pattern": "^discovery-feedback-overlay:[a-f0-9]{64}$"
+        },
+        "current_overlay_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "previous_delta_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "$ref": "#/$defs/id"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

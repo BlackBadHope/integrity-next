@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/discovery-record.schema.json",
+  "title": "Integrity Fog of War Discovery Record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "record_id",
+    "tenant_id",
+    "source_id",
+    "source_epoch",
+    "sequence",
+    "observed_at",
+    "zone_id",
+    "change",
+    "assertion",
+    "evidence",
+    "previous_record_digest",
+    "collector_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/discovery-record/v1" },
+    "record_id": {
+      "type": "string",
+      "pattern": "^discovery-record:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "source_id": { "$ref": "#/$defs/id" },
+    "source_epoch": { "$ref": "#/$defs/id" },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "observed_at": { "$ref": "#/$defs/timestamp" },
+    "zone_id": { "$ref": "#/$defs/id" },
+    "change": { "enum": ["upsert", "delete"] },
+    "assertion": {
+      "oneOf": [
+        { "$ref": "#/$defs/entity_assertion" },
+        { "$ref": "#/$defs/relation_assertion" },
+        { "$ref": "#/$defs/gap_assertion" }
+      ]
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "provenance",
+        "confidence_ppm",
+        "content_digest",
+        "source_artifact_digest",
+        "coverage"
+      ],
+      "properties": {
+        "state": { "enum": ["present", "absent", "unknown", "sensor-gap"] },
+        "provenance": {
+          "enum": ["OBSERVED", "DERIVED", "LEARNED", "PROPOSED"]
+        },
+        "confidence_ppm": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1000000
+        },
+        "content_digest": {
+          "oneOf": [
+            { "$ref": "#/$defs/digest" },
+            { "type": "null" }
+          ]
+        },
+        "source_artifact_digest": { "$ref": "#/$defs/digest" },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "scope_digest"],
+          "properties": {
+            "state": { "enum": ["complete", "partial", "denied", "unknown"] },
+            "scope_digest": { "$ref": "#/$defs/digest" }
+          }
+        }
+      }
+    },
+    "previous_record_digest": {
+      "oneOf": [
+        { "$ref": "#/$defs/digest" },
+        { "type": "null" }
+      ]
+    },
+    "collector_boundary": { "$ref": "#/$defs/collector_boundary" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "entity_assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "entity_id", "entity_type"],
+      "properties": {
+        "kind": { "const": "entity" },
+        "entity_id": { "$ref": "#/$defs/id" },
+        "entity_type": { "$ref": "#/$defs/id" }
+      }
+    },
+    "relation_assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "relation_id",
+        "relation_type",
+        "from_entity_id",
+        "to_entity_id",
+        "from_zone_id",
+        "to_zone_id"
+      ],
+      "properties": {
+        "kind": { "const": "relation" },
+        "relation_id": { "$ref": "#/$defs/id" },
+        "relation_type": { "$ref": "#/$defs/id" },
+        "from_entity_id": { "$ref": "#/$defs/id" },
+        "to_entity_id": { "$ref": "#/$defs/id" },
+        "from_zone_id": { "$ref": "#/$defs/id" },
+        "to_zone_id": { "$ref": "#/$defs/id" }
+      }
+    },
+    "gap_assertion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "gap_id", "classification", "subject_id"],
+      "properties": {
+        "kind": { "const": "gap" },
+        "gap_id": { "$ref": "#/$defs/id" },
+        "classification": {
+          "enum": [
+            "unknown-entity",
+            "unknown-relation",
+            "conflicting-identity",
+            "unobserved-zone",
+            "unsupported-protocol",
+            "denied-coverage",
+            "stale-source",
+            "ambiguous-owner",
+            "model-gap"
+          ]
+        },
+        "subject_id": {
+          "oneOf": [
+            { "$ref": "#/$defs/id" },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "collector_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credentials",
+        "execution",
+        "model_sdk",
+        "network",
+        "production_authority"
+      ],
+      "properties": {
+        "credentials": { "const": false },
+        "execution": { "const": false },
+        "model_sdk": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}

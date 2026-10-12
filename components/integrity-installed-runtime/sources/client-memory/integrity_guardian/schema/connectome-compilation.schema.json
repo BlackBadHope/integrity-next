@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/connectome-compilation.schema.json",
+  "title": "Integrity Connectome Compilation v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "compilation_id",
+    "tenant_id",
+    "manifest_id",
+    "graph_id",
+    "node_bindings",
+    "capability_bindings",
+    "graph",
+    "control_plane_calls",
+    "invariants"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/connectome-compilation/v1"
+    },
+    "compilation_id": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "manifest_id": { "$ref": "#/$defs/digest" },
+    "graph_id": { "$ref": "#/$defs/digest" },
+    "node_bindings": {
+      "type": "array",
+      "maxItems": 10000,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["node_key", "node_id"],
+        "properties": {
+          "node_key": { "$ref": "#/$defs/id" },
+          "node_id": { "$ref": "#/$defs/node_id" }
+        }
+      }
+    },
+    "capability_bindings": {
+      "type": "array",
+      "maxItems": 25000,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["capability_id", "edge_id"],
+        "properties": {
+          "capability_id": { "$ref": "#/$defs/id" },
+          "edge_id": { "$ref": "#/$defs/edge_id" }
+        }
+      }
+    },
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "graph_id",
+        "tenant_id",
+        "nodes",
+        "edges",
+        "capabilities"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/synapse-graph/v1"
+        },
+        "graph_id": { "$ref": "#/$defs/digest" },
+        "tenant_id": { "$ref": "#/$defs/tenant_id" },
+        "nodes": {
+          "type": "array",
+          "maxItems": 10000,
+          "items": { "type": "object" }
+        },
+        "edges": {
+          "type": "array",
+          "maxItems": 25000,
+          "items": { "type": "object" }
+        },
+        "capabilities": { "$ref": "#/$defs/offline_boundary" }
+      }
+    },
+    "control_plane_calls": { "$ref": "#/$defs/zero_calls" },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "all_capabilities_declared",
+        "execution_performed",
+        "identities_compiler_derived",
+        "manifest_graph_bound",
+        "model_calls",
+        "production_authority",
+        "tenant_bound",
+        "tool_calls"
+      ],
+      "properties": {
+        "all_capabilities_declared": { "const": true },
+        "execution_performed": { "const": false },
+        "identities_compiler_derived": { "const": true },
+        "manifest_graph_bound": { "const": true },
+        "model_calls": { "const": 0 },
+        "production_authority": { "const": false },
+        "tenant_bound": { "const": true },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "node_id": {
+      "type": "string",
+      "pattern": "^synapse-node:[a-f0-9]{64}$"
+    },
+    "edge_id": {
+      "type": "string",
+      "pattern": "^synapse-edge:[a-f0-9]{64}$"
+    },
+    "zero_calls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model_calls", "tool_calls"],
+      "properties": {
+        "model_calls": { "const": 0 },
+        "tool_calls": { "const": 0 }
+      }
+    },
+    "offline_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credentials",
+        "execution",
+        "model_sdk",
+        "network",
+        "production_authority"
+      ],
+      "properties": {
+        "credentials": { "const": false },
+        "execution": { "const": false },
+        "model_sdk": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false }
+      }
+    }
+  }
+}

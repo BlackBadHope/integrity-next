@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/seed-relationship-replay.schema.json",
+  "title": "Deterministic Seed relationship replay receipt v1",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol", "snapshot_id", "selection_seed", "selected_event_id", "explanation_digest", "connections_receipt_id", "checks", "deterministic", "reroll_count", "home_record_count", "production_authority", "route_authority", "replay_receipt_id"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/seed-relationship-replay/v1"}, "snapshot_id": {"$ref": "#/$defs/digest"},
+    "selection_seed": {"type": "string", "pattern": "^[a-f0-9]{64}$"}, "selected_event_id": {"type": "integer", "minimum": 1},
+    "explanation_digest": {"$ref": "#/$defs/digest"}, "connections_receipt_id": {"$ref": "#/$defs/digest"},
+    "checks": {"type": "object", "additionalProperties": false, "required": ["event_id", "explanation_digest", "receipt_id", "reroll_zero"], "properties": {"event_id": {"type": "boolean"}, "explanation_digest": {"type": "boolean"}, "receipt_id": {"type": "boolean"}, "reroll_zero": {"type": "boolean"}}},
+    "deterministic": {"const": true}, "reroll_count": {"const": 0}, "home_record_count": {"const": 0},
+    "production_authority": {"const": false}, "route_authority": {"const": false}, "replay_receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {"digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}
+}

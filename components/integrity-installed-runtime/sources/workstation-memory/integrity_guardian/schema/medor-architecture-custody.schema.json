@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/medor-architecture-custody.schema.json",
+  "title": "Persistent Medor architecture custody receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "architecture_admission_id",
+    "mind_admission_receipt_id",
+    "payload_digest",
+    "event",
+    "checkpoint",
+    "inclusion_proof",
+    "open_status",
+    "write_status",
+    "home_record_count",
+    "production_authority",
+    "receipt_id"
+  ],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/medor-architecture-custody/v1"},
+    "architecture_admission_id": {"$ref": "#/$defs/digest"},
+    "mind_admission_receipt_id": {"$ref": "#/$defs/digest"},
+    "payload_digest": {"$ref": "#/$defs/digest"},
+    "event": {"type": "object"},
+    "checkpoint": {"type": "object"},
+    "inclusion_proof": {"type": "object"},
+    "open_status": {
+      "enum": ["empty", "retained-head", "recovered-immediate-child"]
+    },
+    "write_status": {"enum": ["recorded", "already-recorded"]},
+    "home_record_count": {"const": 0},
+    "production_authority": {"const": false},
+    "receipt_id": {"$ref": "#/$defs/digest"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+  }
+}

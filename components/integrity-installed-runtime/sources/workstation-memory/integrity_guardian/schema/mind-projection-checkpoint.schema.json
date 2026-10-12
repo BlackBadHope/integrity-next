@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/mind-projection-checkpoint.schema.json",
+  "title": "Integrity Mind projection checkpoint v1",
+  "description": "Derived Mind state after an incremental fold or clock refresh. Not a replay of the event stream and not production authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "rebuild_kind",
+    "event_cursor",
+    "events_folded",
+    "events_scanned",
+    "task_count",
+    "heartbeat_seconds",
+    "admission_ttl_hours",
+    "production_authority",
+    "generated_utc"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/mind-projection-checkpoint/v1" },
+    "rebuild_kind": {
+      "enum": ["incremental", "clock-refresh", "full-recovery"]
+    },
+    "event_cursor": { "type": "integer", "minimum": 0 },
+    "events_folded": { "type": "integer", "minimum": 0 },
+    "events_scanned": { "type": "integer", "minimum": 0 },
+    "task_count": { "type": "integer", "minimum": 0 },
+    "heartbeat_seconds": { "type": "integer", "minimum": 1 },
+    "admission_ttl_hours": { "type": "integer", "minimum": 1 },
+    "production_authority": { "const": false },
+    "generated_utc": { "type": "string", "format": "date-time" }
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/cross-agent-continuity-package.schema.json",
+  "title": "Cross-Agent Continuity Package v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol", "package_id", "checkpoint_id", "checkpoint_digest",
+    "ack_id", "ack_digest", "tenant_id", "module_id", "task_id",
+    "predecessor_agent_id", "predecessor_key_id", "predecessor_generation",
+    "successor_agent_id", "successor_key_id", "successor_generation",
+    "event_cursor", "snapshot_digest", "outstanding_work_digest",
+    "epistemic_records", "receipt_provenance", "stop_conditions",
+    "authority", "handoff_mode", "handoff_commit_status", "context_digest",
+    "created_at", "expires_at", "production_authority", "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/cross-agent-continuity-package/v1"
+    },
+    "package_id": {
+      "type": "string",
+      "pattern": "^continuity-package:[a-f0-9]{64}$"
+    },
+    "checkpoint_id": { "$ref": "#/$defs/id" },
+    "checkpoint_digest": { "$ref": "#/$defs/digest" },
+    "ack_id": { "$ref": "#/$defs/id" },
+    "ack_digest": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "module_id": { "$ref": "#/$defs/id" },
+    "task_id": { "$ref": "#/$defs/id" },
+    "predecessor_agent_id": { "$ref": "#/$defs/id" },
+    "predecessor_key_id": { "$ref": "#/$defs/id" },
+    "predecessor_generation": { "type": "integer", "minimum": 0 },
+    "successor_agent_id": { "$ref": "#/$defs/id" },
+    "successor_key_id": { "$ref": "#/$defs/id" },
+    "successor_generation": { "type": "integer", "minimum": 1 },
+    "event_cursor": { "type": "integer", "minimum": 0 },
+    "snapshot_digest": { "$ref": "#/$defs/digest" },
+    "outstanding_work_digest": { "$ref": "#/$defs/digest" },
+    "epistemic_records": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/epistemic_record" }
+    },
+    "receipt_provenance": {
+      "type": "array",
+      "maxItems": 64,
+      "items": { "$ref": "#/$defs/receipt_reference" }
+    },
+    "stop_conditions": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 2048 }
+    },
+    "authority": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "context_admission", "read_authority", "append_authority",
+        "production_authority"
+      ],
+      "properties": {
+        "context_admission": { "const": "HANDOFF_BOUND" },
+        "read_authority": { "const": "NOT_GRANTED" },
+        "append_authority": { "const": "NOT_GRANTED" },
+        "production_authority": { "const": false }
+      }
+    },
+    "handoff_mode": { "const": "shadow" },
+    "handoff_commit_status": { "const": "NOT_ATTEMPTED" },
+    "context_digest": { "$ref": "#/$defs/digest" },
+    "created_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "production_authority": { "const": false },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    },
+    "epistemic_record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_id", "sequence", "classification", "statement",
+        "statement_digest", "actor_id", "source_reference_id"
+      ],
+      "properties": {
+        "record_id": {
+          "type": "string",
+          "pattern": "^epistemic:[a-f0-9]{64}$"
+        },
+        "sequence": { "type": "integer", "minimum": 0 },
+        "classification": {
+          "enum": [
+            "KNOWN", "ASSUMED", "OBSERVED", "VERIFIED",
+            "DECIDED", "ACTED", "UNKNOWN"
+          ]
+        },
+        "statement": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "statement_digest": { "$ref": "#/$defs/digest" },
+        "actor_id": { "$ref": "#/$defs/id" },
+        "source_reference_id": {
+          "oneOf": [{ "$ref": "#/$defs/id" }, { "type": "null" }]
+        }
+      }
+    },
+    "receipt_reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol", "reference_id", "checkpoint_id", "checkpoint_digest",
+        "event_cursor", "snapshot_digest", "outstanding_work_digest",
+        "receipt_id", "receipt_protocol", "receipt_type", "receipt_digest",
+        "task_id", "claim_digest", "subject_actor_id", "issuer_id",
+        "issuer_key_id", "observed_at", "production_authority", "signature"
+      ],
+      "properties": {
+        "protocol": {
+          "const": "integrity-guardian/continuity-receipt-reference/v1"
+        },
+        "reference_id": {
+          "type": "string",
+          "pattern": "^continuity-receipt-ref:[a-f0-9]{64}$"
+        },
+        "checkpoint_id": { "$ref": "#/$defs/id" },
+        "checkpoint_digest": { "$ref": "#/$defs/digest" },
+        "event_cursor": { "type": "integer", "minimum": 0 },
+        "snapshot_digest": { "$ref": "#/$defs/digest" },
+        "outstanding_work_digest": { "$ref": "#/$defs/digest" },
+        "receipt_id": { "$ref": "#/$defs/id" },
+        "receipt_protocol": { "$ref": "#/$defs/id" },
+        "receipt_type": {
+          "enum": ["read", "append", "observation", "authority", "action"]
+        },
+        "receipt_digest": { "$ref": "#/$defs/digest" },
+        "task_id": { "$ref": "#/$defs/id" },
+        "claim_digest": { "$ref": "#/$defs/digest" },
+        "subject_actor_id": { "$ref": "#/$defs/id" },
+        "issuer_id": { "$ref": "#/$defs/id" },
+        "issuer_key_id": { "$ref": "#/$defs/id" },
+        "observed_at": { "type": "string", "format": "date-time" },
+        "production_authority": { "const": false },
+        "signature": { "$ref": "#/$defs/signature" }
+      }
+    }
+  }
+}

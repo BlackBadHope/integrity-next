@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/adapter-proof-profile.schema.json",
+  "title": "Integrity ASDK proof profile v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["profile_id", "protocol", "sdk_version", "contract_version", "manifest", "requirements", "controls", "created_at", "signer_id", "signature"],
+  "properties": {
+    "profile_id": { "type": "string", "pattern": "^adapter-proof-profile:[a-f0-9]{64}$" },
+    "protocol": { "const": "integrity-guardian/adapter-proof-profile/v1" },
+    "sdk_version": { "const": "1.0.0a2" },
+    "contract_version": { "const": "1.0" },
+    "manifest": { "$ref": "#/$defs/manifest_ref" },
+    "requirements": {
+      "type": "array", "minItems": 1, "maxItems": 128,
+      "items": { "$ref": "#/$defs/requirement" }
+    },
+    "controls": {
+      "type": "object", "additionalProperties": false,
+      "required": ["capability_is_authority", "home_input_allowed", "unknown_is_success", "automatic_retry_after_unknown", "direct_adapter_call_allowed", "production_authority"],
+      "properties": {
+        "capability_is_authority": { "const": false },
+        "home_input_allowed": { "const": false },
+        "unknown_is_success": { "const": false },
+        "automatic_retry_after_unknown": { "const": false },
+        "direct_adapter_call_allowed": { "const": false },
+        "production_authority": { "const": false }
+      }
+    },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "signer_id": { "$ref": "#/$defs/id" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "manifest_ref": {
+      "type": "object", "additionalProperties": false,
+      "required": ["manifest_id", "manifest_digest", "adapter_id", "adapter_artifact_digest"],
+      "properties": {
+        "manifest_id": { "type": "string", "pattern": "^manifest:[a-f0-9]{64}$" },
+        "manifest_digest": { "$ref": "#/$defs/digest" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_artifact_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "requirement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["proof_id", "category", "tier", "applicability", "reason_code"],
+      "properties": {
+        "proof_id": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}\\.[a-z][a-z0-9-]{0,63}$" },
+        "category": { "enum": ["identity", "capability", "observation", "proposal", "authority", "dispatch", "containment", "crash", "executor", "witness", "result", "memory", "synapse", "reuse", "coordination", "adversarial", "portability", "operations", "statistics"] },
+        "tier": { "enum": ["source", "target", "portfolio"] },
+        "applicability": { "enum": ["required", "not-applicable"] },
+        "reason_code": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,127}$" }
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/finding.schema.json",
+  "title": "Guardian Cyber Finding v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "finding_id",
+    "tenant_id",
+    "policy_id",
+    "severity",
+    "truth_status",
+    "confidence",
+    "source_trust",
+    "title",
+    "affected_assets",
+    "evidence_event_ids",
+    "observed_at",
+    "valid_until",
+    "actual",
+    "worst_case",
+    "assumptions",
+    "unresolved_evidence",
+    "related_intent_ids",
+    "ticket_ids",
+    "recommended_next_action",
+    "changed",
+    "status"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/finding/v1" },
+    "finding_id": { "$ref": "#/$defs/id" },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "policy_id": { "$ref": "#/$defs/id" },
+    "severity": { "enum": ["info", "low", "medium", "high", "critical"] },
+    "truth_status": {
+      "enum": [
+        "reported",
+        "observed",
+        "verified",
+        "inferred",
+        "unknown",
+        "stale",
+        "superseded",
+        "contradicted"
+      ]
+    },
+    "confidence": { "enum": ["low", "medium", "high"] },
+    "source_trust": { "enum": ["unknown", "low", "medium", "high"] },
+    "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+    "affected_assets": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 4096 }
+    },
+    "evidence_event_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "observed_at": {
+      "oneOf": [
+        { "$ref": "#/$defs/timestamp" },
+        { "type": "null" }
+      ]
+    },
+    "valid_until": {
+      "oneOf": [
+        { "$ref": "#/$defs/timestamp" },
+        { "type": "null" }
+      ]
+    },
+    "actual": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "worst_case": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "assumptions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 2048 }
+    },
+    "unresolved_evidence": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "type": "string", "minLength": 1, "maxLength": 2048 }
+    },
+    "related_intent_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "ticket_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "recommended_next_action": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096
+    },
+    "changed": { "type": "boolean" },
+    "status": { "enum": ["open", "resolved", "unknown"] }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

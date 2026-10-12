@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/private-output-reconciliation-status.schema.json",
+  "title": "Private output reconciliation status v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "status",
+    "reservation_state",
+    "purpose",
+    "expected_schema",
+    "purpose_match",
+    "reservation_id",
+    "reservation_digest",
+    "final_output_digest",
+    "reconciliation_required",
+    "automatic_retry_allowed",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/private-output-reconciliation/v1"
+    },
+    "status": {
+      "enum": ["NO_RESERVATION", "UNKNOWN_OUTCOME", "COMMITTED"]
+    },
+    "reservation_state": {
+      "enum": [
+        "ABSENT",
+        "RESERVATION_PRESENT",
+        "NON_RESERVATION_OUTPUT_PRESENT",
+        "COMMITTED_OUTPUT_PRESENT",
+        "COMMITTED_OUTPUT_DURABILITY_UNCERTAIN",
+        "OUTPUT_MISSING_AFTER_COMMIT_ATTEMPT"
+      ]
+    },
+    "purpose": {
+      "enum": [
+        "local-machine-profile",
+        "readonly-operation-receipt",
+        "zero-day-seed-build-receipt"
+      ]
+    },
+    "expected_schema": {
+      "enum": [
+        "local-machine-profile",
+        "readonly-operation-receipt",
+        "zero-day-seed-build-receipt"
+      ]
+    },
+    "purpose_match": { "type": ["boolean", "null"] },
+    "reservation_id": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "pattern": "^private-output-reservation:[a-f0-9]{64}$"
+        }
+      ]
+    },
+    "reservation_digest": { "$ref": "#/$defs/nullable_digest" },
+    "final_output_digest": { "$ref": "#/$defs/nullable_digest" },
+    "reconciliation_required": { "type": "boolean" },
+    "automatic_retry_allowed": { "const": false },
+    "production_authority": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "purpose": { "const": "local-machine-profile" } } },
+      "then": { "properties": { "expected_schema": { "const": "local-machine-profile" } } }
+    },
+    {
+      "if": { "properties": { "purpose": { "const": "readonly-operation-receipt" } } },
+      "then": { "properties": { "expected_schema": { "const": "readonly-operation-receipt" } } }
+    },
+    {
+      "if": { "properties": { "purpose": { "const": "zero-day-seed-build-receipt" } } },
+      "then": { "properties": { "expected_schema": { "const": "zero-day-seed-build-receipt" } } }
+    },
+    {
+      "if": { "properties": { "reservation_state": { "const": "ABSENT" } } },
+      "then": {
+        "properties": {
+          "status": { "const": "NO_RESERVATION" },
+          "purpose_match": { "type": "null" },
+          "reservation_id": { "type": "null" },
+          "reservation_digest": { "type": "null" },
+          "final_output_digest": { "type": "null" },
+          "reconciliation_required": { "const": false }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "reservation_state": { "const": "RESERVATION_PRESENT" } } },
+      "then": {
+        "properties": {
+          "status": { "const": "UNKNOWN_OUTCOME" },
+          "purpose_match": { "type": "boolean" },
+          "reservation_id": {
+            "type": "string",
+            "pattern": "^private-output-reservation:[a-f0-9]{64}$"
+          },
+          "reservation_digest": { "$ref": "#/$defs/digest" },
+          "final_output_digest": { "type": "null" },
+          "reconciliation_required": { "const": true }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "reservation_state": { "const": "NON_RESERVATION_OUTPUT_PRESENT" } } },
+      "then": {
+        "properties": {
+          "status": { "const": "UNKNOWN_OUTCOME" },
+          "purpose_match": { "type": "null" },
+          "reservation_id": { "type": "null" },
+          "reservation_digest": { "type": "null" },
+          "final_output_digest": { "type": "null" },
+          "reconciliation_required": { "const": true }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "reservation_state": { "const": "COMMITTED_OUTPUT_PRESENT" } } },
+      "then": {
+        "properties": {
+          "status": { "const": "COMMITTED" },
+          "purpose_match": { "const": true },
+          "reservation_id": { "type": "null" },
+          "reservation_digest": { "type": "null" },
+          "final_output_digest": { "$ref": "#/$defs/digest" },
+          "reconciliation_required": { "const": false }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "reservation_state": { "const": "COMMITTED_OUTPUT_DURABILITY_UNCERTAIN" } } },
+      "then": {
+        "properties": {
+          "status": { "const": "UNKNOWN_OUTCOME" },
+          "purpose_match": { "const": true },
+          "reservation_id": { "type": "null" },
+          "reservation_digest": { "type": "null" },
+          "final_output_digest": { "$ref": "#/$defs/digest" },
+          "reconciliation_required": { "const": true }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "reservation_state": { "const": "OUTPUT_MISSING_AFTER_COMMIT_ATTEMPT" } } },
+      "then": {
+        "properties": {
+          "status": { "const": "UNKNOWN_OUTCOME" },
+          "purpose_match": { "type": "null" },
+          "reservation_id": { "type": "null" },
+          "reservation_digest": { "type": "null" },
+          "final_output_digest": { "type": "null" },
+          "reconciliation_required": { "const": true }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "nullable_digest": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/digest" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/memory-synapse-architecture-capsule.schema.json",
+  "title": "Memory and Synapse compact architecture capsule v1",
+  "oneOf": [
+    {"$ref": "#/$defs/ready"},
+    {"$ref": "#/$defs/unavailable"}
+  ],
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "ready": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "architecture",
+        "custody",
+        "source_architecture_digest",
+        "complete",
+        "home_record_count",
+        "production_authority"
+      ],
+      "properties": {
+        "protocol": {"const": "integrity-client-memory-mcp/v3/architecture-capsule/v1"},
+        "architecture": {"$ref": "#/$defs/architecture"},
+        "custody": {"$ref": "#/$defs/custody"},
+        "source_architecture_digest": {"$ref": "#/$defs/digest"},
+        "complete": {"const": false},
+        "home_record_count": {"const": 0},
+        "production_authority": {"const": false}
+      }
+    },
+    "architecture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["admission_id", "summary"],
+      "properties": {
+        "admission_id": {"$ref": "#/$defs/digest"},
+        "summary": {"$ref": "#/$defs/summary"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mind_admission_receipt_id",
+        "concept_recovery_digest",
+        "coordination_digest",
+        "coordination_stop_required",
+        "route_disposition",
+        "ledger_event_digest",
+        "checkpoint_digest",
+        "atlas_projection_digest",
+        "connectome_compilation_id",
+        "synapse_plan_id"
+      ],
+      "properties": {
+        "mind_admission_receipt_id": {"$ref": "#/$defs/digest"},
+        "concept_recovery_digest": {"$ref": "#/$defs/digest"},
+        "coordination_digest": {"$ref": "#/$defs/digest"},
+        "coordination_stop_required": {"type": "boolean"},
+        "route_disposition": {"enum": ["ready", "stopped"]},
+        "ledger_event_digest": {"$ref": "#/$defs/digest"},
+        "checkpoint_digest": {"$ref": "#/$defs/digest"},
+        "atlas_projection_digest": {"$ref": "#/$defs/digest"},
+        "connectome_compilation_id": {"$ref": "#/$defs/digest"},
+        "synapse_plan_id": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "custody": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "architecture_admission_id",
+        "mind_admission_receipt_id",
+        "write_status",
+        "checkpoint",
+        "home_record_count",
+        "production_authority"
+      ],
+      "properties": {
+        "receipt_id": {"$ref": "#/$defs/digest"},
+        "architecture_admission_id": {"$ref": "#/$defs/digest"},
+        "mind_admission_receipt_id": {"$ref": "#/$defs/digest"},
+        "write_status": {"enum": ["recorded", "already-recorded"]},
+        "checkpoint": {"$ref": "#/$defs/checkpoint"},
+        "home_record_count": {"const": 0},
+        "production_authority": {"const": false}
+      }
+    },
+    "checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkpoint_id", "root_digest", "tree_size"],
+      "properties": {
+        "checkpoint_id": {"const": "checkpoint:medor-architecture-custody"},
+        "root_digest": {"$ref": "#/$defs/digest"},
+        "tree_size": {"type": "integer", "minimum": 1}
+      }
+    },
+    "unavailable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "protocol",
+        "outcome",
+        "failure_layer",
+        "reason_digest",
+        "canonical_writes",
+        "production_authority"
+      ],
+      "properties": {
+        "protocol": {"const": "integrity-client-memory-mcp/v3/architecture-unavailable/v1"},
+        "outcome": {"const": "unavailable"},
+        "failure_layer": {"const": "write-plane-admission"},
+        "reason_digest": {"$ref": "#/$defs/digest"},
+        "canonical_writes": {"const": 0},
+        "production_authority": {"const": false}
+      }
+    }
+  }
+}

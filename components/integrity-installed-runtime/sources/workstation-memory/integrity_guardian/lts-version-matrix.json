@@ -1,0 +1,90 @@
+{
+  "protocol": "integrity-guardian/lts-version-matrix/v1",
+  "umbrella": {
+    "name": "Integrity LTS",
+    "version": "1.0.0-rc.1",
+    "release_id": "release:lts:integrity:1.0.0-rc.1",
+    "tag": "lts/integrity/v1.0.0-rc.1",
+    "status": "candidate"
+  },
+  "product": {
+    "name": "Integrity Guardian",
+    "version": "5.5.1",
+    "lifecycle": "stable"
+  },
+  "components": [
+    {
+      "track_id": "guardian-core-lts",
+      "name": "Guardian Core",
+      "version": "1.0.0",
+      "lifecycle": "stable",
+      "status": "active",
+      "source_revision": "2216c6f716a7b3b225fc46984fa513bd875efb65",
+      "release": {
+        "tag": "lts/guardian-core-lts/v1.0.0",
+        "url": "https://github.com/Integrity Project contributors/integrity-guardian/releases/tag/lts/guardian-core-lts/v1.0.0",
+        "manifest_digest": "sha256:7f5ef1070aec1c052b24bea47662773814ef94e85a1a294f84639aad650989ff",
+        "bundle_digest": "sha256:3f130b879be9f51e6d5677c97984bbde325cd1bf900b8ecc5ef506414ba6594f"
+      }
+    },
+    {
+      "track_id": "seed-synapse-lts",
+      "name": "Seed & Synapse",
+      "aliases": [
+        "Memory & Synapse"
+      ],
+      "version": "1.0.1",
+      "lifecycle": "stable",
+      "status": "active",
+      "source_revision": "2216c6f716a7b3b225fc46984fa513bd875efb65",
+      "release": {
+        "tag": "lts/seed-synapse-lts/v1.0.1",
+        "url": "https://github.com/Integrity Project contributors/integrity-guardian/releases/tag/lts/seed-synapse-lts/v1.0.1",
+        "manifest_digest": "sha256:d22a11fa289d8a2334d969163dd36699fca1d757ec394aebfe2b90a3dce717b1",
+        "bundle_digest": "sha256:c2718f543c493e2d80f00e36d71a7cc966d6e95c454172642b5038fbe80641a1"
+      }
+    },
+    {
+      "track_id": "adapter-observer-sdk-lts",
+      "name": "Adapter & Observer SDK",
+      "version": "1.0.0",
+      "lifecycle": "stable",
+      "status": "candidate",
+      "source_revision": "2216c6f716a7b3b225fc46984fa513bd875efb65"
+    }
+  ],
+  "integrations": [
+    {
+      "integration_id": "workstation-broker",
+      "name": "workstation Broker",
+      "version": "1.4.0",
+      "lifecycle": "stable",
+      "status": "included",
+      "source_revision": "3304c70d0b8c3750e5f9885d0b9234d9ea7f47c3"
+    },
+    {
+      "integration_id": "workstation-mind-hooks",
+      "name": "workstation Mind Hooks",
+      "version": "1.7.1",
+      "lifecycle": "stable",
+      "status": "included",
+      "source_revision": "e0baf524dfd92d9851be00d39f70b96ec3a5e801"
+    }
+  ],
+  "compatibility": {
+    "versioning": "independent-component-semver",
+    "selection": "exact-version-bom",
+    "signed_release_index_required": true,
+    "product_prerelease_blocks_umbrella_activation": true,
+    "component_prerelease_blocks_umbrella_activation": true,
+    "schema_breaks_require_new_major": true
+  },
+  "installation": {
+    "artifact_class": "signed-offline-bundle",
+    "windows": "native-offline-bundle",
+    "posix": "verified-offline-wheelhouse",
+    "automatic_remote_rollout": false
+  },
+  "production_authority": false,
+  "memory_grants_authority": false
+}

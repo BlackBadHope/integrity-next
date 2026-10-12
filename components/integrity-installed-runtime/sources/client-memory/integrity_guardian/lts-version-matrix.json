@@ -1,0 +1,78 @@
+{
+  "protocol": "integrity-guardian/lts-version-matrix/v2",
+  "umbrella": {
+    "name": "Integrity LTS",
+    "version": "1.0.0-rc.1",
+    "release_id": "release:lts:integrity:1.0.0-rc.1",
+    "tag": "lts/integrity/v1.0.0-rc.1",
+    "status": "candidate"
+  },
+  "product": {
+    "name": "Integrity Guardian",
+    "version": "6.0.0rc1",
+    "lifecycle": "prerelease"
+  },
+  "components": [
+    {
+      "track_id": "guardian-core-lts",
+      "name": "Guardian Core",
+      "version": "2.0.0rc1",
+      "lifecycle": "prerelease",
+      "status": "candidate",
+      "source_revision": null
+    },
+    {
+      "track_id": "seed-synapse-lts",
+      "name": "Seed & Synapse",
+      "aliases": [
+        "Memory & Synapse"
+      ],
+      "version": "2.0.0rc1",
+      "lifecycle": "prerelease",
+      "status": "candidate",
+      "source_revision": null
+    },
+    {
+      "track_id": "adapter-observer-sdk-lts",
+      "name": "Adapter & Observer SDK",
+      "version": "2.0.0rc1",
+      "lifecycle": "prerelease",
+      "status": "candidate",
+      "source_revision": null
+    }
+  ],
+  "integrations": [
+    {
+      "integration_id": "client-broker",
+      "name": "client Broker",
+      "version": "1.4.1",
+      "lifecycle": "stable",
+      "status": "candidate",
+      "source_revision": null
+    },
+    {
+      "integration_id": "client-mind-hooks",
+      "name": "client Mind Hooks",
+      "version": "1.7.4",
+      "lifecycle": "stable",
+      "status": "candidate",
+      "source_revision": null
+    }
+  ],
+  "compatibility": {
+    "versioning": "independent-component-semver",
+    "selection": "exact-version-bom",
+    "signed_release_index_required": true,
+    "product_prerelease_blocks_umbrella_activation": true,
+    "component_prerelease_blocks_umbrella_activation": true,
+    "schema_breaks_require_new_major": true
+  },
+  "installation": {
+    "artifact_class": "signed-offline-bundle",
+    "windows": "native-offline-bundle",
+    "posix": "verified-offline-wheelhouse",
+    "automatic_remote_rollout": false
+  },
+  "production_authority": false,
+  "memory_grants_authority": false
+}

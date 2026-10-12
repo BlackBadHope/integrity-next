@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/atlas-projection.schema.json",
+  "title": "Guardian Atlas Projection v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "projection_id",
+    "tenant_id",
+    "ledger_id",
+    "generated_from",
+    "nodes",
+    "edges",
+    "summary",
+    "capabilities"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/atlas-projection/v1" },
+    "projection_id": {
+      "type": "string",
+      "pattern": "^atlas:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "ledger_id": { "$ref": "#/$defs/id" },
+    "generated_from": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checkpoint_id",
+        "checkpoint_digest",
+        "tree_size",
+        "root_digest",
+        "last_event_digest"
+      ],
+      "properties": {
+        "checkpoint_id": { "$ref": "#/$defs/id" },
+        "checkpoint_digest": { "$ref": "#/$defs/digest" },
+        "tree_size": { "type": "integer", "minimum": 1 },
+        "root_digest": { "$ref": "#/$defs/digest" },
+        "last_event_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "maxItems": 10000,
+      "items": { "$ref": "#/$defs/node" }
+    },
+    "edges": {
+      "type": "array",
+      "maxItems": 25000,
+      "items": { "$ref": "#/$defs/edge" }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_count",
+        "edge_count",
+        "event_count",
+        "decision_count",
+        "finding_count",
+        "open_finding_count"
+      ],
+      "properties": {
+        "node_count": { "type": "integer", "minimum": 1 },
+        "edge_count": { "type": "integer", "minimum": 1 },
+        "event_count": { "type": "integer", "minimum": 1 },
+        "decision_count": { "type": "integer", "minimum": 0 },
+        "finding_count": { "type": "integer", "minimum": 0 },
+        "open_finding_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network", "remediation", "production_authority"],
+      "properties": {
+        "network": { "const": false },
+        "remediation": { "const": false },
+        "production_authority": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "truth_status": {
+      "enum": [
+        "reported",
+        "observed",
+        "verified",
+        "inferred",
+        "unknown",
+        "stale",
+        "superseded",
+        "contradicted"
+      ]
+    },
+    "primitive": {
+      "oneOf": [
+        { "type": "string", "maxLength": 4096 },
+        { "type": "integer" },
+        { "type": "boolean" },
+        { "type": "null" }
+      ]
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "node_id",
+        "kind",
+        "ref",
+        "label",
+        "truth_status",
+        "evidence_event_ids",
+        "attributes"
+      ],
+      "properties": {
+        "node_id": {
+          "type": "string",
+          "pattern": "^atlas-node:[a-f0-9]{64}$"
+        },
+        "kind": {
+          "enum": [
+            "checkpoint",
+            "source",
+            "event",
+            "asset",
+            "intent",
+            "decision",
+            "finding"
+          ]
+        },
+        "ref": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "label": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "truth_status": { "$ref": "#/$defs/truth_status" },
+        "evidence_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        },
+        "attributes": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/primitive" }
+        }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "edge_id",
+        "from_node_id",
+        "to_node_id",
+        "relation",
+        "evidence_event_ids"
+      ],
+      "properties": {
+        "edge_id": {
+          "type": "string",
+          "pattern": "^atlas-edge:[a-f0-9]{64}$"
+        },
+        "from_node_id": {
+          "type": "string",
+          "pattern": "^atlas-node:[a-f0-9]{64}$"
+        },
+        "to_node_id": {
+          "type": "string",
+          "pattern": "^atlas-node:[a-f0-9]{64}$"
+        },
+        "relation": {
+          "enum": [
+            "commits_tip",
+            "reported_by",
+            "follows",
+            "derived_from",
+            "classifies",
+            "evaluates_against",
+            "supported_by",
+            "affects",
+            "relates_to_intent"
+          ]
+        },
+        "evidence_event_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/id" }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/turn-memory-terminal-receipt.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "namespace_fingerprint", "registration_id", "identity", "prompt_sha256", "outcome", "closed_at", "production_authority", "receipt_id", "signature"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/turn-memory-terminal-receipt/v1"},
+    "namespace_fingerprint": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "registration_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "identity": {"$ref": "#/$defs/identity"},
+    "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "outcome": {"enum": ["events", "no-event"]},
+    "events": {
+      "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["event_uid", "event_id", "request_sha256"],
+        "properties": {
+          "event_uid": {"type": "string", "pattern": "^client:[A-Za-z0-9][A-Za-z0-9._:-]{7,154}$"},
+          "event_id": {"type": "integer", "minimum": 1},
+          "request_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "no_event_reason": {"enum": ["read-only", "repetition", "social-response", "no-durable-state-change", "user-cancelled"]},
+    "closed_at": {"type": "string", "format": "date-time"},
+    "production_authority": {"const": false},
+    "receipt_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "oneOf": [
+    {"required": ["events"], "not": {"required": ["no_event_reason"]}, "properties": {"outcome": {"const": "events"}}},
+    {"required": ["no_event_reason"], "not": {"required": ["events"]}, "properties": {"outcome": {"const": "no-event"}}}
+  ],
+  "$defs": {
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["machine_id", "thread_id", "turn_id"],
+      "properties": {
+        "machine_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
+        "thread_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
+        "turn_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"}
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

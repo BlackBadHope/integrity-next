@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/module-agent-successor-ack.schema.json",
+  "title": "Module Agent Successor ACK v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "ack_id", "checkpoint_id", "checkpoint_digest", "tenant_id", "module_id", "successor_agent_id", "successor_key_id", "successor_generation", "event_cursor", "snapshot_digest", "outstanding_work_digest", "mode", "accepted", "acknowledged_at", "expires_at", "commit_status", "production_authority", "signature"],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/module-agent-successor-ack/v1" },
+    "ack_id": { "type": "string", "pattern": "^successor-ack:[a-f0-9]{64}$" },
+    "checkpoint_id": { "$ref": "#/$defs/id" },
+    "checkpoint_digest": { "$ref": "#/$defs/digest" },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "module_id": { "$ref": "#/$defs/id" },
+    "successor_agent_id": { "$ref": "#/$defs/id" },
+    "successor_key_id": { "$ref": "#/$defs/id" },
+    "successor_generation": { "type": "integer", "minimum": 1 },
+    "event_cursor": { "type": "integer", "minimum": 0 },
+    "snapshot_digest": { "$ref": "#/$defs/digest" },
+    "outstanding_work_digest": { "$ref": "#/$defs/digest" },
+    "mode": { "const": "shadow" },
+    "accepted": { "const": true },
+    "acknowledged_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "commit_status": { "const": "NOT_ATTEMPTED" },
+    "production_authority": { "const": false },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "tenant_id": { "type": "string", "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "signature": { "type": "object", "additionalProperties": false, "required": ["algorithm", "key_id", "value"], "properties": { "algorithm": { "const": "ed25519" }, "key_id": { "$ref": "#/$defs/id" }, "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" } } }
+  }
+}

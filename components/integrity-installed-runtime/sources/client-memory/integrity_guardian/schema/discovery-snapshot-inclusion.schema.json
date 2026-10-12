@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/discovery-snapshot-inclusion.schema.json",
+  "title": "Integrity Fog of War Discovery Snapshot Inclusion v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "inclusion_id",
+    "tenant_id",
+    "snapshot_id",
+    "snapshot_digest",
+    "ledger_id",
+    "ledger_source_id",
+    "ledger_event_id",
+    "ledger_event_digest",
+    "ledger_event",
+    "checkpoint_id",
+    "checkpoint_digest",
+    "checkpoint",
+    "proof",
+    "verification_boundary"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/discovery-snapshot-inclusion/v1"
+    },
+    "inclusion_id": {
+      "type": "string",
+      "pattern": "^discovery-snapshot-inclusion:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "snapshot_id": {
+      "type": "string",
+      "pattern": "^discovery-index-snapshot:[a-f0-9]{64}$"
+    },
+    "snapshot_digest": { "$ref": "#/$defs/digest" },
+    "ledger_id": { "$ref": "#/$defs/id" },
+    "ledger_source_id": { "$ref": "#/$defs/id" },
+    "ledger_event_id": {
+      "type": "string",
+      "pattern": "^event:[a-f0-9]{64}$"
+    },
+    "ledger_event_digest": { "$ref": "#/$defs/digest" },
+    "ledger_event": {
+      "type": "object"
+    },
+    "checkpoint_id": { "$ref": "#/$defs/id" },
+    "checkpoint_digest": { "$ref": "#/$defs/digest" },
+    "checkpoint": {
+      "type": "object"
+    },
+    "proof": {
+      "type": "object"
+    },
+    "verification_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "credentials",
+        "execution_performed",
+        "local_storage_read",
+        "model_calls",
+        "network",
+        "production_authority",
+        "tool_calls"
+      ],
+      "properties": {
+        "credentials": { "const": false },
+        "execution_performed": { "const": false },
+        "local_storage_read": { "const": true },
+        "model_calls": { "const": 0 },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "tool_calls": { "const": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    }
+  }
+}
