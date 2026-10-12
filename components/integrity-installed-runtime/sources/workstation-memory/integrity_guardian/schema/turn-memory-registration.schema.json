@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/turn-memory-registration.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocol", "namespace_fingerprint", "identity", "prompt_sha256", "opened_at", "terminal_required", "production_authority", "receipt_id", "signature"],
+  "properties": {
+    "protocol": {"const": "integrity-guardian/turn-memory-registration/v1"},
+    "namespace_fingerprint": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "identity": {"$ref": "#/$defs/identity"},
+    "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "opened_at": {"type": "string", "format": "date-time"},
+    "terminal_required": {"const": true},
+    "production_authority": {"const": false},
+    "receipt_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "signature": {"$ref": "#/$defs/signature"}
+  },
+  "$defs": {
+    "identity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["machine_id", "thread_id", "turn_id"],
+      "properties": {
+        "machine_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
+        "thread_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
+        "turn_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"}
+      }
+    },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "ed25519"},
+        "key_id": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

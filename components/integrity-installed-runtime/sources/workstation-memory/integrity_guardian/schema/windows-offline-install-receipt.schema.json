@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/windows-offline-install-receipt.schema.json",
+  "title": "Windows offline install receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "status",
+    "version",
+    "installed_at",
+    "target",
+    "guardian_digest",
+    "wheel_count",
+    "manifest_sha256",
+    "target_private_dacl",
+    "reparse_points_accepted",
+    "dependency_closure",
+    "windows_asset_count",
+    "windows_asset_manifest_digest",
+    "user_launcher_registered",
+    "user_launcher",
+    "install_locator",
+    "install_network",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/windows-offline-install-receipt/v1" },
+    "status": { "const": "PASS" },
+    "version": { "type": "string", "pattern": "^[0-9A-Za-z.!+-]+$" },
+    "installed_at": { "type": "string", "format": "date-time" },
+    "target": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "guardian_digest": { "$ref": "#/$defs/digest" },
+    "wheel_count": { "type": "integer", "minimum": 2, "maximum": 128 },
+    "manifest_sha256": { "$ref": "#/$defs/digest" },
+    "target_private_dacl": { "const": true },
+    "reparse_points_accepted": { "const": false },
+    "dependency_closure": { "const": "pip-check-pass" },
+    "windows_asset_count": { "const": 9 },
+    "windows_asset_manifest_digest": { "$ref": "#/$defs/digest" },
+    "user_launcher_registered": { "type": "boolean" },
+    "user_launcher": { "$ref": "#/$defs/nullable_path" },
+    "install_locator": { "$ref": "#/$defs/nullable_path" },
+    "install_network": { "const": false },
+    "production_authority": { "const": false }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "user_launcher_registered": { "const": true } }
+      },
+      "then": {
+        "properties": {
+          "user_launcher": { "type": "string", "minLength": 1 },
+          "install_locator": { "type": "string", "minLength": 1 }
+        }
+      },
+      "else": {
+        "properties": {
+          "user_launcher": { "type": "null" },
+          "install_locator": { "type": "null" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nullable_path": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1, "maxLength": 4096 }
+      ]
+    }
+  }
+}

@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/toolz-admission-recovery-receipt.schema.json",
+  "title": "Integrity Uroboros Toolzs Admission Recovery Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "policy_id",
+    "policy_digest",
+    "install_policy_digest",
+    "admission",
+    "memory",
+    "store",
+    "timing",
+    "authority_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/toolz-admission-recovery-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^toolz-admission-recovery-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "const": "tenant:public-6e3cdbebaafc8efa"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/synthetic_id"
+    },
+    "policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "install_policy_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "admission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_digest",
+        "policy_digest"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^toolz-trace-admission-receipt:[a-f0-9]{64}$"
+        },
+        "receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "policy_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receipt_id",
+        "receipt_digest",
+        "outcome",
+        "expires_at"
+      ],
+      "properties": {
+        "receipt_id": {
+          "type": "string",
+          "pattern": "^toolz-route-memory-receipt:[a-f0-9]{64}$"
+        },
+        "receipt_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "outcome": {
+          "const": "theoretical"
+        },
+        "expires_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "store": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "store_id",
+        "retained_cursor",
+        "recovered_cursor",
+        "status",
+        "maximum_descendant_distance",
+        "recovered_manifest_created_at"
+      ],
+      "properties": {
+        "store_id": {
+          "$ref": "#/$defs/store_id"
+        },
+        "retained_cursor": {
+          "$ref": "#/$defs/store_cursor"
+        },
+        "recovered_cursor": {
+          "$ref": "#/$defs/store_cursor"
+        },
+        "status": {
+          "enum": [
+            "retained-head",
+            "recovered-install"
+          ]
+        },
+        "maximum_descendant_distance": {
+          "const": 1
+        },
+        "recovered_manifest_created_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evaluated_at",
+        "recovered_at"
+      ],
+      "properties": {
+        "evaluated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "recovered_at": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "browser_control",
+        "credentials",
+        "execution",
+        "global_publish",
+        "historical_install_invocation",
+        "install_receipt_reconstruction",
+        "local_storage",
+        "model_sdk",
+        "network",
+        "production_authority",
+        "raw_ui_data",
+        "rollback_bypass",
+        "store_write",
+        "tool_invocation"
+      ],
+      "properties": {
+        "browser_control": {
+          "const": false
+        },
+        "credentials": {
+          "const": false
+        },
+        "execution": {
+          "const": false
+        },
+        "global_publish": {
+          "const": false
+        },
+        "historical_install_invocation": {
+          "const": false
+        },
+        "install_receipt_reconstruction": {
+          "const": false
+        },
+        "local_storage": {
+          "const": true
+        },
+        "model_sdk": {
+          "const": false
+        },
+        "network": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        },
+        "raw_ui_data": {
+          "const": false
+        },
+        "rollback_bypass": {
+          "const": false
+        },
+        "store_write": {
+          "const": false
+        },
+        "tool_invocation": {
+          "const": false
+        }
+      }
+    },
+    "signature": {
+      "$ref": "#/$defs/signature"
+    }
+  },
+  "$defs": {
+    "synthetic_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}synthetic[A-Za-z0-9._:/-]*$"
+    },
+    "store_id": {
+      "type": "string",
+      "pattern": "^toolz-store:[A-Za-z0-9][A-Za-z0-9._:/-]{0,242}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "store_cursor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "store_id",
+        "tenant_id",
+        "sequence",
+        "manifest_id",
+        "manifest_digest"
+      ],
+      "properties": {
+        "store_id": {
+          "$ref": "#/$defs/store_id"
+        },
+        "tenant_id": {
+          "const": "tenant:public-6e3cdbebaafc8efa"
+        },
+        "sequence": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9223372036854775807
+        },
+        "manifest_id": {
+          "type": "string",
+          "pattern": "^toolz-route-store-manifest:[a-f0-9]{64}$"
+        },
+        "manifest_digest": {
+          "$ref": "#/$defs/digest"
+        }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "key_id",
+        "value"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "ed25519"
+        },
+        "key_id": {
+          "type": "string",
+          "pattern": "^key:[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$"
+        },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      }
+    }
+  }
+}

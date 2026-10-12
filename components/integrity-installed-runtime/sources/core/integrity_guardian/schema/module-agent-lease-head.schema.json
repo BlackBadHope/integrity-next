@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/module-agent-lease-head.schema.json",
+  "title": "Integrity Module Agent Lease Head v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "head_id",
+    "tenant_id",
+    "module_id",
+    "head_revision",
+    "previous_head_id",
+    "state",
+    "lease_id",
+    "lease_digest",
+    "agent_id",
+    "agent_key_id",
+    "generation",
+    "sequence",
+    "event_cursor",
+    "state_digest",
+    "recorded_at",
+    "authority_id",
+    "production_authority",
+    "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/module-agent-lease-head/v1" },
+    "head_id": {
+      "type": "string",
+      "pattern": "^lease-head:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "module_id": { "$ref": "#/$defs/id" },
+    "head_revision": { "type": "integer", "minimum": 0 },
+    "previous_head_id": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^lease-head:[a-f0-9]{64}$" }
+      ]
+    },
+    "state": { "const": "active" },
+    "lease_id": {
+      "type": "string",
+      "pattern": "^lease:[a-f0-9]{64}$"
+    },
+    "lease_digest": { "$ref": "#/$defs/digest" },
+    "agent_id": { "$ref": "#/$defs/id" },
+    "agent_key_id": { "$ref": "#/$defs/id" },
+    "generation": { "type": "integer", "minimum": 0 },
+    "sequence": { "type": "integer", "minimum": 0 },
+    "event_cursor": { "type": "integer", "minimum": 0 },
+    "state_digest": { "$ref": "#/$defs/digest" },
+    "recorded_at": { "$ref": "#/$defs/timestamp" },
+    "authority_id": { "$ref": "#/$defs/id" },
+    "production_authority": { "const": false },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

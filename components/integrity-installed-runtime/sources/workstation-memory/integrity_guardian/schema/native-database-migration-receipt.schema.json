@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/native-database-migration-receipt.schema.json",
+  "title": "Integrity native database migration receipt",
+  "type": "object", "additionalProperties": false,
+  "required": [
+    "protocol", "instance_id", "database_id", "enrollment_id",
+    "previous_checkpoint_digest", "event_count", "tree_size",
+    "history_rewritten", "migrated_at", "receipt_id", "signature"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/native-database-migration-receipt/v1" },
+    "instance_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "database_id": { "type": "string", "pattern": "^database:[a-f0-9]{64}$" },
+    "enrollment_id": { "$ref": "#/$defs/digest" },
+    "previous_checkpoint_digest": { "$ref": "#/$defs/digest" },
+    "event_count": { "type": "integer", "minimum": 1 },
+    "tree_size": { "type": "integer", "minimum": 1 },
+    "history_rewritten": { "const": false },
+    "migrated_at": { "type": "string", "format": "date-time" },
+    "receipt_id": { "$ref": "#/$defs/digest" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+      }
+    }
+  }
+}

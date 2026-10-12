@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/response-envelope.schema.json",
+  "title": "Guardian Restricted Response Envelope v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "response_id",
+    "tenant_id",
+    "finding_ids",
+    "response_class",
+    "target_id",
+    "executor_id",
+    "release_revision",
+    "artifacts",
+    "controls",
+    "created_at",
+    "valid_from",
+    "valid_until",
+    "authorization"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/response-envelope/v1" },
+    "response_id": { "$ref": "#/$defs/id" },
+    "tenant_id": { "$ref": "#/$defs/id" },
+    "finding_ids": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "response_class": { "$ref": "#/$defs/id" },
+    "target_id": { "$ref": "#/$defs/id" },
+    "executor_id": { "$ref": "#/$defs/id" },
+    "release_revision": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,64}$"
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action_digest",
+        "preflight_digest",
+        "compensation_digest",
+        "postcheck_digest",
+        "policy_digest"
+      ],
+      "properties": {
+        "action_digest": { "$ref": "#/$defs/digest" },
+        "preflight_digest": { "$ref": "#/$defs/digest" },
+        "compensation_digest": { "$ref": "#/$defs/digest" },
+        "postcheck_digest": { "$ref": "#/$defs/digest" },
+        "policy_digest": { "$ref": "#/$defs/digest" }
+      }
+    },
+    "controls": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "guardian_executes",
+        "requires_exact_go",
+        "dry_run_first"
+      ],
+      "properties": {
+        "guardian_executes": { "const": false },
+        "requires_exact_go": { "const": true },
+        "dry_run_first": { "const": true }
+      }
+    },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "valid_from": { "$ref": "#/$defs/timestamp" },
+    "valid_until": { "$ref": "#/$defs/timestamp" },
+    "authorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority_id", "decision", "signature"],
+      "properties": {
+        "authority_id": { "$ref": "#/$defs/id" },
+        "decision": { "const": "approved" },
+        "signature": { "$ref": "#/$defs/signature" }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "digest": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43,128}$" }
+      }
+    }
+  }
+}

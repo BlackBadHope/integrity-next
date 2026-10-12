@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/model-route-receipt.schema.json",
+  "title": "Atlas Model Route Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "route_id",
+    "tenant_id",
+    "incident_id",
+    "alarm_id",
+    "alarm_kind",
+    "severity",
+    "mandatory",
+    "required_tier",
+    "minimum_reasoning",
+    "status",
+    "selected_model",
+    "reason_codes",
+    "budgets",
+    "policy_digest",
+    "registry_digest",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/model-route-receipt/v1" },
+    "route_id": {
+      "type": "string",
+      "pattern": "^route:[a-f0-9]{64}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "incident_id": { "$ref": "#/$defs/id" },
+    "alarm_id": { "$ref": "#/$defs/id" },
+    "alarm_kind": { "$ref": "#/$defs/id" },
+    "severity": {
+      "enum": ["info", "low", "medium", "high", "critical"]
+    },
+    "mandatory": { "type": "boolean" },
+    "required_tier": { "enum": ["L1", "L2", "L3"] },
+    "minimum_reasoning": {
+      "enum": ["minimal", "low", "medium", "high", "maximum"]
+    },
+    "status": { "enum": ["ready", "analysis_pending"] },
+    "selected_model": {
+      "oneOf": [
+        { "$ref": "#/$defs/selected_model" },
+        { "type": "null" }
+      ]
+    },
+    "reason_codes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "budgets": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_input_tokens",
+        "max_output_tokens",
+        "max_model_calls",
+        "max_specialist_agents"
+      ],
+      "properties": {
+        "max_input_tokens": { "type": "integer", "minimum": 1 },
+        "max_output_tokens": { "type": "integer", "minimum": 1 },
+        "max_model_calls": { "type": "integer", "minimum": 0, "maximum": 1 },
+        "max_specialist_agents": { "type": "integer", "minimum": 0, "maximum": 16 }
+      }
+    },
+    "policy_digest": { "$ref": "#/$defs/digest" },
+    "registry_digest": { "$ref": "#/$defs/digest" },
+    "production_authority": { "const": false }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "selected_model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_id",
+        "provider",
+        "capability_tier",
+        "reasoning",
+        "capability_rank",
+        "generation",
+        "cost_rank",
+        "local"
+      ],
+      "properties": {
+        "model_id": { "$ref": "#/$defs/id" },
+        "provider": { "$ref": "#/$defs/id" },
+        "capability_tier": { "enum": ["L1", "L2", "L3"] },
+        "reasoning": {
+          "enum": ["minimal", "low", "medium", "high", "maximum"]
+        },
+        "capability_rank": { "type": "integer", "minimum": 0 },
+        "generation": { "type": "integer", "minimum": 0 },
+        "cost_rank": { "type": "integer", "minimum": 0 },
+        "local": { "type": "boolean" }
+      }
+    }
+  }
+}

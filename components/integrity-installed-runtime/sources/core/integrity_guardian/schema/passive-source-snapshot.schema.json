@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/passive-source-snapshot.schema.json",
+  "title": "Integrity Digest-Only Passive Source Snapshot v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "tenant_id",
+    "capture_id",
+    "platform_family",
+    "source_epoch",
+    "collector_artifact_digest",
+    "source_summaries",
+    "boundary"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/passive-source-snapshot/v1"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "capture_id": { "$ref": "#/$defs/id" },
+    "platform_family": {
+      "enum": [
+        "linux",
+        "windows",
+        "macos",
+        "bsd",
+        "posix-other",
+        "unknown"
+      ]
+    },
+    "source_epoch": { "$ref": "#/$defs/id" },
+    "collector_artifact_digest": { "$ref": "#/$defs/digest" },
+    "source_summaries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": { "$ref": "#/$defs/source_summary" }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "active_probe",
+        "atlas_admission",
+        "collection",
+        "cursor_commit",
+        "execution",
+        "memory_admission",
+        "model_calls",
+        "mutation",
+        "network",
+        "production_authority",
+        "raw_rows_present"
+      ],
+      "properties": {
+        "active_probe": { "const": false },
+        "atlas_admission": { "const": false },
+        "collection": { "const": false },
+        "cursor_commit": { "const": false },
+        "execution": { "const": false },
+        "memory_admission": { "const": false },
+        "model_calls": { "const": 0 },
+        "mutation": { "const": false },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "raw_rows_present": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "source_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_name",
+        "status",
+        "observed_at",
+        "truncated",
+        "record_count",
+        "payload_digest",
+        "coverage_digest",
+        "reason_class"
+      ],
+      "properties": {
+        "source_name": { "$ref": "#/$defs/id" },
+        "status": {
+          "enum": ["OBSERVED", "UNKNOWN", "DENIED"]
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "truncated": { "type": "boolean" },
+        "record_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4096
+        },
+        "payload_digest": {
+          "oneOf": [
+            { "$ref": "#/$defs/digest" },
+            { "type": "null" }
+          ]
+        },
+        "coverage_digest": { "$ref": "#/$defs/digest" },
+        "reason_class": {
+          "oneOf": [
+            {
+              "enum": [
+                "unknown-entity",
+                "unknown-relation",
+                "conflicting-identity",
+                "unobserved-zone",
+                "unsupported-protocol",
+                "denied-coverage",
+                "stale-source",
+                "ambiguous-owner",
+                "model-gap"
+              ]
+            },
+            { "type": "null" }
+          ]
+        }
+      }
+    }
+  }
+}

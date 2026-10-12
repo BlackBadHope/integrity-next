@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/readonly-operation-receipt.schema.json",
+  "title": "Read-only operation receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "manifest_id",
+    "manifest_digest",
+    "status",
+    "observed_at",
+    "operations",
+    "outcome_counts",
+    "unknown_outcome_count",
+    "all_operations_confirmed_success",
+    "complete_operation_coverage",
+    "production_authority"
+  ],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/readonly-operation-receipt/v1" },
+    "receipt_id": { "type": "string", "pattern": "^operation-receipt:[a-f0-9]{64}$" },
+    "manifest_id": { "type": "string", "pattern": "^operation-manifest:[a-f0-9]{64}$" },
+    "manifest_digest": { "$ref": "#/$defs/digest" },
+    "status": { "enum": ["PASS", "FAIL"] },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation_id",
+          "outcome",
+          "started_at",
+          "finished_at",
+          "exit_code",
+          "stdout_digest",
+          "stderr_digest",
+          "stdout_byte_count",
+          "stderr_byte_count",
+          "stdout_artifact",
+          "stderr_artifact",
+          "reason_code",
+          "automatic_retry_allowed"
+        ],
+        "properties": {
+          "operation_id": { "$ref": "#/$defs/id" },
+          "outcome": {
+            "enum": [
+              "not-started",
+              "confirmed-success",
+              "confirmed-failure",
+              "unknown-outcome"
+            ]
+          },
+          "started_at": { "$ref": "#/$defs/nullable_time" },
+          "finished_at": { "$ref": "#/$defs/nullable_time" },
+          "exit_code": {
+            "oneOf": [
+              { "type": "null" },
+              { "type": "integer", "minimum": -2147483648, "maximum": 2147483647 }
+            ]
+          },
+          "stdout_digest": { "$ref": "#/$defs/nullable_digest" },
+          "stderr_digest": { "$ref": "#/$defs/nullable_digest" },
+          "stdout_byte_count": { "type": ["integer", "null"], "minimum": 0, "maximum": 4194304 },
+          "stderr_byte_count": { "type": ["integer", "null"], "minimum": 0, "maximum": 4194304 },
+          "stdout_artifact": { "$ref": "#/$defs/nullable_artifact" },
+          "stderr_artifact": { "$ref": "#/$defs/nullable_artifact" },
+          "reason_code": {
+            "enum": [
+              "preflight-rejected",
+              "spawn-rejected",
+              "prior-operation-not-successful",
+              "completed-exit-zero",
+              "completed-nonzero",
+              "timeout",
+              "output-bound-exceeded",
+              "interrupted"
+            ]
+          },
+          "automatic_retry_allowed": { "type": "boolean" }
+        }
+      }
+    },
+    "outcome_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "not-started",
+        "confirmed-success",
+        "confirmed-failure",
+        "unknown-outcome"
+      ],
+      "properties": {
+        "not-started": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "confirmed-success": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "confirmed-failure": { "type": "integer", "minimum": 0, "maximum": 64 },
+        "unknown-outcome": { "type": "integer", "minimum": 0, "maximum": 64 }
+      }
+    },
+    "unknown_outcome_count": { "type": "integer", "minimum": 0, "maximum": 64 },
+    "all_operations_confirmed_success": { "type": "boolean" },
+    "complete_operation_coverage": { "const": true },
+    "production_authority": { "const": false }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$" },
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "nullable_digest": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/digest" }
+      ]
+    },
+    "nullable_time": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "format": "date-time" }
+      ]
+    },
+    "nullable_artifact": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$" }
+      ]
+    }
+  }
+}

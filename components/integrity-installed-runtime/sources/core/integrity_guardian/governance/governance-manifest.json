@@ -1,0 +1,48 @@
+{
+  "protocol": "integrity-guardian/governance-bundle/v1",
+  "bundle_id": "governance:guardian-core-3.0.2",
+  "version": "3.0.2",
+  "documents": [
+    {
+      "path": "AGENT-OPERATING-CONTRACT.md",
+      "sha256": "0d6710f0509260601594a7d3b656aea8d85cad9abde7332feff329a15ef46a96",
+      "size_bytes": 972
+    },
+    {
+      "path": "AUTHORITY-AND-GO.md",
+      "sha256": "486b54bd1e728ac6967fe88ab31a3beb0efe2a0daa89ad70b4de933d043853ef",
+      "size_bytes": 1376
+    },
+    {
+      "path": "CREDENTIAL-HANDLING.md",
+      "sha256": "2c1e8d6b7c2eafcc3065add614e83f55dcbb97977c09b5ebc389b4fde144f447",
+      "size_bytes": 818
+    },
+    {
+      "path": "EVIDENCE-AND-TRUTH.md",
+      "sha256": "575ef126d77cdc60efde26aeda2c6002af3a5853f04eedc96ef01381ffbc7acd",
+      "size_bytes": 905
+    },
+    {
+      "path": "HANDOFF-AND-CONTINUITY.md",
+      "sha256": "e8ff025b1a3a53eac58d31c0deceeffc3ff814059e41bd23030ad7af146310d9",
+      "size_bytes": 798
+    },
+    {
+      "path": "INCIDENT-AND-ROLLBACK.md",
+      "sha256": "29652b6b2fd974a1a7569611d46431ebba7465ce3fae792c7d5d33a54c2bc2fa",
+      "size_bytes": 795
+    },
+    {
+      "path": "OPERATOR-REQUEST-PROTOCOL.md",
+      "sha256": "1e6ba73365b4c1b45ede3f6aea4d76c990bfa0c632f5d75a4ccc96b71cf3623a",
+      "size_bytes": 799
+    }
+  ],
+  "controls": {
+    "production_authority": false,
+    "credentials_permitted": false,
+    "customer_policy_embedded": false,
+    "unknown_fails_closed": true
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v1/native-module-enrollment.schema.json",
+  "title": "Integrity native module enrollment",
+  "type": "object", "additionalProperties": false,
+  "required": ["protocol", "instance_id", "module_id", "artifact_digest", "scopes", "created_at", "enrollment_id", "signature"],
+  "properties": {
+    "protocol": { "const": "integrity-guardian/native-module-enrollment/v1" },
+    "instance_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+    "module_id": { "type": "string", "pattern": "^module:[A-Za-z0-9._:-]+$" },
+    "artifact_digest": { "$ref": "#/$defs/digest" },
+    "scopes": { "type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9.-]{0,63}$" } },
+    "created_at": { "type": "string", "format": "date-time" },
+    "enrollment_id": { "$ref": "#/$defs/digest" },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "signature": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "value": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+      }
+    }
+  }
+}

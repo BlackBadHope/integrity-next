@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian.invalid/schema/v2/action-log-recovery-verification.schema.json",
+  "title": "Integrity Action Log recovery verification receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "source_namespace",
+    "action_log_alias",
+    "observed_at",
+    "target_count",
+    "events",
+    "reference_target_set_digest",
+    "observed_target_set_digest",
+    "reference_source_digest",
+    "post_delete_source_digest",
+    "observed_source_digest",
+    "observed_cursor",
+    "unique_event_uid_index_verified",
+    "sqlite_integrity",
+    "verification_result",
+    "reference_trust",
+    "privacy_boundary",
+    "authority_boundary"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/action-log-recovery-verification/v2"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^action-log-recovery-verification:[a-f0-9]{64}$"
+    },
+    "source_namespace": {
+      "type": "string",
+      "pattern": "^seed://project/[a-z0-9][a-z0-9._-]{0,127}$"
+    },
+    "action_log_alias": {
+      "const": "actionlog://global"
+    },
+    "observed_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "target_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 1024
+    },
+    "events": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1024,
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    },
+    "reference_target_set_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "observed_target_set_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "reference_source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "post_delete_source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "observed_source_digest": {
+      "$ref": "#/$defs/digest"
+    },
+    "observed_cursor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_count",
+        "maximum_event_id"
+      ],
+      "properties": {
+        "event_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "maximum_event_id": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "unique_event_uid_index_verified": {
+      "const": true
+    },
+    "sqlite_integrity": {
+      "const": "ok"
+    },
+    "verification_result": {
+      "enum": [
+        "exact-local-reference",
+        "exact-pinned-reference",
+        "mismatch"
+      ]
+    },
+    "reference_trust": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "externally_pinned_before_incident",
+        "checkpoint_digest",
+        "same_failure_domain_rollback_protection"
+      ],
+      "properties": {
+        "externally_pinned_before_incident": {
+          "type": "boolean"
+        },
+        "checkpoint_digest": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/digest"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "same_failure_domain_rollback_protection": {
+          "const": false
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "externally_pinned_before_incident": {
+                "const": true
+              }
+            },
+            "required": [
+              "externally_pinned_before_incident"
+            ]
+          },
+          "then": {
+            "properties": {
+              "checkpoint_digest": {
+                "$ref": "#/$defs/digest"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "checkpoint_digest": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "privacy_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_event_body_emitted",
+        "raw_event_body_retained",
+        "database_path_emitted",
+        "secrets_emitted",
+        "output_mode"
+      ],
+      "properties": {
+        "raw_event_body_emitted": {
+          "const": false
+        },
+        "raw_event_body_retained": {
+          "const": false
+        },
+        "database_path_emitted": {
+          "const": false
+        },
+        "secrets_emitted": {
+          "const": false
+        },
+        "output_mode": {
+          "const": "digest-and-metadata-only"
+        }
+      }
+    },
+    "authority_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_writes",
+        "event_update",
+        "event_delete",
+        "event_import",
+        "event_overwrite",
+        "bulk_write",
+        "recovery_authority",
+        "production_authority"
+      ],
+      "properties": {
+        "canonical_writes": {
+          "const": 0
+        },
+        "event_update": {
+          "const": false
+        },
+        "event_delete": {
+          "const": false
+        },
+        "event_import": {
+          "const": false
+        },
+        "event_overwrite": {
+          "const": false
+        },
+        "bulk_write": {
+          "const": false
+        },
+        "recovery_authority": {
+          "const": false
+        },
+        "production_authority": {
+          "const": false
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_uid_digest",
+        "reference_event_digest",
+        "reference_match_count",
+        "post_delete_match_count",
+        "observed_event_digest",
+        "observed_match_count",
+        "exact_match"
+      ],
+      "properties": {
+        "event_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "event_uid_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "reference_event_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "reference_match_count": {
+          "const": 1
+        },
+        "post_delete_match_count": {
+          "const": 0
+        },
+        "observed_event_digest": {
+          "$ref": "#/$defs/digest"
+        },
+        "observed_match_count": {
+          "const": 1
+        },
+        "exact_match": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}

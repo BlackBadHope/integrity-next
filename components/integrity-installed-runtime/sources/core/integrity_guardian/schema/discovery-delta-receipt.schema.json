@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://integrity.guardian/schema/v1/discovery-delta-receipt.schema.json",
+  "title": "Integrity Fog of War Discovery Delta Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "receipt_id",
+    "tenant_id",
+    "batch_digest",
+    "accepted_count",
+    "inserted_count",
+    "updated_count",
+    "deleted_count",
+    "no_op_count",
+    "active_assertion_count",
+    "changed_zone_ids",
+    "cross_zone_relation_ids",
+    "source_tips",
+    "index_boundary",
+    "signature"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "integrity-guardian/discovery-delta-receipt/v1"
+    },
+    "receipt_id": {
+      "type": "string",
+      "pattern": "^discovery-delta-receipt:[a-f0-9]{64}$"
+    },
+    "tenant_id": { "$ref": "#/$defs/tenant_id" },
+    "batch_digest": { "$ref": "#/$defs/digest" },
+    "accepted_count": { "$ref": "#/$defs/batch_count" },
+    "inserted_count": { "$ref": "#/$defs/batch_count" },
+    "updated_count": { "$ref": "#/$defs/batch_count" },
+    "deleted_count": { "$ref": "#/$defs/batch_count" },
+    "no_op_count": { "$ref": "#/$defs/batch_count" },
+    "active_assertion_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 25000
+    },
+    "changed_zone_ids": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "cross_zone_relation_ids": {
+      "type": "array",
+      "maxItems": 1000,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "source_tips": {
+      "type": "array",
+      "maxItems": 1000,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_id",
+          "source_epoch",
+          "sequence",
+          "record_digest",
+          "source_artifact_digest"
+        ],
+        "properties": {
+          "source_id": { "$ref": "#/$defs/id" },
+          "source_epoch": { "$ref": "#/$defs/id" },
+          "sequence": { "type": "integer", "minimum": 0 },
+          "record_digest": { "$ref": "#/$defs/digest" },
+          "source_artifact_digest": { "$ref": "#/$defs/digest" }
+        }
+      }
+    },
+    "index_boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "execution_performed",
+        "model_calls",
+        "network",
+        "production_authority",
+        "tool_calls"
+      ],
+      "properties": {
+        "execution_performed": { "const": false },
+        "model_calls": { "const": 0 },
+        "network": { "const": false },
+        "production_authority": { "const": false },
+        "tool_calls": { "const": 0 }
+      }
+    },
+    "signature": { "$ref": "#/$defs/signature" }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]{0,255}$"
+    },
+    "tenant_id": {
+      "type": "string",
+      "pattern": "^tenant:[A-Za-z0-9][A-Za-z0-9._:/-]{0,248}$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "batch_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 1000
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": { "const": "ed25519" },
+        "key_id": { "$ref": "#/$defs/id" },
+        "value": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{43,128}$"
+        }
+      }
+    }
+  }
+}
