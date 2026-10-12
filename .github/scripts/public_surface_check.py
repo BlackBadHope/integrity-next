@@ -64,6 +64,7 @@ ALLOWED_URL_HOSTS = frozenset(
         "localhost",
         "modelcontextprotocol.io",
         "openai.com",
+        "platform.openai.com",
         "opencode.ai",
         "packaging.python.org",
         "pillow.readthedocs.io",
