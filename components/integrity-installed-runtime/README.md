@@ -26,10 +26,10 @@ and owns their own organization, tunnel, credentials and access policy.
 Configure a separate connection under your own account and access policy.
 This repository contains no maintainer connection profile or tunnel identity.
 
-1. In your own [Platform organization](https://host-82ce46d1b71f.example.invalid/settings/organization/tunnels),
+1. In your own [Platform organization](https://platform.openai.com/settings/organization/tunnels),
    create a tunnel and associate only the intended organizations/workspaces.
-   Creating it requires permission to manage tunnels; operating it requires
-   permission to use them. ChatGPT workspace permissions are separate.
+   Creating or editing it requires Tunnels Read + Manage permissions; running
+   or selecting it requires Read + Use. ChatGPT workspace permissions are separate.
 2. Download the official client through Platform settings. Keep your runtime key
    outside the repository in `CONTROL_PLANE_API_KEY`. Set `YOUR_TUNNEL_ID` to
    your new tunnel and `YOUR_MCP_COMMAND` to your own local server command.
