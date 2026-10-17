@@ -860,7 +860,7 @@
       "mode": "0o644",
       "path": "components/integrity-claude-code/tests/test_claude_public_contract.py",
       "sanitization_edits": 0,
-      "sha256": "f37c7253a64bf8531ce06d7851922ee0a3285233b9659820fb2a20620841feef"
+      "sha256": "093cea90d58bf4d3c4d6213f9fc8d210853fb87f3e766ba0030649eedb706342"
     },
     {
       "bytes": 10246,
@@ -6326,7 +6326,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:c3c89d213410dba379eb0fe31c14a74385bc414444dc8c6d5ab73f16c01ee310",
+  "projection_digest": "sha256:fdd0ae60402e4b18e64cb8b18f46672c308b679eb8d873ab5297ac67626da78a",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
