@@ -1,0 +1,56 @@
+{
+  "antigravity/antigravity_hook": {
+    "path": "resources/antigravity/antigravity_hook.py"
+  },
+  "antigravity/integrity_antigravity_broker": {
+    "path": "resources/antigravity/integrity_antigravity_broker.py"
+  },
+  "antigravity/integrity_antigravity_hook": {
+    "path": "resources/antigravity/integrity_antigravity_hook.py"
+  },
+  "antigravity/integrity_client_turn_envelope": {
+    "path": "resources/antigravity/integrity_client_turn_envelope.py"
+  },
+  "antigravity/turn_broker_core": {
+    "path": "resources/antigravity/turn_broker_core.py"
+  },
+  "claude/admission": {
+    "path": "resources/claude/admission.py"
+  },
+  "common/integrity_client_turn_envelope": {
+    "path": "resources/common/integrity_client_turn_envelope.py"
+  },
+  "linux/admission": {
+    "path": "resources/linux/admission.py"
+  },
+  "linux/integrity-client-turn-broker": {
+    "path": "resources/linux/integrity-client-turn-broker.py"
+  },
+  "linux/integrity_client_turn_envelope": {
+    "path": "resources/linux/integrity_client_turn_envelope.py"
+  },
+  "linux/linux_runtime_factory": {
+    "path": "resources/linux/linux_runtime_factory.py"
+  },
+  "windows/admission-system": {
+    "path": "resources/windows/admission-system.ps1"
+  },
+  "windows/admission": {
+    "path": "resources/windows/admission.py"
+  },
+  "windows/integrity-client-turn-broker": {
+    "path": "resources/windows/integrity-client-turn-broker.py"
+  },
+  "windows/integrity_client_turn_envelope": {
+    "path": "resources/windows/integrity_client_turn_envelope.py"
+  },
+  "common/generation_launcher": {
+    "path": "resources/common/generation_launcher.py"
+  },
+  "common/integrity_scope_synapse": {
+    "path": "resources/common/integrity_scope_synapse.py"
+  },
+  "common/scope": {
+    "path": "resources/common/scope.ps1"
+  }
+}

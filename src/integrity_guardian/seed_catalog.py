@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import re
 import sqlite3
@@ -27,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from .hashing import digest_object
+from .project_scope import event_metadata
 
 SEED_NAMESPACE = "seed://project/default"
 ACTION_LOG_ALIAS = "actionlog://global"
@@ -782,6 +784,56 @@ def _seed_canonical_bytes(value: Any) -> bytes:
     except (TypeError, ValueError) as exc:
         raise SeedCatalogError(f"value is outside the Seed JSON profile: {exc}") from exc
     return rendered.encode("utf-8")
+
+
+_SEARCH_K1 = 1.2
+_SEARCH_B = 0.75
+_SEARCH_HEAD_WEIGHT = 2.0
+_SEARCH_TF_CAP = 3
+
+
+def _search_patterns(terms: Sequence[str]) -> list[tuple[str, str, re.Pattern[str]]]:
+    """Token-anchored matchers: a word prefix, never the middle of a word.
+
+    Long alphabetic terms keep a stem (all but two characters, at least four)
+    so Russian/English inflections match; numeric endings must not continue
+    with a digit, so ``192.0.2.1`` matches ``192.0.2.1/11`` but not ``.100``.
+    """
+    patterns = []
+    for term in terms:
+        stem = term[:max(4, len(term) - 2)] if len(term) >= 6 and term.isalpha() else term
+        tail = r"(?!\d)" if stem[-1].isdigit() else ""
+        patterns.append((term, stem, re.compile(r"(?<!\w)" + re.escape(stem) + tail)))
+    return patterns
+
+
+def _term_hits(
+    patterns: Sequence[tuple[str, str, re.Pattern[str]]], head: str, body: str,
+) -> dict[str, tuple[int, int]]:
+    hits = {}
+    for term, stem, pattern in patterns:
+        head_tf = len(pattern.findall(head)) if stem in head else 0
+        body_tf = len(pattern.findall(body)) if stem in body else 0
+        if head_tf or body_tf:
+            hits[term] = (head_tf, body_tf)
+    return hits
+
+
+def _ranked_score(
+    hits: dict[str, tuple[int, int]], weights: dict[str, float],
+    head_norm: float, body_norm: float,
+) -> int:
+    """BM25F-style integer score; field length normalization defeats aggregates.
+
+    Raw counts are capped before normalization: in an aggregate the count grows
+    with the length, so an uncapped ratio would keep its weight unchanged.
+    """
+    total = 0.0
+    for term, (head_tf, body_tf) in hits.items():
+        tf = (_SEARCH_HEAD_WEIGHT * min(head_tf, _SEARCH_TF_CAP) / head_norm
+              + min(body_tf, _SEARCH_TF_CAP) / body_norm)
+        total += max(weights[term], 0.01) * tf * (_SEARCH_K1 + 1) / (tf + _SEARCH_K1)
+    return round(total * 1000)
 
 
 def _canonical_text(value: Any) -> str:
@@ -1561,12 +1613,32 @@ def _verify_connection(
     event_count = int(connection.execute("SELECT COUNT(*) FROM seed_events").fetchone()[0])
     if expected_event_count is not None and event_count != expected_event_count:
         raise SeedCatalogError("catalog event count differs from expected snapshot")
-    raw_events = [
-        _parse_seed_json(row[0].encode("utf-8"))
-        for row in connection.execute(
-            "SELECT canonical_json FROM seed_events ORDER BY event_id"
-        )
-    ]
+    raw_events = []
+    event_columns = (
+        "event_id", "event_uid", "ts_utc", "actor", "action", "level", "summary",
+        "details_json", "tags_json", "canonical_json", "event_digest",
+    )
+    for row in connection.execute(
+        "SELECT " + ", ".join(event_columns) + " FROM seed_events ORDER BY event_id"
+    ):
+        indexed = dict(zip(event_columns, row, strict=True))
+        event = _parse_seed_json(indexed["canonical_json"].encode("utf-8"))
+        if not isinstance(event, dict):
+            raise SeedCatalogError("catalog raw event is not an object")
+        # Recall consumes indexed fields; verify those exact values against
+        # canonical evidence rather than merely hashing both independently.
+        expected = {
+            "event_id": event.get("id"), "event_uid": _string(event.get("event_uid", "")),
+            "ts_utc": event.get("ts_utc"), "actor": _string(event.get("actor", "")),
+            "action": event.get("action"), "level": _string(event.get("level", "")),
+            "summary": _string(event.get("summary", "")),
+            "details_json": _canonical_text(event.get("details") or {}),
+            "tags_json": _canonical_text(_string_list(event.get("tags"))),
+            "canonical_json": _canonical_text(event), "event_digest": _event_digest(event),
+        }
+        if indexed != expected:
+            raise SeedCatalogError("catalog event index does not match canonical evidence")
+        raw_events.append(event)
     actual_source_digest = _source_digest(raw_events)
     if (
         expected_source_digest is not None
@@ -1596,20 +1668,6 @@ def _verify_connection(
     )
     if raw_mismatch:
         raise SeedCatalogError("catalog contains an incomplete raw event")
-    maximum_event_id = int(
-        connection.execute("SELECT COALESCE(MAX(event_id), 0) FROM seed_events").fetchone()[0]
-    )
-    present_ids = {
-        row[0]
-        for row in connection.execute(
-            "SELECT event_id FROM seed_events WHERE event_id IN (4711, 5042)"
-        )
-    }
-    required_ids = {
-        event_id for event_id in (4711, 5042) if maximum_event_id >= event_id
-    }
-    if present_ids != required_ids:
-        raise SeedCatalogError("catalog is missing a mandatory owner doctrine anchor")
     counts = _counts(connection)
     if counts["home_record_count"] != 0:
         raise SeedCatalogError("Integrity Home leaked into the Seed catalog")
@@ -2112,18 +2170,29 @@ class SeedCatalog:
             "topic_event_counts": topic_counts,
         }
 
-    def search(self, query: str, *, limit: int = 20) -> list[dict[str, Any]]:
-        """Rank events by free-text term counts.
+    def search(
+        self, query: str, *, limit: int = 20, project_area: str | None = None,
+        project_host: str | None = None, project_id: str | None = None,
+        include_legacy: bool = False,
+    ) -> list[dict[str, Any]]:
+        """Rank events by BM25F over token-anchored term matches.
 
-        This scans every event and matches substrings of actor, action,
-        summary, details and tags; it uses no index. Use ``find_events`` for
-        exact, index-backed filters.
+        This scans every event over actor, action, summary, details and tags;
+        it uses no index. Use ``find_events`` for exact, index-backed filters.
+        A term matches a token prefix (Cyrillic/Latin stems for long terms),
+        never the middle of a word.  Rare terms weigh more, repeated hits
+        saturate, actor/action/summary/tags outweigh details, and field length
+        normalization keeps one very long aggregate event from outranking
+        short exact matches.
         """
-        terms = [term.casefold() for term in re.findall(r"[\w./:-]+", query)]
+        terms = list(dict.fromkeys(term.casefold() for term in re.findall(r"[\w./:-]+", query)))
         if not terms:
             raise SeedCatalogError("Seed search requires at least one term")
         if not 1 <= limit <= 200:
             raise SeedCatalogError("Seed search limit is outside 1..200")
+        if project_area is not None and project_area not in {"HOME", "PROD", "UNCLASSIFIED"}:
+            raise SeedCatalogError("project area must be HOME, PROD or UNCLASSIFIED")
+        filtered = any(value is not None for value in (project_area, project_host, project_id))
         with self._read_connection() as connection:
             connection.row_factory = sqlite3.Row
             candidates = connection.execute(
@@ -2133,23 +2202,43 @@ class SeedCatalog:
                 FROM seed_events ORDER BY event_id DESC
                 """
             )
-            results: list[tuple[int, dict[str, Any]]] = []
+            patterns = _search_patterns(terms)
+            matched: list[tuple[dict[str, tuple[int, int]], int, int, dict[str, Any]]] = []
+            document_frequency = dict.fromkeys(terms, 0)
+            event_count = head_total = body_total = 0
             for row in candidates:
-                searchable = " ".join(
-                    (
-                        row["actor"],
-                        row["action"],
-                        row["summary"],
-                        row["details_json"],
-                        row["tags_json"],
-                    )
+                project_scope = event_metadata(json.loads(row["details_json"])) if filtered else None
+                if filtered:
+                    if (not isinstance(project_scope, dict)
+                            or project_scope.get("schema") != "integrity.project-scope.v1"):
+                        selected = include_legacy or (
+                            project_area == "UNCLASSIFIED" and project_host is None and project_id is None
+                        )
+                    else:
+                        selected = (
+                            (project_area is None or project_scope.get("area") == project_area)
+                            and (project_host is None or project_scope.get("host_id") == project_host)
+                            and (project_id is None or project_scope.get("project_id") == project_id)
+                        )
+                    if not selected:
+                        continue
+                event_count += 1
+                head = " ".join(
+                    (row["actor"], row["action"], row["summary"], row["tags_json"])
                 ).casefold()
-                score = sum(searchable.count(term) for term in terms)
-                if not score:
+                body = row["details_json"].casefold()
+                head_total += len(head)
+                body_total += len(body)
+                hits = _term_hits(patterns, head, body)
+                if not hits:
                     continue
-                results.append(
+                for term in hits:
+                    document_frequency[term] += 1
+                matched.append(
                     (
-                        score,
+                        hits,
+                        len(head),
+                        len(body),
                         {
                             "event_id": row["event_id"],
                             "ts_utc": row["ts_utc"],
@@ -2157,10 +2246,27 @@ class SeedCatalog:
                             "action": row["action"],
                             "summary": row["summary"],
                             "event_digest": row["event_digest"],
-                            "score": score,
+                            **({"project_scope": project_scope or {
+                                "schema": "integrity.project-scope.v1", "area": "UNCLASSIFIED",
+                                "status": "legacy",
+                            }} if filtered else {}),
                         },
                     )
                 )
+            weights = {
+                term: math.log((event_count + 1) / (count + 0.5))
+                for term, count in document_frequency.items()
+            }
+            average_head = max(head_total / max(event_count, 1), 1.0)
+            average_body = max(body_total / max(event_count, 1), 1.0)
+            results: list[tuple[int, dict[str, Any]]] = []
+            for hits, head_length, body_length, event in matched:
+                score = _ranked_score(
+                    hits, weights,
+                    1 - _SEARCH_B + _SEARCH_B * head_length / average_head,
+                    1 - _SEARCH_B + _SEARCH_B * body_length / average_body,
+                )
+                results.append((score, {**event, "score": score}))
             results.sort(key=lambda item: (item[0], item[1]["event_id"]), reverse=True)
             return [item[1] for item in results[:limit]]
 

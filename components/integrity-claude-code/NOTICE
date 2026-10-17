@@ -1,0 +1,9 @@
+Integrity Claude Code executor
+Copyright 2026 Integrity Project contributors
+
+The Integrity Project publishes this component under Apache-2.0.
+Third-party dependencies retain their respective licenses.
+
+This component integrates with an operator-installed Anthropic Claude Code CLI.
+The CLI and authentication are not bundled. Anthropic trademarks and upstream CLI terms are unaffected.
+No provider SDK code, credentials, local run ledger or CLI binary is distributed.

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling>=1.32.4,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "integrity-space"
+version = "0.2.0"
+description = "Optional MCP Apps workbench with explicit host enrollment and bounded Seed lab views"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "THIRD-PARTY-NOTICES.txt"]
+dependencies = ["integrity-guardian>=6.1.0,<6.2", "mcp==2.2.0", "openai-mcp-extensions==0.1.0", "anyio>=4,<5", "starlette>=1,<2", "uvicorn>=0.54,<1"]
+
+[project.optional-dependencies]
+hub = ["integrity-bridges==0.7.0"]
+test = ["pytest>=8.2,<10", "integrity-home==0.2.0a1", "integrity-bridges==0.7.0"]
+
+[project.scripts]
+integrity-space = "integrity_space.server:main"
+integrity-space-lab = "integrity_space.lab:main"
+integrity-space-workbench = "integrity_space.hub:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/integrity_space"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "ui", "tests", "package.json", "package-lock.json", "pyproject.toml", "README.md", "LICENSE", "NOTICE", "THIRD-PARTY-NOTICES.txt", "plugin"]
+exclude = ["/node_modules", "/dist", "**/__pycache__"]

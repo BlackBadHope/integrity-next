@@ -1,0 +1,386 @@
+{
+  "mcp_server_name": {
+    "kind": "identity",
+    "used_by": [
+      "clients/antigravity/antigravity_hook.py"
+    ]
+  },
+  "path_b90aa9f0d1c5": {
+    "kind": "path",
+    "used_by": [
+      "clients/antigravity/antigravity_hook.py:16"
+    ]
+  },
+  "upstream_toml": {
+    "kind": "path",
+    "used_by": [
+      "clients/antigravity/antigravity_hook.py:77"
+    ]
+  },
+  "tools_catalogue": {
+    "kind": "path",
+    "used_by": [
+      "clients/antigravity/antigravity_hook.py:77"
+    ]
+  },
+  "private_state_root": {
+    "kind": "path",
+    "used_by": [
+      "clients/antigravity/antigravity_state.py"
+    ]
+  },
+  "path_b8097dd72ab5": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude/admission.py:2433"
+    ]
+  },
+  "architecture_checkpoint_id": {
+    "kind": "checkpoint",
+    "used_by": [
+      "clients/claude/admission.py:409",
+      "clients/linux/admission.py:395",
+      "clients/windows/admission-system.ps1",
+      "clients/windows/admission.ps1",
+      "clients/windows/admission.py:398"
+    ]
+  },
+  "path_672ada16776c": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/admission.py:597",
+      "clients/linux/admission.py:2279",
+      "clients/linux/linux_runtime_factory.py:19"
+    ]
+  },
+  "pin_498c7592d714": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:28",
+      "clients/windows/integrity-client-turn-broker.py:28"
+    ]
+  },
+  "pin_fd1c0d5a8471": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:60",
+      "clients/windows/integrity-client-turn-broker.py:60"
+    ]
+  },
+  "pin_74e986d01516": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:47",
+      "clients/windows/integrity-client-turn-broker.py:47"
+    ]
+  },
+  "path_6417ae8b427b": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:1151",
+      "clients/windows/integrity-client-turn-broker.py:1149"
+    ]
+  },
+  "pin_3c8ef62afebf": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2390",
+      "clients/windows/integrity-client-turn-broker.py:2382"
+    ]
+  },
+  "path_0b4608844dcc": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:1802",
+      "clients/windows/integrity-client-turn-broker.py:1798"
+    ]
+  },
+  "seed_namespace": {
+    "kind": "namespace",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2239",
+      "clients/windows/integrity-client-turn-broker.py:2231"
+    ]
+  },
+  "pin_dd9fa64be3f2": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2269",
+      "clients/linux/integrity_client_turn_envelope.py:1041",
+      "clients/windows/integrity-client-turn-broker.py:2261",
+      "clients/windows/integrity_client_turn_envelope.py:1041"
+    ]
+  },
+  "binding_9627b6210e51": {
+    "kind": "identity",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2372",
+      "clients/windows/integrity-client-turn-broker.py:2364"
+    ]
+  },
+  "pin_57b074bde43c": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2373",
+      "clients/windows/integrity-client-turn-broker.py:2365"
+    ]
+  },
+  "pin_b3e80aea09e2": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2395",
+      "clients/windows/integrity-client-turn-broker.py:2387"
+    ]
+  },
+  "pin_9ae1c0f33d07": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2395",
+      "clients/windows/integrity-client-turn-broker.py:2387"
+    ]
+  },
+  "pin_3cf6719e1f73": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2395",
+      "clients/windows/integrity-client-turn-broker.py:2387"
+    ]
+  },
+  "pin_10b8b4c69d7c": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2395",
+      "clients/windows/integrity-client-turn-broker.py:2387"
+    ]
+  },
+  "pin_e8a92f8dbfa3": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2395",
+      "clients/windows/integrity-client-turn-broker.py:2387"
+    ]
+  },
+  "path_dd2435d503a6": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/integrity-client-turn-broker.py:2702",
+      "clients/linux/integrity-client-turn-broker.py:2698",
+      "clients/windows/integrity-client-turn-broker.py:2694",
+      "clients/windows/integrity-client-turn-broker.py:2690"
+    ]
+  },
+  "pin_8355e401d593": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity_client_turn_envelope.py.base64.py:11",
+      "clients/linux/integrity_client_turn_envelope.py.base64.py:6",
+      "clients/linux/integrity_client_turn_envelope.py.base64.py:8",
+      "clients/linux/integrity_client_turn_envelope.py:1055",
+      "clients/windows/integrity_client_turn_envelope.py.base64.py:11",
+      "clients/windows/integrity_client_turn_envelope.py.base64.py:6",
+      "clients/windows/integrity_client_turn_envelope.py.base64.py:8",
+      "clients/windows/integrity_client_turn_envelope.py:1055"
+    ]
+  },
+  "path_5164c4d20152": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/integrity_client_turn_envelope.py.base64.py:10",
+      "clients/linux/integrity_client_turn_envelope.py.base64.py:5",
+      "clients/linux/integrity_client_turn_envelope.py.base64.py:7",
+      "clients/linux/integrity_client_turn_envelope.py:1053",
+      "clients/linux/integrity_client_turn_envelope.py:1172",
+      "clients/windows/integrity_client_turn_envelope.py.base64.py:10",
+      "clients/windows/integrity_client_turn_envelope.py.base64.py:5",
+      "clients/windows/integrity_client_turn_envelope.py.base64.py:7",
+      "clients/windows/integrity_client_turn_envelope.py:1053",
+      "clients/windows/integrity_client_turn_envelope.py:1177"
+    ]
+  },
+  "pin_5a4e77c00ca8": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity_client_turn_envelope.py:1085"
+    ]
+  },
+  "pin_0266e73cb5e7": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity_client_turn_envelope.py:1183",
+      "clients/windows/integrity_client_turn_envelope.py:1188"
+    ]
+  },
+  "pin_37c8b12ade41": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/integrity_client_turn_envelope.py:1184",
+      "clients/windows/integrity_client_turn_envelope.py:1189"
+    ]
+  },
+  "path_a7a775fb78e8": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/integrity_client_turn_envelope.py:1173",
+      "clients/windows/integrity_client_turn_envelope.py:1178"
+    ]
+  },
+  "native_owner_uid": {
+    "kind": "uid",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py"
+    ]
+  },
+  "native_daemon_directory": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py"
+    ]
+  },
+  "native_home_parent": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py"
+    ]
+  },
+  "native_home_mode": {
+    "kind": "mode",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py"
+    ]
+  },
+  "path_421d7209bec4": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py:18",
+      "clients/linux/native/integrity_owning_native.py:4"
+    ]
+  },
+  "path_2570ca9aa91a": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py:21"
+    ]
+  },
+  "path_8c0a5bb8b07c": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py:22"
+    ]
+  },
+  "path_863c29bb9a6e": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py:185"
+    ]
+  },
+  "path_d92be9924882": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py:186"
+    ]
+  },
+  "path_0a58ddc7612c": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py:187"
+    ]
+  },
+  "path_4b105e55cc7d": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/linux_runtime_factory.py:226"
+    ]
+  },
+  "path_a136563213bf": {
+    "kind": "path",
+    "used_by": [
+      "clients/windows/integrity-client-turn-broker.py:1816"
+    ]
+  },
+  "binding_diagnostic_actor": {
+    "kind": "identity",
+    "used_by": [
+      "clients/linux/native/integrity_delegation_codex.py:50"
+    ]
+  },
+  "binding_diagnostic_nodeny_actor": {
+    "kind": "identity",
+    "used_by": [
+      "clients/linux/native/integrity_delegation_codex.py:51"
+    ]
+  },
+  "path_d5fd52cfb7f6": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/native/integrity_delegation_codex.py:53"
+    ]
+  },
+  "binding_medor_thread": {
+    "kind": "identity",
+    "used_by": [
+      "clients/linux/native/integrity_delegation_core.py:23"
+    ]
+  },
+  "pin_b474a24dcbd7": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/native/integrity_scope_synapse.py.base64.py.base64.py:13"
+    ]
+  },
+  "path_dec5aa38ac57": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/native/integrity_scope_synapse.py.base64.py.base64.py:12"
+    ]
+  },
+  "path_92fad53f3db0": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/native/integrity_scope_synapse.py:18"
+    ]
+  },
+  "path_8a9e4b9f5f66": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/native/integrity_scope_synapse.py:19"
+    ]
+  },
+  "pin_da5fa25612d5": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/native/integrity_scope_synapse.py:25"
+    ]
+  },
+  "binding_db8055e0e030": {
+    "kind": "identity",
+    "used_by": [
+      "clients/linux/native/integrity_scope_synapse.py:72"
+    ]
+  },
+  "path_ba69d17f10cf": {
+    "kind": "path",
+    "used_by": [
+      "clients/linux/native/integrity_scope_synapse.py:104",
+      "clients/linux/native/integrity_scope_synapse.py:74"
+    ]
+  },
+  "binding_medor": {
+    "kind": "identity",
+    "used_by": [
+      "clients/linux/native/linux_terminal_peer_bridge.py:8",
+      "clients/linux/native/native_evidence_facade.py:14"
+    ]
+  },
+  "binding_93cc9ba645aa": {
+    "kind": "identity",
+    "used_by": [
+      "clients/linux/native/native_evidence_facade.py:87"
+    ]
+  },
+  "pin_49aaeb94d0ae": {
+    "kind": "pin",
+    "used_by": [
+      "clients/linux/native/integrity_owning_native.py:5"
+    ]
+  }
+}

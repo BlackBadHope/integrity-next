@@ -317,6 +317,12 @@ def build_parser() -> argparse.ArgumentParser:
     seed_search.add_argument("--catalog", required=True, type=Path)
     seed_search.add_argument("--query", required=True)
     seed_search.add_argument("--limit", type=int, default=20)
+    seed_search.add_argument("--area", choices=["HOME", "PROD", "UNCLASSIFIED"])
+    seed_search.add_argument("--project-host", help="Exact persisted host identity")
+    seed_search.add_argument("--project-id", help="Exact persisted project identity, never a basename")
+    seed_search.add_argument("--include-legacy", action="store_true")
+    seed_search.add_argument("--cross-scope", action="store_true",
+                             help="Explicit unfiltered search within this catalog's existing namespace")
 
     seed_connections = subparsers.add_parser("seed-connections")
     seed_connections.add_argument("--catalog", required=True, type=Path)
@@ -1558,13 +1564,23 @@ def _handle_seed_capsule(args: argparse.Namespace) -> None:
 
 
 def _handle_seed_search(args: argparse.Namespace) -> None:
-    results = SeedCatalog(args.catalog).search(args.query, limit=args.limit)
+    if args.cross_scope and any(value is not None for value in (args.area, args.project_host, args.project_id)):
+        raise ValueError("--cross-scope cannot be combined with project filters")
+    results = SeedCatalog(args.catalog).search(
+        args.query, limit=args.limit, project_area=args.area, project_host=args.project_host,
+        project_id=args.project_id, include_legacy=args.include_legacy,
+    )
     _emit(
         {
             "ok": True,
             "query": args.query,
             "count": len(results),
             "events": results,
+            "project_filter": {"area": args.area, "host_id": args.project_host,
+                               "project_id": args.project_id, "include_legacy": args.include_legacy},
+            "cross_scope": args.cross_scope,
+            "retrieval_scope": "current-catalog-namespace",
+            "security_isolation": False,
             "production_authority": False,
         }
     )

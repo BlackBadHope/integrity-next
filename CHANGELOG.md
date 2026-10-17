@@ -4,6 +4,42 @@ All notable public changes are recorded here.
 
 ## Unreleased
 
+## 6.1.0 — 2026-10-17
+
+- Consolidated the canonical Guardian implementation and independently versioned
+  optional distributions. Removed repeated runtime source trees while retaining
+  distinct broker/plugin contracts and historical LTS profile metadata.
+- Integrated snapshot-bound context delivery, bounded canonical event context,
+  topic extraction, ranked recall, separate Native/legacy Turn Memory and
+  explicitly gated lifecycle curation. Memory facade API is 2.11.0; the modern
+  request-independent transport remains the default surface.
+- Added source packages for Action Log, Memory Plane, client hooks/brokers,
+  Home/Chronicle, Space, the guarded Claude executor, LLM Bus and Bridges.
+  Installation starts no service and includes no user archive, active host
+  binding, session, route catalogue, credential or runtime database.
+- Added one component catalogue with dependency, namespace, license and version
+  checks. Adapter SDK 2.0.0rc2 binds Guardian 6.1.0 and its exact package origin;
+  optional distributions keep their own versions and platform boundaries.
+- Preserved Apache-2.0 ownership notices and third-party license texts, including
+  the Space UI bundle and Execution Bridge supporting code.
+- Catalog verification now rejects disagreement between indexed event fields
+  and canonical payloads before ranked recall. Archive provenance policy is an
+  explicit immutable input rather than a pre-enrolled corpus. Full source and
+  catalog verification remain required.
+- Preserved public export/privacy, functional and package checks; extended the
+  release gate to canonical source layout, modes, metadata and optional packages.
+  Tests use synthetic data and do not imply live production or model-delivery
+  acceptance.
+- Fixed the minimal Seed runtime's Windows virtual-environment launch boundary
+  without relaxing exact process or signed-receipt checks. Its runtime revision
+  is 0.1.4; the source plugin has a separate version and explicit package allowlist.
+  Public CI now exercises isolated co-installation on both Linux and Windows.
+- Upgrade boundary: historical signed deployment receipts and their reviewed
+  replay paths retain their original version pins. This release neither rewrites
+  those receipts nor silently migrates or bootstraps Native lifecycle state.
+
+### Earlier changes since 6.0.0
+
 - Seed writes no longer change identifiers or accepted text silently.
   `event_uid` is stored exactly as sent (up to 200 characters of
   `[A-Za-z0-9._:@/+-]`) or refused before the write; the same `event_uid`

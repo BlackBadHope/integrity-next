@@ -34,11 +34,27 @@ LAUNCHER = (
 DIRECT = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
 
+@pytest.fixture
+def tmp_path(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    # Catalog custody must not silently harden pytest's pre-existing directory.
+    # Give this suite a newly created, actually private boundary on Windows.
+    parent = tmp_path_factory.mktemp("seed-sync")
+    private = parent / "private"
+    if os.name == "nt":
+        from integrity_guardian._windows_files import create_private_directory
+        create_private_directory(private)
+    else:
+        private.mkdir(mode=0o700)
+    return private
+
+
 class Runtime:
     def __init__(self, root: Path) -> None:
         self.home = root / "seed"
         self.work = root / "work"
         self.work.mkdir(parents=True, exist_ok=True)
+        # A synthetic marker prevents inheriting any real ancestor workspace.
+        (self.work / ".git").mkdir(exist_ok=True)
 
     def cli(self, *args: str) -> subprocess.CompletedProcess:
         env = {
@@ -53,6 +69,7 @@ class Runtime:
 
     def setup(self) -> Runtime:
         result = self.cli("setup", "--json")
+        assert result.returncode == 0, result.stderr
         assert json.loads(result.stdout)["ok"] is True, result.stderr
         return self
 

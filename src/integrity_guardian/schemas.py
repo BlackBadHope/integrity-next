@@ -182,6 +182,8 @@ SCHEMA_NAMES = (
     "toolz-route-store-manifest",
     "toolz-start-state-witness",
     "toolz-trace-admission-receipt",
+    "turn-memory-creation-policy",
+    "turn-memory-native-bootstrap",
     "turn-memory-gap-receipt",
     "turn-memory-registration",
     "turn-memory-terminal-receipt",

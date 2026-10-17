@@ -1,0 +1,11 @@
+{
+  "schema": "integrity/component-config/v1",
+  "component": "integrity-action-log",
+  "configured": false,
+  "guardian_version": "6.1.0",
+  "memory_api_version": "2.11.0",
+  "owner_local_catalogue": null,
+  "values": {
+    "path_b8bbeaea89e4": null
+  }
+}

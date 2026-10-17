@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.32.4,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "integrity-client-memory"
+version = "1.8.0"
+description = "Explicitly configured integrity-client-memory sources for Integrity"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Integrity Project contributors" }]
+dependencies = ["integrity-action-log>=2.10.0,<3", "integrity-guardian>=6.1.0,<7"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2,<10"]
+native = ["websockets>=13,<16"]
+
+[project.scripts]
+integrity-client-memory = "integrity_client_memory.launcher:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/integrity_client_memory"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "README.md", "LICENSE", "NOTICE", "configuration.example.json", "CONFIGURATION-VALUES.json", "SOURCE-MAP.json", "legacy-tests", "tests", "pyproject.toml"]

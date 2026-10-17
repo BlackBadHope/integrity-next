@@ -1,0 +1,206 @@
+{
+  "action_log_full_backup": {
+    "path": "resources/action_log_full_backup.py"
+  },
+  "action_log_tail_archive": {
+    "path": "resources/action_log_tail_archive.py"
+  },
+  "build_seed_delta_release": {
+    "path": "resources/build_seed_delta_release.py"
+  },
+  "capacity_guard": {
+    "path": "resources/capacity_guard.py"
+  },
+  "offhost_windows_replica": {
+    "path": "resources/offhost_windows_replica.py"
+  },
+  "p1_golden_eval": {
+    "path": "resources/p1_golden_eval.py"
+  },
+  "p1_projection": {
+    "path": "resources/p1_projection.py"
+  },
+  "p1_retrieval": {
+    "path": "resources/p1_retrieval.py"
+  },
+  "p1_segment_verify": {
+    "path": "resources/p1_segment_verify.py"
+  },
+  "p1_segment_witness": {
+    "path": "resources/p1_segment_witness.py"
+  },
+  "p1_transition_gate": {
+    "path": "resources/p1_transition_gate.py"
+  },
+  "p2_attachment_capacity": {
+    "path": "resources/p2_attachment_capacity.py"
+  },
+  "p2_attachment_credentials": {
+    "path": "resources/p2_attachment_credentials.py"
+  },
+  "p2_attachment_enforcement": {
+    "path": "resources/p2_attachment_enforcement.py"
+  },
+  "p2_attachment_ingress": {
+    "path": "resources/p2_attachment_ingress.py"
+  },
+  "p2_billion_capacity": {
+    "path": "resources/p2_billion_capacity.py"
+  },
+  "p2_capacity_supplement": {
+    "path": "resources/p2_capacity_supplement.py"
+  },
+  "p2_client_canary_bootstrap": {
+    "path": "resources/p2_client_canary_bootstrap.py"
+  },
+  "p2_compact_billion_gate": {
+    "path": "resources/p2_compact_billion_gate.py"
+  },
+  "p2_compact_catalog": {
+    "path": "resources/p2_compact_catalog.py"
+  },
+  "p2_compact_dual_golden_eval": {
+    "path": "resources/p2_compact_dual_golden_eval.py"
+  },
+  "p2_compact_index": {
+    "path": "resources/p2_compact_index.py"
+  },
+  "p2_compact_offhost": {
+    "path": "resources/p2_compact_offhost.py"
+  },
+  "p2_compact_offhost_dispatch": {
+    "path": "resources/p2_compact_offhost_dispatch.py"
+  },
+  "p2_compact_offhost_export": {
+    "path": "resources/p2_compact_offhost_export.py"
+  },
+  "p2_compact_retrieval": {
+    "path": "resources/p2_compact_retrieval.py"
+  },
+  "p2_compact_runtime": {
+    "path": "resources/p2_compact_runtime.py"
+  },
+  "p2_dlq": {
+    "path": "resources/p2_dlq.py"
+  },
+  "p2_dual_golden_eval": {
+    "path": "resources/p2_dual_golden_eval.py"
+  },
+  "p2_dual_read": {
+    "path": "resources/p2_dual_read.py"
+  },
+  "p2_dual_reader_bootstrap": {
+    "path": "resources/p2_dual_reader_bootstrap.py"
+  },
+  "p2_dual_reader_verify": {
+    "path": "resources/p2_dual_reader_verify.py"
+  },
+  "p2_edge_relay": {
+    "path": "resources/p2_edge_relay.py"
+  },
+  "p2_fault_lab": {
+    "path": "resources/p2_fault_lab.py"
+  },
+  "p2_fault_lab_verify": {
+    "path": "resources/p2_fault_lab_verify.py"
+  },
+  "p2_gap_guard": {
+    "path": "resources/p2_gap_guard.py"
+  },
+  "p2_guard_bootstrap": {
+    "path": "resources/p2_guard_bootstrap.py"
+  },
+  "p2_guard_verify": {
+    "path": "resources/p2_guard_verify.py"
+  },
+  "p2_hot_cold_dual": {
+    "path": "resources/p2_hot_cold_dual.py"
+  },
+  "p2_least_privilege_verify": {
+    "path": "resources/p2_least_privilege_verify.py"
+  },
+  "p2_nats_bootstrap": {
+    "path": "resources/p2_nats_bootstrap.py"
+  },
+  "p2_nats_capacity_reconcile": {
+    "path": "resources/p2_nats_capacity_reconcile.py"
+  },
+  "p2_offhost_bootstrap": {
+    "path": "resources/p2_offhost_bootstrap.py"
+  },
+  "p2_offhost_dispatch": {
+    "path": "resources/p2_offhost_dispatch.py"
+  },
+  "p2_offhost_export": {
+    "path": "resources/p2_offhost_export.py"
+  },
+  "p2_offhost_restore_drill": {
+    "path": "resources/p2_offhost_restore_drill.py"
+  },
+  "p2_offhost_verify": {
+    "path": "resources/p2_offhost_verify.py"
+  },
+  "p2_physical_history_lab": {
+    "path": "resources/p2_physical_history_lab.py"
+  },
+  "p2_physical_retrieval_replay": {
+    "path": "resources/p2_physical_retrieval_replay.py"
+  },
+  "p2_physical_stage_admission": {
+    "path": "resources/p2_physical_stage_admission.py"
+  },
+  "p2_physical_verify_replay": {
+    "path": "resources/p2_physical_verify_replay.py"
+  },
+  "p2_projection": {
+    "path": "resources/p2_projection.py"
+  },
+  "p2_projection_bootstrap": {
+    "path": "resources/p2_projection_bootstrap.py"
+  },
+  "p2_quarantine_bus_message": {
+    "path": "resources/p2_quarantine_bus_message.py"
+  },
+  "p2_regional_canary_verify": {
+    "path": "resources/p2_regional_canary_verify.py"
+  },
+  "p2_regional_gate": {
+    "path": "resources/p2_regional_gate.py"
+  },
+  "p2_retrieval": {
+    "path": "resources/p2_retrieval.py"
+  },
+  "p2_s3_bootstrap": {
+    "path": "resources/p2_s3_bootstrap.py"
+  },
+  "p2_scoped_credentials": {
+    "path": "resources/p2_scoped_credentials.py"
+  },
+  "p2_shadow_bootstrap": {
+    "path": "resources/p2_shadow_bootstrap.py"
+  },
+  "p2_socket_proxy_target": {
+    "path": "resources/p2_socket_proxy_target.py"
+  },
+  "p2_stage_capacity_preflight": {
+    "path": "resources/p2_stage_capacity_preflight.py"
+  },
+  "restore_drill": {
+    "path": "resources/restore_drill.py"
+  },
+  "seed_delta_runtime": {
+    "path": "resources/seed_delta_runtime.py"
+  },
+  "seed_delta_sync": {
+    "path": "resources/seed_delta_sync.py"
+  },
+  "seed_run_retention": {
+    "path": "resources/seed_run_retention.py"
+  },
+  "verify_restore_receipt": {
+    "path": "resources/verify_restore_receipt.py"
+  },
+  "verify_seed_delta_release": {
+    "path": "resources/verify_seed_delta_release.py"
+  }
+}

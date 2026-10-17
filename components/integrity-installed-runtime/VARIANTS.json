@@ -1,0 +1,102 @@
+{
+  "activation_inherited": false,
+  "canonical_sources": [
+    {
+      "component": "integrity-guardian",
+      "path": "src/integrity_guardian"
+    },
+    {
+      "component": "integrity-action-log",
+      "path": "components/integrity-action-log/src/integrity_action_log"
+    },
+    {
+      "component": "integrity-active-inquiry",
+      "path": "components/integrity-active-inquiry/src/integrity_active_inquiry"
+    },
+    {
+      "component": "integrity-adapter-sdk",
+      "path": "components/integrity-adapter-sdk/src/integrity_adapter_sdk"
+    },
+    {
+      "component": "integrity-agents-api",
+      "path": "components/integrity-agents-api/src/integrity_agents_api"
+    },
+    {
+      "component": "integrity-bridges",
+      "path": "components/integrity-bridges/src/integrity_bridges"
+    },
+    {
+      "component": "integrity-claude-code",
+      "path": "components/integrity-claude-code/src/integrity_claude_code"
+    },
+    {
+      "component": "integrity-client-memory",
+      "path": "components/integrity-client-memory/src/integrity_client_memory"
+    },
+    {
+      "component": "integrity-codex-persistent",
+      "path": "components/integrity-codex-persistent/src/integrity_codex_persistent"
+    },
+    {
+      "component": "integrity-execution-bridge",
+      "path": "components/integrity-execution-bridge/src/integrity_execution_bridge"
+    },
+    {
+      "component": "integrity-experience-adapters",
+      "path": "components/integrity-experience-adapters/src/integrity_experience_adapters"
+    },
+    {
+      "component": "integrity-home",
+      "path": "components/integrity-home/src/integrity_chronicle"
+    },
+    {
+      "component": "integrity-home",
+      "path": "components/integrity-home/src/integrity_home"
+    },
+    {
+      "component": "integrity-llm-bus",
+      "path": "components/integrity-llm-bus/src/integrity_llm_bus"
+    },
+    {
+      "component": "integrity-memory-plane",
+      "path": "components/integrity-memory-plane/src/integrity_memory_plane"
+    },
+    {
+      "component": "integrity-resource-advisor",
+      "path": "components/integrity-resource-advisor/src/integrity_resource_advisor"
+    },
+    {
+      "component": "integrity-space",
+      "path": "components/integrity-space/src/integrity_space"
+    }
+  ],
+  "legacy_profile_metadata": [
+    {
+      "path": "components/integrity-installed-runtime/profiles/client-memory-lts-version-matrix.json",
+      "profile": "client-memory",
+      "status": "historical-reference-not-current-runtime"
+    },
+    {
+      "path": "components/integrity-installed-runtime/profiles/core-lts-version-matrix.json",
+      "profile": "core",
+      "status": "historical-reference-not-current-runtime"
+    },
+    {
+      "path": "components/integrity-installed-runtime/profiles/core-lts-version-matrix.json",
+      "profile": "workstation-memory",
+      "status": "historical-reference-not-current-runtime"
+    }
+  ],
+  "release_version": "6.1.0",
+  "retired_duplicate_groups": [
+    "action-log",
+    "client-hooks",
+    "client-memory",
+    "core",
+    "seed-sync",
+    "workstation-memory",
+    "server-hooks"
+  ],
+  "runtime_data_included": false,
+  "schema": "integrity.source-layout/v2"
+}

@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from .mind_capsule import capsule_is_open, render_mind_capsule
+from .context_delivery import recall_candidates
 
 BRIDGE_PROTOCOL = "integrity-client-memory-mcp/v3"
 CONTEXT_CAPSULE_PROTOCOL = BRIDGE_PROTOCOL + "/context-capsule/v1"
@@ -322,7 +323,7 @@ def _candidate_sources(source: dict[str, Any]) -> dict[str, list[Any]]:
         "contradictions": _items(epistemic.get("contradictions")),
         "invariants": _items(source.get("invariants")),
         "plan_items": _items(plan.get("items")),
-        "recall_hits": _items(recall.get("hits")),
+        "recall_hits": recall_candidates(source),
         "concept_tasks": _items(concept.get("relevant_tasks")),
         "attention_items": _items(attention.get("items")),
         "logical_chains": _items(source.get("logical_chains")),
@@ -415,7 +416,7 @@ def _capsule_core(source: dict[str, Any], admission: dict[str, Any]) -> dict[str
                 for key in ("item_count", "ready_count", "blocked_by_dependency_count")
                 if isinstance(plan.get(key), int) and not isinstance(plan.get(key), bool)
             },
-            "recall_terms": _short_list(recall.get("terms"), maximum=12, text_limit=80),
+            "recall_terms": _short_list(_mapping(source.get("auxiliary_recall")).get("terms") if "auxiliary_recall" in source else recall.get("terms"), maximum=12, text_limit=80),
             "context_text": "",
             "invariants": [],
             "plan_items": [],
@@ -454,6 +455,12 @@ def build_context_capsule(
     if policy.mode != "adaptive":
         raise ContextBudgetError("a context capsule requires adaptive mode")
     capsule = _capsule_core(source, admission)
+    auxiliary = _mapping(source.get("auxiliary_recall"))
+    if auxiliary:
+        capsule["retrieval_context"] = _bounded_value({
+            key: auxiliary.get(key) for key in
+            ("protocol", "policy", "source", "term_query_sha256", "search_only", "authority", "hit_count", "status")
+        })
     synaptic = source.get("capsule") if isinstance(source.get("capsule"), dict) else None
     door_open = True if synaptic is None else capsule_is_open(synaptic)
     synaptic_lead = render_mind_capsule(synaptic) if synaptic is not None else ""
@@ -469,21 +476,42 @@ def build_context_capsule(
     available = {name: len(values) for name, values in sources.items()}
     selected = {name: 0 for name in sources}
     dropped_for_budget = False
-    lane_names = tuple(sources)
-    maximum_lane_length = max((len(values) for values in sources.values()), default=0)
-    for index in range(min(maximum_lane_length, policy.transport_candidate_cap)):
-        for lane in lane_names:
-            values = sources[lane]
-            if index >= len(values):
-                continue
-            target = _lane_target(capsule, lane)
-            candidate = _compact_record(values[index])
-            target.append(candidate)
-            if len(_canonical_json(capsule)) <= policy.max_context_bytes:
-                selected[lane] += 1
-            else:
-                target.pop()
-                dropped_for_budget = True
+    # Keep safety lanes first, then the intent-ranked recall (auxiliary exact
+    # search already precedes primary recall). Global background lanes must not
+    # consume bytes reserved by those candidates. Their allowance is the exact
+    # serialized residual after priority selection. Optional background cannot
+    # outweigh the measured recall payload when a recall lane is present.
+    # This presentation order never grants authority:
+    # the mandatory core, closed-door rule and source projection stay intact.
+    safety_lanes = ("coordination_conflicts", "active_locks")
+    recall_lanes = ("recall_hits",)
+    background_lanes = tuple(name for name in sources if name not in safety_lanes + recall_lanes)
+    recall_bytes = 0
+    background_bytes = 0
+    for lane_names in (safety_lanes, recall_lanes, background_lanes):
+        maximum_lane_length = max((len(sources[name]) for name in lane_names), default=0)
+        for index in range(min(maximum_lane_length, policy.transport_candidate_cap)):
+            for lane in lane_names:
+                values = sources[lane]
+                if index >= len(values):
+                    continue
+                target = _lane_target(capsule, lane)
+                candidate = _compact_record(values[index])
+                before_bytes = len(_canonical_json(capsule))
+                target.append(candidate)
+                after_bytes = len(_canonical_json(capsule))
+                record_bytes = after_bytes - before_bytes
+                background_fits = (lane not in background_lanes or not selected["recall_hits"]
+                                   or background_bytes + record_bytes <= recall_bytes)
+                if after_bytes <= policy.max_context_bytes and background_fits:
+                    selected[lane] += 1
+                    if lane == "recall_hits":
+                        recall_bytes += record_bytes
+                    elif lane in background_lanes:
+                        background_bytes += record_bytes
+                else:
+                    target.pop()
+                    dropped_for_budget = True
 
     if synaptic is not None and not door_open:
         raw_context_text = synaptic_lead

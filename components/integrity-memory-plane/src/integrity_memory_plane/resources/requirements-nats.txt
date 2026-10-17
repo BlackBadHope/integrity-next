@@ -1,0 +1,1 @@
+nats-py==2.15.0 --hash=sha256:9f8d36aa52a9926a88b8f1d70cf1fdce0ad387941479b500ee9ab3e51073cefd

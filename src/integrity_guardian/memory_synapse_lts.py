@@ -39,7 +39,7 @@ from .seed_relationships import RELATIONSHIP_PROTOCOL, SeedRelationshipIndex
 LTS_PROTOCOL = "integrity-guardian/memory-synapse-lts/v1"
 LTS_VERSION = "1.9.0"
 FACADE_SERVER_NAME = "integrity-client-memory"
-FACADE_SERVER_VERSION = "2.10.0"
+FACADE_SERVER_VERSION = "2.11.0"
 RELEASE_WRAPPER_CONTRACT = "integrity-client-memory-lts/runtime-seal-token-env/v1"
 SNAPSHOT_PROTOCOL = "integrity-guardian/memory-synapse-snapshot/v1"
 TASK_INVENTORY_PROTOCOL = "integrity-guardian/seed-task-inventory-receipt/v1"
@@ -92,7 +92,7 @@ def _event_digest(event: dict[str, Any]) -> str:
 
 
 def package_artifact_digest() -> str:
-    """Hash the installed package files without importing build metadata."""
+    """Hash current package bytes, including editable installations."""
 
     package_root = Path(integrity_guardian.__file__).resolve().parent
     hasher = hashlib.sha256()
@@ -371,6 +371,15 @@ class MemorySynapseLtsService:
     def _artifact_digest(self) -> str:
         return self.artifact_digest or package_artifact_digest()
 
+    def package_digest(self) -> str:
+        """The installed package digest alone.
+
+        Unlike ``capabilities()``, this never verifies the Seed catalog, so a
+        caller that only needs the artifact identity does not pay for a full
+        catalog verification.
+        """
+        return self._artifact_digest()
+
     def capabilities(self) -> dict[str, Any]:
         core = {
             "protocol": LTS_PROTOCOL,
@@ -584,6 +593,116 @@ class MemorySynapseLtsService:
         if snapshot["snapshot_id"] != expected_snapshot_id:
             raise MemorySynapseLtsError("canonical Seed snapshot changed")
         return snapshot
+
+    def exact_read_context_events(
+        self, *, expected_snapshot_id: str, event_ids: list[int], event_uids: list[str] | None = None
+    ) -> dict[str, Any]:
+        """Read at most eight explicit IDs from the already frozen catalog.
+
+        Internal read-only context supplement. No AgentSession or action grant.
+        Not exposed as a new model tool and never calls the mutable Action Log.
+        """
+        snapshot = self._assert_snapshot(expected_snapshot_id)
+        event_uids = [] if event_uids is None else event_uids
+        if (not isinstance(event_ids, list) or not isinstance(event_uids, list)
+                or not 1 <= len(event_ids) + len(event_uids) <= 8
+                or any(isinstance(i, bool) or not isinstance(i, int) or not 1 <= i < 2**63
+                       for i in event_ids) or len(set(event_ids)) != len(event_ids)
+                or any(not isinstance(uid, str) or not uid or uid != uid.strip() or len(uid) > 256 for uid in event_uids)
+                or len(set(event_uids)) != len(event_uids)):
+            raise MemorySynapseLtsError("exact read context IDs outside bound")
+        clauses, parameters = [], []
+        for column, values in (("event_id", event_ids), ("event_uid", event_uids)):
+            if values:
+                clauses.append(column + " IN (" + ",".join("?" for _ in values) + ")")
+                parameters.extend(values)
+        with self._read_connection() as connection:
+            rows = connection.execute(
+                "SELECT event_id, canonical_json FROM seed_events WHERE "
+                + " OR ".join(clauses) + " ORDER BY event_id LIMIT 9", tuple(parameters)
+            ).fetchall()
+        if len(rows) > 8:
+            raise MemorySynapseLtsError("exact read context contains duplicate UID evidence")
+        by_id = {}
+        by_uid = {}
+        for event_id, raw in rows:
+            event = json.loads(raw)
+            if not isinstance(event, dict) or event.get("id") != event_id:
+                raise MemorySynapseLtsError("exact read context event identity mismatch")
+            by_id[event_id] = {
+                "event_id": event_id, "event_digest": _event_digest(event),
+                "summary": str(event.get("summary") or ""),
+                "action": str(event.get("action") or ""),
+                "ts_utc": str(event.get("ts_utc") or ""),
+            }
+            uid = event.get("event_uid")
+            if uid in event_uids:
+                if uid in by_uid:
+                    raise MemorySynapseLtsError("canonical Seed contains a duplicate event_uid")
+                by_uid[uid] = event_id
+                by_id[event_id]["event_uid"] = uid
+                # Bounded public scalar evidence only; internal receipts and nested payloads stay out.
+                details = event.get("details")
+                by_id[event_id]["details"] = {
+                    key: value[:512] if isinstance(value, str) else value
+                    for key, value in sorted(details.items())[:8]
+                    if isinstance(key, str) and not key.startswith("_") and len(key) <= 80
+                    and (value is None or isinstance(value, (str, int, float, bool)))
+                } if isinstance(details, dict) else {}
+        self._assert_snapshot(expected_snapshot_id)
+        order = list(dict.fromkeys([i for i in event_ids if i in by_id] + [by_uid[uid] for uid in event_uids if uid in by_uid]))
+        events = [by_id[i] for i in order]
+        core = {
+            "protocol": "integrity-guardian/exact-read-context-receipt/v1",
+            "snapshot_id": snapshot["snapshot_id"],
+            "source_digest": snapshot["source_digest"],
+            "catalog_digest": snapshot["catalog_digest"],
+            "query_digest": digest_object({"event_ids": event_ids, "event_uids": event_uids} if event_uids else event_ids, domain="exact-read-context-query-v1"),
+            "event_ids": [e["event_id"] for e in events],
+            "result_digest": digest_object(events, domain="exact-read-context-result-v1"),
+            "production_authority": False, "route_authority": False,
+        }
+        return {"snapshot_id": snapshot["snapshot_id"], "events": events,
+                "receipt": {**core, "receipt_id": digest_object(core, domain="exact-read-context-receipt-v1")}}
+
+    def recall(
+        self,
+        *,
+        expected_snapshot_id: str,
+        query: str,
+        limit: int = 20,
+        project_area: str | None = None,
+        project_host: str | None = None,
+        project_id: str | None = None,
+        include_legacy: bool = False,
+    ) -> dict[str, Any]:
+        """Explicit optional filtering over the existing pinned Seed catalog."""
+        snapshot = self._assert_snapshot(expected_snapshot_id)
+        if not isinstance(query, str) or not query.strip() or len(query) > 4096:
+            raise MemorySynapseLtsError("recall query is outside its bound")
+        if (isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 200
+                or not isinstance(include_legacy, bool)):
+            raise MemorySynapseLtsError("recall selectors are invalid")
+        catalog = SeedCatalog(
+            self.catalog_path, immutable=self.immutable_catalog,
+            readonly_connection=self.catalog_connection,
+        )
+        selectors = {"project_area": project_area, "project_host": project_host,
+                     "project_id": project_id, "include_legacy": include_legacy}
+        events = catalog.search(query, limit=limit, **selectors)
+        self._assert_snapshot(expected_snapshot_id)
+        core = {
+            "protocol": "integrity-guardian/seed-recall-receipt/v1",
+            "snapshot_id": snapshot["snapshot_id"],
+            "query_digest": digest_object(query, domain="seed-recall-query-v1"),
+            "selectors_digest": digest_object(selectors, domain="seed-recall-selectors-v1"),
+            "result_digest": digest_object(events, domain="seed-recall-results-v1"),
+            "event_ids": [event["event_id"] for event in events],
+            "result_count": len(events), "production_authority": False,
+            "route_authority": False, "security_isolation": False,
+        }
+        return {"snapshot_id": snapshot["snapshot_id"], "events": events,
+                "receipt": {**core, "receipt_id": digest_object(core, domain="seed-recall-receipt-v1")}}
 
     def tasks(
         self,

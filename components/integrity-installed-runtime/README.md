@@ -1,52 +1,50 @@
-# Installed Integrity source variants
+# Canonical source layout and historical profiles
 
-This component retains code-only source variants of Guardian and Adapter SDK,
-client and workstation memory packages, reusable client/server hooks, Seed
-synchronization and Action Log. It is a source reference, not an installer,
-release activation or a claim that the variants form one compatible runtime.
-The main package keeps its own source and release contracts. Older package code
-is retained in its named variant rather than replacing the main package.
+This directory is source-layout metadata, not a Python distribution or an
+installer. Guardian 6.1.0 uses one canonical implementation under
+[`src/integrity_guardian`](../../src/integrity_guardian). Integrations have their
+own package trees and unique import namespaces; see the root
+[component catalogue](../../COMPONENTS.json) and [component table](../../README.md#components).
 
-`SOURCE-INVENTORY.json` binds the private retained bytes. Capture origins remain
-outside the repository. The public projection sanitizes source text, excludes
-this private inventory and carries its own complete export manifest.
+Earlier public snapshots retained copied kernels, SDK code, hooks and service
+scripts under `sources/`. Those duplicate runtime groups were consolidated into
+their canonical package locations. Distinct client profiles and plugin
+interfaces remain where their contracts differ; they are not arbitrarily
+renamed to the Guardian release version.
 
-Personal tunnel integrations, Hub/bridge/host-node adapters, native tunnel
-executables, connection profiles, credentials, deployment pins, private task
-bindings, runtime databases, prompts, memory events, logs and rollback state
-are excluded from this update. Generic examples grant no access or authority
-over any maintainer system.
+## Retained metadata
 
-For an independently configured developer connection, follow the
-[developer setup below](#your-own-openai-developer-tunnel). Every developer creates
-and owns their own organization, tunnel, credentials and access policy.
+[VARIANTS.json](VARIANTS.json) records canonical source roots, retired duplicate
+groups and the two retained historical LTS matrices under `profiles/`.
+The matrices describe historical core/client cohorts; a reference shared by
+two old profiles is one metadata file, not two runtime copies. They are not
+current install constraints, deployment activation or proof of live acceptance.
 
-## Your own OpenAI developer tunnel
+Active distribution versions and dependencies come from package metadata and
+[COMPONENTS.json](../../COMPONENTS.json). The SDK's current origin binding is
+derived from canonical Guardian package bytes. Historical signed deployment
+and replay contracts retain their original pins and are not rewritten by a
+source release.
 
-Configure a separate connection under your own account and access policy.
-This repository contains no maintainer connection profile or tunnel identity.
+## Verification
 
-1. In your own [Platform organization](https://platform.openai.com/settings/organization/tunnels),
-   create a tunnel and associate only the intended organizations/workspaces.
-   Creating or editing it requires Tunnels Read + Manage permissions; running
-   or selecting it requires Read + Use. ChatGPT workspace permissions are separate.
-2. Download the official client through Platform settings. Keep your runtime key
-   outside the repository in `CONTROL_PLANE_API_KEY`. Set `YOUR_TUNNEL_ID` to
-   your new tunnel and `YOUR_MCP_COMMAND` to your own local server command.
-3. Configure, inspect and run your separate development profile:
+From the repository root, after installing the development dependencies:
 
 ```sh
-tunnel-client init --sample sample_mcp_stdio_local --profile developer-example --tunnel-id "$YOUR_TUNNEL_ID" --mcp-command "$YOUR_MCP_COMMAND"
-tunnel-client doctor --profile developer-example --explain
-tunnel-client run --profile developer-example
+python .github/scripts/component_catalog.py
+python components/integrity-installed-runtime/verify_sources.py
+python .github/scripts/public_surface_check.py
 ```
 
-4. In ChatGPT Plugins, add a custom MCP connection using your tunnel and your
-   server's authentication. First verify tool discovery and a harmless read-only
-   call. Recheck organization/workspace access if discovery fails.
+The catalogue check rejects stale versions/origin metadata, incompatible local
+dependencies, missing license files and colliding import namespaces. The source
+verifier checks canonical files against the closed public manifest, including
+size, digest, path custody and executable mode. Git index modes are used on
+Windows; POSIX filesystem modes are checked where supported. The privacy and
+manifest gate remains separate and rejects unlisted source files.
 
-Keep the server private: the client connects outward over HTTPS. Avoid inbound
-port forwarding, shared credentials and production data in development tests.
-
-See [OpenAI's Secure MCP Tunnel documentation](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels)
-for current installation, permissions, HTTP-server configuration and troubleshooting.
+None of these checks installs a hook, opens a service, initializes a database
+or confers authority over an external target. Configure a deployment from your
+own identities, paths, endpoints and trust material, outside the source tree.
+No maintainer connection, route catalogue, credential, user context or runtime
+state is included.

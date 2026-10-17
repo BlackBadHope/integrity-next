@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling>=1.32.4,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "integrity-home"
+version = "0.2.0a1"
+description = "Local provenance-preserving archive ingestion, reviewed projections and bounded memory retrieval"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+dependencies = []
+
+[project.scripts]
+integrity-home = "integrity_home.cli:main"
+integrity-chronicle = "integrity_chronicle.cli:main"
+integrity-home-mcp = "integrity_home.mcp_server:main"
+integrity-home-unified-mcp = "integrity_home.unified_mcp_server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/integrity_home", "src/integrity_chronicle"]

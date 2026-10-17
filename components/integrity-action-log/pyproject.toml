@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling>=1.32.4,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "integrity-action-log"
+version = "2.10.0"
+description = "Explicitly configured integrity-action-log sources for Integrity"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Integrity Project contributors" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.2,<10"]
+
+[project.scripts]
+integrity-action-log = "integrity_action_log.launcher:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/integrity_action_log"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src", "README.md", "LICENSE", "NOTICE", "configuration.example.json", "CONFIGURATION-VALUES.json", "SOURCE-MAP.json", "legacy-tests", "tests", "pyproject.toml"]

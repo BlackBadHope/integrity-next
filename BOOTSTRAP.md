@@ -14,8 +14,9 @@ to your own machine.
 ## Install
 
 ```bash
-git clone --branch v6.0.0 --depth 1 <URL copied from Code → Local → HTTPS>
+git clone --branch main --depth 1 <URL copied from Code → Local → HTTPS>
 cd integrity-next
+git rev-parse HEAD
 python -m venv .venv
 ```
 
@@ -28,7 +29,9 @@ guardian capabilities
 guardian lts-contracts
 ```
 
-The expected version is `6.0.0`. The source tree contains no owner credentials,
+The expected Guardian version is `6.1.0`; the memory MCP facade is `2.11.0`.
+Record the commit above alongside test results: `main` can advance. This guide
+does not depend on an unpublished version tag. The source tree contains no owner credentials,
 release signatures or deployment activation. Configure each adapter with
 credentials and authority that belong to your own environment.
 
@@ -37,7 +40,7 @@ credentials and authority that belong to your own environment.
 Install the components needed for your test directly from their package trees:
 
 ```bash
-python -m pip install ./components/integrity-adapter-sdk
+python -m pip install . ./components/integrity-adapter-sdk
 python -m pip install ./components/integrity-execution-bridge
 python -m pip install ./components/integrity-agents-api
 python -m pip install ./components/integrity-codex-persistent
@@ -45,9 +48,48 @@ python -m pip install ./components/integrity-active-inquiry
 python -m pip install ./components/integrity-resource-advisor
 ```
 
-Experience Adapters is also available under
-`components/integrity-experience-adapters`. Each component README documents its
-entrypoint and required optional dependencies.
+The SDK is bound to Guardian `6.1.0`; the Claude executor requires SDK
+`2.0.0rc2`. Supplying local package paths together lets the resolver use the
+matching source rather than look for an unpublished version on an index.
+For example:
+
+```bash
+python -m pip install . ./components/integrity-adapter-sdk ./components/integrity-claude-code
+python -m pip check
+integrity-claude-code capabilities
+```
+
+Other optional packages are listed in [COMPONENTS.json](COMPONENTS.json) and
+the [README component table](README.md#components). Each has its own README,
+license, Python dependencies and platform limits. Install only what you need.
+Home/Chronicle uses the standard library; Space additionally installs its pinned
+MCP/UI dependencies. Storage extras belong to the memory-plane tool that uses
+them. Packages do not automatically start services or import personal data.
+
+The transport packages provide disabled `configuration.example.json` templates.
+Copy one outside the source tree, supply your own paths and endpoints and run
+the package's documented preflight. Native hooks additionally need verified
+owner/session bindings and a tool catalogue for the selected server. A package
+version alone is not an enrolled client identity. No example contains an active
+route catalogue, enrolled session, service token or queue.
+
+## Memory MCP profiles
+
+The `guardian-memory-synapse-mcp` entrypoint uses the modern MCP transport.
+Its default surface is request-independent; the full session/Native broker
+contract requires explicit architecture, catalog, trust and evidence inputs.
+Inspect `guardian-memory-synapse-mcp --help` before selecting a profile.
+
+Turn Memory registration is distinct from context admission. Native lifecycle
+state has its own store; `--bootstrap-native-intent-store` is an explicit
+initialization request and never an implicit migration of legacy history.
+Missing session or delivery evidence must remain visible as a degraded result.
+Memory read availability and authorization to act on another target are separate.
+
+Historical deployment and replay schemas retain their original version pins.
+Installing 6.1.0 does not revalidate an older signed deployment receipt. In
+particular, the retained reviewed 5.5.1-to-6.0 replay path is not a migration
+path to 6.1.0; create and review the appropriate new evidence for a new deployment.
 
 ## First read-only check
 
@@ -73,9 +115,13 @@ temporary demo directory when finished, then return to the checkout.
 
 ```bash
 python -m pip wheel . --no-deps --wheel-dir dist
-python -m pip install --force-reinstall dist/integrity_guardian-*.whl
+python -m pip install --force-reinstall dist/integrity_guardian-6.1.0-py3-none-any.whl
 guardian version --all
 ```
+
+Use the exact wheel filename printed by the build if its platform tag differs.
+Do not substitute another build or release merely because its filename matches
+a wildcard.
 
 ## Initialize a local instance
 

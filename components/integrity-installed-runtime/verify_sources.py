@@ -16,13 +16,14 @@ ALLOWED_SOURCE_GROUPS = frozenset({
 })
 
 
-def verify_modes(expected: dict[str, str]) -> list[str]:
+def verify_modes(expected: dict[str, str], *, roots: list[str] | None = None) -> list[str]:
     """Check portable Git metadata and native POSIX executable state separately."""
     checked = []
-    prefix = HERE.relative_to(REPO).as_posix() + "/"
+    prefix = "" if roots is not None else HERE.relative_to(REPO).as_posix() + "/"
     if (REPO / ".git").exists():
         raw = subprocess.run(
-            ["git", "-C", str(REPO), "ls-files", "--stage", "-z", "--", prefix + "sources/"],
+            ["git", "-C", str(REPO), "ls-files", "--stage", "-z", "--",
+             *(roots if roots is not None else [prefix + "sources/"])],
             capture_output=True, check=True, timeout=15,
         ).stdout
         actual = {}
@@ -39,14 +40,68 @@ def verify_modes(expected: dict[str, str]) -> list[str]:
         checked.append("git-index")
     if os.name != "nt":
         for relative, mode in expected.items():
-            actual_mode = "100755" if (HERE / relative).stat().st_mode & 0o111 else "100644"
+            target = (REPO if roots is not None else HERE) / relative
+            actual_mode = "100755" if target.stat().st_mode & 0o111 else "100644"
             if actual_mode != mode:
                 raise ValueError("source executable mode mismatch on filesystem")
         checked.append("posix-filesystem")
     return checked
 
 
+def verify_canonical() -> dict[str, object]:
+    """Verify relocated canonical implementations without retaining kernel copies."""
+    layout = json.loads((HERE / "VARIANTS.json").read_text(encoding="utf-8"))
+    if layout.get("schema") != "integrity.source-layout/v2" or layout.get("runtime_data_included") is not False:
+        raise ValueError("canonical source layout contract mismatch")
+    roots = [row["path"] for row in layout["canonical_sources"]]
+    if not roots or len(set(roots)) != len(roots):
+        raise ValueError("canonical source roots are empty or duplicated")
+    for relative in roots:
+        candidate = Path(relative)
+        target = REPO / relative
+        if (candidate.is_absolute() or "\\" in relative or ":" in relative
+                or ".." in candidate.parts or not target.is_dir() or target.is_symlink()
+                or not target.resolve().is_relative_to(REPO.resolve())):
+            raise ValueError("invalid canonical source root")
+    manifest = json.loads((REPO / "PUBLIC-EXPORT-MANIFEST.json").read_text(encoding="utf-8"))
+    rows = [row for group in ("files", "generated_files") for row in manifest[group]
+            if any(row["path"].startswith(root.rstrip("/") + "/") for root in roots)]
+    expected = set()
+    modes = {}
+    python_files = 0
+    for row in rows:
+        relative = row["path"]
+        target = REPO / relative
+        if (relative in expected or not target.is_file() or target.is_symlink()
+                or not target.resolve().is_relative_to(REPO.resolve())
+                or target.stat().st_nlink != 1):
+            raise ValueError("invalid canonical source member")
+        expected.add(relative)
+        mode = int(row["mode"], 8)
+        if mode not in {0o644, 0o755}:
+            raise ValueError("invalid canonical executable mode")
+        modes[relative] = "100755" if mode == 0o755 else "100644"
+        data = target.read_bytes()
+        if len(data) != row["bytes"] or hashlib.sha256(data).hexdigest() != row["sha256"]:
+            raise ValueError("canonical source byte identity mismatch")
+        if target.suffix in {".db", ".sqlite", ".sqlite3", ".key", ".pem", ".token", ".log"}:
+            raise ValueError("non-source runtime member")
+        if target.suffix == ".py":
+            ast.parse(data.decode("utf-8"), filename=relative)
+            python_files += 1
+    actual = {path.relative_to(REPO).as_posix() for root in roots
+              for path in (REPO / root).rglob("*") if path.is_file()}
+    if not expected or actual != expected:
+        raise ValueError("canonical source reference is not closed")
+    checked = verify_modes(modes, roots=roots)
+    return {"passed": True, "source_files": len(rows), "python_files": python_files,
+            "mode_checks": checked, "layout": "canonical-v2",
+            "native_executable_modes": "not-applicable-on-Windows" if os.name == "nt" else "verified"}
+
+
 def verify() -> dict[str, object]:
+    if (HERE / "VARIANTS.json").is_file():
+        return verify_canonical()
     inventory = HERE / "SOURCE-INVENTORY.json"
     if inventory.is_file():
         value = json.loads(inventory.read_text(encoding="utf-8"))

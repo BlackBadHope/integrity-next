@@ -44,7 +44,7 @@ def adapter_execution_sdk_lts_contract() -> dict[str, Any]:
         "distribution": "integrity-adapter-sdk",
         "package_version": __version__,
         "signed_document_version": ADAPTER_SDK_VERSION,
-        "guardian_dependency": "integrity-guardian==6.0.0",
+        "guardian_dependency": "integrity-guardian==6.1.0",
         "status": "lts-candidate",
         "support_window_months": 24,
         "activation_rule": "first-signed-non-prerelease-release",

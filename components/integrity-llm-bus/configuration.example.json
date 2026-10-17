@@ -1,0 +1,15 @@
+{
+  "schema": "integrity/component-config/v1",
+  "component": "integrity-llm-bus",
+  "configured": false,
+  "guardian_version": "6.1.0",
+  "memory_api_version": "2.11.0",
+  "owner_local_catalogue": null,
+  "values": {
+    "state_directory": null,
+    "path_d4f3db5417f4": null,
+    "path_dd2435d503a6": null,
+    "endpoint_173b0c3b2ac1": null,
+    "native_peer_port_49481": null
+  }
+}

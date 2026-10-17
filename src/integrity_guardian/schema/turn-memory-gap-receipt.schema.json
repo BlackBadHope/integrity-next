@@ -22,7 +22,9 @@
     "identity": {
       "type": "object", "additionalProperties": false,
       "required": ["machine_id", "thread_id", "turn_id"],
+      "allOf": [{"if": {"required": ["intent_id"]}, "then": {"properties": {"thread_id": {"pattern": "^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$"}, "turn_id": {"pattern": "^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$"}}}}],
       "properties": {
+        "intent_id": {"type": "string", "pattern": "^intent:[a-f0-9]{64}$"},
         "machine_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
         "thread_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"},
         "turn_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:@/\\-]{0,255}$"}

@@ -1,0 +1,9 @@
+Integrity Home / Chronicle
+Copyright 2026 Integrity Project contributors
+
+The Integrity Project publishes this component under Apache-2.0.
+Third-party dependencies retain their respective licenses.
+
+Home and Chronicle are two import namespaces in one distribution.
+The historical Chronicle namespace is retained for format/API compatibility.
+No archives, conversation records, local indexes, credentials or registrations are included.

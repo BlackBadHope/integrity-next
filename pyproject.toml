@@ -1,14 +1,15 @@
 [build-system]
-requires = ["hatchling>=1.25"]
+requires = ["hatchling>=1.32.4,<2"]
 build-backend = "hatchling.build"
 
 [project]
 name = "integrity-guardian"
-version = "6.0.0"
+version = "6.1.0"
 description = "Local-first integrity layer for verified discovery, action and learning"
 readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Integrity Project contributors" }]
 keywords = ["integrity", "audit", "agents", "evidence", "local-first"]
 classifiers = [
@@ -29,6 +30,7 @@ dependencies = [
 dev = [
   "pytest>=8.2,<10",
   "ruff>=0.9,<1",
+  "packaging>=24,<27",
 ]
 
 [project.scripts]
@@ -42,11 +44,11 @@ packages = ["src/integrity_guardian"]
 
 [tool.hatch.build]
 include = [
-  "src/integrity_guardian/**",
-  "README.md",
-  "LICENSE",
-  "NOTICE",
-  "AUTHORS.md",
+  "/src/integrity_guardian/**",
+  "/README.md",
+  "/LICENSE",
+  "/NOTICE",
+  "/AUTHORS.md",
 ]
 
 [tool.pytest.ini_options]
