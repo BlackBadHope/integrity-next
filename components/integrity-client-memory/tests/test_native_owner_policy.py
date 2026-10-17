@@ -38,7 +38,7 @@ def test_runbook_catalogues_are_empty_in_both_broker_families():
     component = Path(__file__).resolve().parents[1]
     for family in ("windows", "linux"):
         source = component / "src/integrity_client_memory/resources" / family / "integrity-client-turn-broker.py"
-        tree = ast.parse(source.read_text())
+        tree = ast.parse(source.read_text(encoding="utf-8"))
         assignment = next(n for n in tree.body if isinstance(n, ast.Assign)
                           and any(isinstance(t, ast.Name) and t.id == "_LOCAL_ROUTE_CATALOG"
                                   for t in n.targets))

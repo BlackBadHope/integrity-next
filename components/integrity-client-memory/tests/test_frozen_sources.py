@@ -30,5 +30,5 @@ def test_frozen_scope_modules_have_matching_public_source_digests():
             visited.append(hashlib.sha256(raw).hexdigest())
             inspect(decoded, depth + 1)
 
-    inspect(source.read_text())
+    inspect(source.read_text(encoding="utf-8"))
     assert len(visited) >= 3
