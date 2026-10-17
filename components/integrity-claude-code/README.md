@@ -1,4 +1,4 @@
-# Integrity Claude Code executor 0.1.0rc2
+# Integrity Claude Code executor 0.1.0rc3
 
 Optional Windows executor through the genuine Integrity Adapter SDK
 `2.0.0rc3` (Guardian 6.1.1). It is separate from Guardian, Home and the read-only

@@ -685,7 +685,7 @@
       "mode": "0o644",
       "path": "components/integrity-claude-code/README.md",
       "sanitization_edits": 0,
-      "sha256": "6768505367226e3d7507da19c00b8d5a150700feeae85cf6ad13a882f53d687c"
+      "sha256": "0ae10e26115819b3bba187b6d4bf55690eaae6e8702e67ff8203c80ba3ddf817"
     },
     {
       "bytes": 563,
@@ -6326,7 +6326,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:aca812f15042647f40e0ba07b4c8115184ea6c0c75fcd9e2ed8dd24f56b91f71",
+  "projection_digest": "sha256:c3c89d213410dba379eb0fe31c14a74385bc414444dc8c6d5ab73f16c01ee310",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
