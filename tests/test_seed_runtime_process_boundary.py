@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.util
+from concurrent.futures import ThreadPoolExecutor
 import os
 from pathlib import Path
 import sys
@@ -27,18 +28,23 @@ def test_real_runtime_start_keeps_exact_signed_process_identity(tmp_path, monkey
     monkeypatch.setenv("INTEGRITY_SEED_HOME", str(tmp_path / "seed"))
     monkeypatch.setenv("CODEX_HOME", str(tmp_path / "codex-home"))
     runtime_commands = []
+    runtime_processes = []
     real_popen = seed.subprocess.Popen
     def spawn(*args, **kwargs):
         command = args[0]
+        process = real_popen(*args, **kwargs)
         if isinstance(command, (list, tuple)) and str(seed.RUNTIME_SOURCE) in command:
             runtime_commands.append(list(command))
-        return real_popen(*args, **kwargs)
+            runtime_processes.append(process)
+        return process
     monkeypatch.setattr(seed.subprocess, "Popen", spawn)
     runtime = None
     try:
         runtime = seed.ensure_runtime(work)
         assert runtime_commands == [[seed._runtime_python_executable(), "-I", "-B", str(seed.RUNTIME_SOURCE)]]
         receipt = runtime["receipt"]
+        assert len(runtime_processes) == 1
+        assert runtime_processes[0].pid == receipt["pid"]
         resolved = seed.paths(work)
         assert seed._valid_signed_receipt(receipt, runtime["token"])
         assert seed._process_matches_runtime(receipt, resolved)
@@ -53,8 +59,23 @@ def test_real_runtime_start_keeps_exact_signed_process_identity(tmp_path, monkey
         assert not seed._valid_signed_receipt({**receipt, "startup_nonce": "x" * 64}, runtime["token"])
     finally:
         if runtime is not None:
-            stopped = seed.stop_runtime()
-            assert stopped["ok"] is True
+            child = runtime_processes[0]
+            # This fixture is the runtime's actual parent. Reap its exact child
+            # while stop_runtime performs its unchanged identity-checked stop;
+            # kill(pid, 0) otherwise still sees an exited POSIX child as a zombie.
+            with ThreadPoolExecutor(max_workers=1) as reaper:
+                terminal = reaper.submit(child.wait, timeout=10)
+                try:
+                    stopped = seed.stop_runtime()
+                finally:
+                    # Disposable test cleanup only; never convert a failed stop
+                    # to PASS by replacing its returned result.
+                    if child.poll() is None:
+                        child.terminate()
+                    child_exit = terminal.result(timeout=12)
+            safe_stopped = {key: value for key, value in stopped.items() if key != "home"}
+            assert stopped["ok"] is True, {"stop": safe_stopped, "child_exit": child_exit}
+            assert child.returncode is not None
             assert not seed._pid_exists(runtime["receipt"]["pid"])
 
 

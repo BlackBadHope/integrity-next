@@ -6141,11 +6141,11 @@
       "sha256": "45f293e80d7544241783a16692c688424d770a89c781df080f058e7652fb386b"
     },
     {
-      "bytes": 3630,
+      "bytes": 4825,
       "mode": "0o644",
       "path": "tests/test_seed_runtime_process_boundary.py",
       "sanitization_edits": 0,
-      "sha256": "bc105f37602ed1a4b24a3cafec9fad629a4774075bb4b37b08dfe77e10a333af"
+      "sha256": "0aaeb5be10181c909f495946caf44b615b39680f617750d22f117236be4a95df"
     },
     {
       "bytes": 13669,
@@ -6326,7 +6326,7 @@
       "sha256": "7d464eabe63e904a0a47d3891b54743990f3257b999af98d0a15e31d8245a598"
     }
   ],
-  "projection_digest": "sha256:1f15a1d18b85a4ac32e6fb7f5f90dded1c80ae4fe4943005b5ed633d0c5d05d3",
+  "projection_digest": "sha256:900d3c752108b3e74995f5491b384c7e9ad9599e8b64eebc442314a59ae8bedd",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
