@@ -222,3 +222,7 @@ third-party notices and external dependency boundaries.
 replaces former copied kernel trees with one maintained implementation per
 namespace. Historical version matrices remain reference metadata, not active
 package versions or evidence of a deployment.
+
+## Installation acceptance evidence
+
+See the [6.1.0 / 6.1.1 isolated installation report](docs/audits/installation-6.1.1-20261017/REPORT_RU.md) for Linux and Windows results, single-run command timings, preserved failures, limitations and evidence SHA256. These timings are not product-performance or cross-platform speed claims.
