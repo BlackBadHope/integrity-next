@@ -1,0 +1,355 @@
+{
+  "components": [
+    {
+      "dependencies": [
+        "cryptography>=50.0.0,<51",
+        "jsonschema>=4.19.2,<5"
+      ],
+      "distribution": "integrity-guardian",
+      "entry_points": {
+        "guardian": "integrity_guardian.cli:main",
+        "guardian-cross-agent-continuity-acceptance": "integrity_guardian.cross_agent_acceptance_cli:main",
+        "guardian-galaxy-ppv4-bridge": "integrity_guardian.galaxy_ppv4_bridge:main",
+        "guardian-memory-synapse-mcp": "integrity_guardian.memory_synapse_mcp_protocol:main"
+      },
+      "import_roots": [
+        "integrity_guardian"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "dev": [
+          "pytest>=8.2,<10",
+          "ruff>=0.9,<1",
+          "packaging>=24,<27"
+        ]
+      },
+      "path": ".",
+      "python": ">=3.11",
+      "version": "6.1.0"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-action-log",
+      "entry_points": {
+        "integrity-action-log": "integrity_action_log.launcher:main"
+      },
+      "import_roots": [
+        "integrity_action_log"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "dev": [
+          "pytest>=8.2,<10"
+        ]
+      },
+      "path": "components/integrity-action-log",
+      "python": ">=3.11",
+      "version": "2.10.0"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-active-inquiry",
+      "entry_points": {
+        "integrity-inquiry": "integrity_active_inquiry.__main__:main"
+      },
+      "import_roots": [
+        "integrity_active_inquiry"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {},
+      "path": "components/integrity-active-inquiry",
+      "python": ">=3.11",
+      "version": "0.1.0rc2"
+    },
+    {
+      "dependencies": [
+        "integrity-guardian==6.1.0"
+      ],
+      "distribution": "integrity-adapter-sdk",
+      "entry_points": {},
+      "import_roots": [
+        "integrity_adapter_sdk"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "dev": [
+          "pytest>=8.2,<10"
+        ]
+      },
+      "path": "components/integrity-adapter-sdk",
+      "python": ">=3.11",
+      "version": "2.0.0rc2"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-agents-api",
+      "entry_points": {
+        "integrity-agents": "integrity_agents_api.__main__:main"
+      },
+      "import_roots": [
+        "integrity_agents_api"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {},
+      "path": "components/integrity-agents-api",
+      "python": ">=3.11",
+      "version": "0.1.0rc2"
+    },
+    {
+      "dependencies": [
+        "websockets>=13,<16"
+      ],
+      "distribution": "integrity-bridges",
+      "entry_points": {
+        "integrity-bridges": "integrity_bridges.launcher:main"
+      },
+      "import_roots": [
+        "integrity_bridges"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "dev": [
+          "pytest>=8.2,<10"
+        ]
+      },
+      "path": "components/integrity-bridges",
+      "python": ">=3.11",
+      "version": "0.7.0"
+    },
+    {
+      "dependencies": [
+        "integrity-adapter-sdk==2.0.0rc2"
+      ],
+      "distribution": "integrity-claude-code",
+      "entry_points": {
+        "integrity-claude-code": "integrity_claude_code.__main__:main"
+      },
+      "import_roots": [
+        "integrity_claude_code"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {},
+      "path": "components/integrity-claude-code",
+      "python": ">=3.11",
+      "version": "0.1.0rc2"
+    },
+    {
+      "dependencies": [
+        "integrity-action-log>=2.10.0,<3",
+        "integrity-guardian>=6.1.0,<7"
+      ],
+      "distribution": "integrity-client-memory",
+      "entry_points": {
+        "integrity-client-memory": "integrity_client_memory.launcher:main"
+      },
+      "import_roots": [
+        "integrity_client_memory"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "dev": [
+          "pytest>=8.2,<10"
+        ],
+        "native": [
+          "websockets>=13,<16"
+        ]
+      },
+      "path": "components/integrity-client-memory",
+      "python": ">=3.11",
+      "version": "1.8.0"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-codex-persistent",
+      "entry_points": {},
+      "import_roots": [
+        "integrity_codex_persistent"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {},
+      "path": "components/integrity-codex-persistent",
+      "python": ">=3.11",
+      "version": "0.1.0rc3"
+    },
+    {
+      "dependencies": [
+        "jsonschema>=4.19.2,<5"
+      ],
+      "distribution": "integrity-execution-bridge",
+      "entry_points": {},
+      "import_roots": [
+        "integrity_execution_bridge"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {},
+      "path": "components/integrity-execution-bridge",
+      "python": ">=3.11",
+      "version": "0.1.0rc5"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-experience-adapters",
+      "entry_points": {
+        "integrity-experience": "integrity_experience_adapters.__main__:main"
+      },
+      "import_roots": [
+        "integrity_experience_adapters"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "asr": [
+          "faster-whisper==1.2.1"
+        ],
+        "browser-tests": [
+          "Pillow==12.3.0",
+          "playwright==1.57.0"
+        ],
+        "images": [
+          "Pillow==12.3.0"
+        ]
+      },
+      "path": "components/integrity-experience-adapters",
+      "python": ">=3.11",
+      "version": "0.1.0rc3"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-home",
+      "entry_points": {
+        "integrity-chronicle": "integrity_chronicle.cli:main",
+        "integrity-home": "integrity_home.cli:main",
+        "integrity-home-mcp": "integrity_home.mcp_server:main",
+        "integrity-home-unified-mcp": "integrity_home.unified_mcp_server:main"
+      },
+      "import_roots": [
+        "integrity_chronicle",
+        "integrity_home"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {},
+      "path": "components/integrity-home",
+      "python": ">=3.11",
+      "version": "0.2.0a1"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-llm-bus",
+      "entry_points": {
+        "integrity-llm-bus": "integrity_llm_bus.launcher:main"
+      },
+      "import_roots": [
+        "integrity_llm_bus"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "dev": [
+          "pytest>=8.2,<10"
+        ]
+      },
+      "path": "components/integrity-llm-bus",
+      "python": ">=3.11",
+      "version": "1.0.0"
+    },
+    {
+      "dependencies": [
+        "integrity-guardian>=6.1.0,<7"
+      ],
+      "distribution": "integrity-memory-plane",
+      "entry_points": {
+        "integrity-memory-plane": "integrity_memory_plane.launcher:main"
+      },
+      "import_roots": [
+        "integrity_memory_plane"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "dev": [
+          "pytest>=8.2,<10"
+        ],
+        "nats": [
+          "nats-py>=2.15,<3"
+        ],
+        "postgres": [
+          "psycopg[binary]>=3.2,<4"
+        ],
+        "s3": [
+          "boto3>=1.35,<2"
+        ]
+      },
+      "path": "components/integrity-memory-plane",
+      "python": ">=3.11",
+      "version": "1.0.0"
+    },
+    {
+      "dependencies": [],
+      "distribution": "integrity-resource-advisor",
+      "entry_points": {
+        "integrity-codex-read-snapshot": "integrity_resource_advisor.app_server_snapshot:main",
+        "integrity-codex-rollout-usage": "integrity_resource_advisor.rollout_usage:main",
+        "integrity-codex-telemetry": "integrity_resource_advisor.codex:main",
+        "integrity-resource-advisor": "integrity_resource_advisor.__main__:main"
+      },
+      "import_roots": [
+        "integrity_resource_advisor"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {},
+      "path": "components/integrity-resource-advisor",
+      "python": ">=3.11",
+      "version": "0.1.0rc6"
+    },
+    {
+      "dependencies": [
+        "integrity-guardian>=6.1.0,<6.2",
+        "mcp==2.2.0",
+        "openai-mcp-extensions==0.1.0",
+        "anyio>=4,<5",
+        "starlette>=1,<2",
+        "uvicorn>=0.54,<1"
+      ],
+      "distribution": "integrity-space",
+      "entry_points": {
+        "integrity-space": "integrity_space.server:main",
+        "integrity-space-lab": "integrity_space.lab:main",
+        "integrity-space-workbench": "integrity_space.hub:main"
+      },
+      "import_roots": [
+        "integrity_space"
+      ],
+      "license": "Apache-2.0",
+      "optional_dependencies": {
+        "hub": [
+          "integrity-bridges==0.7.0"
+        ],
+        "test": [
+          "pytest>=8.2,<10",
+          "integrity-home==0.2.0a1",
+          "integrity-bridges==0.7.0"
+        ]
+      },
+      "path": "components/integrity-space",
+      "python": ">=3.11",
+      "version": "0.2.0"
+    }
+  ],
+  "configured": false,
+  "memory_facade_api": "2.11.0",
+  "release_version": "6.1.0",
+  "runtime_data_included": false,
+  "schema": "integrity.public-component-catalog/v1",
+  "source_components": [
+    {
+      "allowlist": "components/integrity-seed/PACKAGE_ALLOWLIST.txt",
+      "dependencies": [],
+      "license": "Apache-2.0",
+      "name": "integrity-seed",
+      "path": "components/integrity-seed",
+      "runtime": "Python standard library",
+      "runtime_data_included": false,
+      "runtime_version": "0.1.4",
+      "type": "source-plugin",
+      "version": "0.1.14"
+    }
+  ],
+  "source_profiles": "components/integrity-installed-runtime/VARIANTS.json"
+}

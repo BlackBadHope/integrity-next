@@ -1,0 +1,31 @@
+{
+  "schema": "integrity/component-config/v1",
+  "component": "integrity-bridges",
+  "configured": false,
+  "guardian_version": "6.1.0",
+  "memory_api_version": "2.11.0",
+  "owner_local_catalogue": null,
+  "values": {
+    "delegation_source_thread_id": null,
+    "delegation_target_thread_id": null,
+    "pin_9e26652d89d8": null,
+    "pin_d03d5e208f04": null,
+    "source_owner_uid": null,
+    "binding_target": null,
+    "binding_source_host": null,
+    "binding_source_room": null,
+    "pin_da5fa25612d5": null,
+    "path_863c29bb9a6e": null,
+    "path_421d7209bec4": null,
+    "path_6655dd9c8e44": null,
+    "path_006aa8b9ced8": null,
+    "path_92fad53f3db0": null,
+    "pin_f223e53008dd": null,
+    "path_dd2435d503a6": null,
+    "path_5164c4d20152": null,
+    "path_04d9ee0e8d07": null,
+    "path_70ff966bc499": null,
+    "command_b734f1f83ce5": null,
+    "command_7f5a55cf3f88": null
+  }
+}

@@ -1,0 +1,13 @@
+Integrity Space
+Copyright 2026 Integrity Project contributors
+
+The Integrity Project publishes this component under Apache-2.0.
+Third-party dependencies retain their respective licenses.
+
+Bundled UI dependencies (retained license comments):
+- @modelcontextprotocol/ext-apps 1.7.5: MIT
+- @openai/mcp-extensions 0.1.0: Apache-2.0
+- esbuild 0.28.2: MIT (build-time only)
+Transitive dependencies retain upstream copyright notices in THIRD-PARTY-NOTICES.txt
+and the bundled comments of src/integrity_space/assets/lab.html and workbench.html.
+Python dependencies are installed separately and are not relicensed by this component.

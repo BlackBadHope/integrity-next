@@ -1,13 +1,13 @@
 {
-  "description": "Mandatory client Integrity admission, closure enforcement and scope synapse.",
+  "description": "Owner-installed Integrity client profile; requires explicit INTEGRITY_CLIENT_MEMORY_CONFIG and fresh bindings.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" SessionStart",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event SessionStart",
+            "command": "integrity-client-memory linux/admission --event SessionStart",
+            "commandWindows": "integrity-client-memory windows/admission --event SessionStart",
             "timeout": 45,
             "statusMessage": "Integrity capability and snapshot admission"
           }
@@ -17,8 +17,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-scope-synapse.sh\" SessionStart",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-scope-synapse.ps1\" -Event SessionStart",
+            "command": "integrity-client-memory common/integrity_scope_synapse --harness codex --event SessionStart",
+            "commandWindows": "integrity-client-memory common/integrity_scope_synapse --harness codex --event SessionStart",
             "timeout": 20,
             "statusMessage": "Integrity scope synapse delivery after compaction"
           }
@@ -30,8 +30,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" UserPromptSubmit",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event UserPromptSubmit",
+            "command": "integrity-client-memory linux/admission --event UserPromptSubmit",
+            "commandWindows": "integrity-client-memory windows/admission --event UserPromptSubmit",
             "timeout": 45,
             "statusMessage": "Integrity Mind Graph and architecture admission"
           }
@@ -41,8 +41,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-scope-synapse.sh\" UserPromptSubmit",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-scope-synapse.ps1\" -Event UserPromptSubmit",
+            "command": "integrity-client-memory common/integrity_scope_synapse --harness codex --event UserPromptSubmit",
+            "commandWindows": "integrity-client-memory common/integrity_scope_synapse --harness codex --event UserPromptSubmit",
             "timeout": 20,
             "statusMessage": "Integrity scope anchor from the owner prompt"
           }
@@ -54,8 +54,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" PreToolUse",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event PreToolUse",
+            "command": "integrity-client-memory linux/admission --event PreToolUse",
+            "commandWindows": "integrity-client-memory windows/admission --event PreToolUse",
             "timeout": 10,
             "statusMessage": "Integrity admission and mutation gate"
           }
@@ -65,8 +65,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-scope-synapse.sh\" PreToolUse",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-scope-synapse.ps1\" -Event PreToolUse",
+            "command": "integrity-client-memory common/integrity_scope_synapse --harness codex --event PreToolUse",
+            "commandWindows": "integrity-client-memory common/integrity_scope_synapse --harness codex --event PreToolUse",
             "timeout": 20,
             "statusMessage": "Integrity scope reflex after compaction"
           }
@@ -78,8 +78,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" PostToolUse",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event PostToolUse",
+            "command": "integrity-client-memory linux/admission --event PostToolUse",
+            "commandWindows": "integrity-client-memory windows/admission --event PostToolUse",
             "timeout": 60,
             "statusMessage": "Integrity outcome and closure witness"
           }
@@ -91,8 +91,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" SubagentStart",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event SubagentStart",
+            "command": "integrity-client-memory linux/admission --event SubagentStart",
+            "commandWindows": "integrity-client-memory windows/admission --event SubagentStart",
             "timeout": 45,
             "statusMessage": "Integrity subagent architecture admission"
           }
@@ -104,8 +104,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" Stop",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event Stop",
+            "command": "integrity-client-memory linux/admission --event Stop",
+            "commandWindows": "integrity-client-memory windows/admission --event Stop",
             "timeout": 60,
             "statusMessage": "Integrity admission and closure check"
           }
@@ -117,8 +117,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-client-admission.sh\" SubagentStop",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-client-admission.ps1\" -Event SubagentStop",
+            "command": "integrity-client-memory linux/admission --event SubagentStop",
+            "commandWindows": "integrity-client-memory windows/admission --event SubagentStop",
             "timeout": 60,
             "statusMessage": "Integrity subagent closure check"
           }
@@ -130,8 +130,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-scope-synapse.sh\" PreCompact",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-scope-synapse.ps1\" -Event PreCompact",
+            "command": "integrity-client-memory common/integrity_scope_synapse --harness codex --event PreCompact",
+            "commandWindows": "integrity-client-memory common/integrity_scope_synapse --harness codex --event PreCompact",
             "timeout": 20,
             "statusMessage": "Integrity scope synapse arming before compaction"
           }
@@ -143,8 +143,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/bin/sh \"$HOME/.codex/integrity-memory/integrity-scope-synapse.sh\" PostCompact",
-            "commandWindows": "$pwsh=(Get-Command pwsh.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source; & $pwsh -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"$env:USERPROFILE\\.codex\\integrity-memory\\integrity-scope-synapse.ps1\" -Event PostCompact",
+            "command": "integrity-client-memory common/integrity_scope_synapse --harness codex --event PostCompact",
+            "commandWindows": "integrity-client-memory common/integrity_scope_synapse --harness codex --event PostCompact",
             "timeout": 20,
             "statusMessage": "Integrity scope synapse arming after compaction"
           }

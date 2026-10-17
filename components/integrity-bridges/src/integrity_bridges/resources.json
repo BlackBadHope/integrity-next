@@ -1,0 +1,26 @@
+{
+  "hub/host_hub": {
+    "path": "resources/hub/host_hub.py"
+  },
+  "hub/host_node": {
+    "path": "resources/hub/host_node.py"
+  },
+  "hub/unified_mcp": {
+    "path": "resources/hub/unified_mcp.py"
+  },
+  "hub/unix_ws_stdio": {
+    "path": "resources/hub/unix_ws_stdio.py"
+  },
+  "private-memory/host_hub": {
+    "path": "resources/private-memory/host_hub.py"
+  },
+  "private-memory/host_link": {
+    "path": "resources/private-memory/host_link.py"
+  },
+  "private-memory/host_node": {
+    "path": "resources/private-memory/host_node.py"
+  },
+  "private-memory/unified_mcp": {
+    "path": "resources/private-memory/unified_mcp.py"
+  }
+}

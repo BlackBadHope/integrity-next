@@ -1,0 +1,215 @@
+[
+  {
+    "path": "src/integrity_client_memory/resources/antigravity/antigravity_hook.py",
+    "source": "clients/antigravity/antigravity_hook.py",
+    "source_sha256": "c20dbae8dd5c91b3de49ea16c44d7787be7dad8494298436da153ae300c37a61",
+    "sha256": "645fb640674f265679c1b71f7af8559ba9c1f221cbb1a46ba36108df4bf6fe02"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/antigravity/antigravity_state.py",
+    "source": "clients/antigravity/antigravity_state.py",
+    "source_sha256": "705511ce5af826c4f5e215793ea6cd3702f866dcc3d9d8e143ccc0fc5475abba",
+    "sha256": "433197be6e8fe05756b12732fff15578f747fdc5e6388617db0012a7be02986d"
+  },
+  {
+    "path": "src/integrity_client_memory/data/tools-current.json",
+    "source": "clients/antigravity/integrity-client-tools.json",
+    "source_sha256": "09b70292b3b5238755741095fda74107baa2d2d1d1a5e8867c51ee09a17b7fa5",
+    "sha256": "05034eb24f14a3e8d4a773e05c02b41ffa5dc91dbee3183364be56036a4a5102",
+    "disposition": "superseded-by-canonical-memory-api-2.11-tools"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/antigravity/integrity_antigravity_broker.py",
+    "source": "clients/antigravity/integrity_antigravity_broker.py",
+    "source_sha256": "1883e593a4512e12bc5fda9761b6b0e2c05f6a411266d0060b2bf800da2a6a57",
+    "sha256": "db1b48ed1fff36d7912da9f1cea699b8566919ffed23d43928c88535c5dee65a"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/antigravity/integrity_antigravity_hook.py",
+    "source": "clients/antigravity/integrity_antigravity_hook.py",
+    "source_sha256": "cc51a1471071324fba27a24821b2923214d5c44eb5d81c191c8e05693f929bef",
+    "sha256": "973aa048233283aa5a56624439a09ff42ccc565fb73e39a87256e225bfc9dd8e"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/antigravity/integrity_client_turn_envelope.py",
+    "source": "clients/antigravity/integrity_client_turn_envelope.py",
+    "source_sha256": "f2d4e275a55e06dcedf3b04971db1506c586e536b6490c008a57d23b0571c703",
+    "sha256": "d05a8b9c71c3531a6e90a2348cf08cbd8b5378b1e26748afb0e1982fb65b3285"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/antigravity/turn_broker_core.py",
+    "source": "clients/antigravity/turn_broker_core.py",
+    "source_sha256": "2d90c8be9b6a3ecb20ef7c18f904d061356832ba81486a3a1bbc0f396e39edeb",
+    "sha256": "711378f5d574cad03a535059349d343c7551afb88f797bd268e9417ee3a194cf"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/claude/admission.py",
+    "source": "clients/claude/admission.py",
+    "source_sha256": "87972c08f3ce1cbe1bfd6a020de5af61eec534ad948252ba734b5510d3125816",
+    "sha256": "a13e906358be24b87d4dd4a38ba1507842ff248ea088f213a36b0cae14f7d4b2"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/common/integrity_client_turn_envelope.py",
+    "source": "clients/common/integrity_client_turn_envelope.py",
+    "source_sha256": "1eb54b7555972cd5699f36194531d0dcf0f4f4f0c1696b2eede5a934eccd8f3f",
+    "sha256": "ee71d2d678486936a40e90ac4090b7575e9075e440c5e3b1ebb0a0709cc994e8"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/admission.py",
+    "source": "clients/linux/admission.py",
+    "source_sha256": "a2f2e68665fb9a433cca8c99a6b3eb5069c62b0e283ccb785109bd948d9c805d",
+    "sha256": "4d0f379c5d74c9c4cb340de6d52fb6a6efb4da6ad57171362d03448778819987"
+  },
+  {
+    "path": "src/integrity_client_memory/data/tools-current.json",
+    "source": "clients/linux/integrity-client-tools.json",
+    "source_sha256": "4d5d1b9889ba6fc187256676a643ac60b02be7620712bfa6b62f9bece4bed3e3",
+    "sha256": "05034eb24f14a3e8d4a773e05c02b41ffa5dc91dbee3183364be56036a4a5102",
+    "disposition": "superseded-by-canonical-memory-api-2.11-tools"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/integrity-client-turn-broker.py",
+    "source": "clients/linux/integrity-client-turn-broker.py",
+    "source_sha256": "34e1951905ce56a72257e42e23ad26cfc832a040f404ba90bf35e1207e8bd974",
+    "sha256": "d5d0fdc504eb39af01f704ac00f532206f2f37303f7cedd8be08209719d31a9b"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/integrity_client_turn_envelope.py",
+    "source": "clients/linux/integrity_client_turn_envelope.py",
+    "source_sha256": "779975f33276e0cfcb513c8a63c197d7fae2ebbaca49298effc9087a7ea2091b",
+    "sha256": "fcc27972b71c05a514f632eb61cf435b10eef50882cb495707bc3dd3678b7a8c"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/linux_runtime_factory.py",
+    "source": "clients/linux/linux_runtime_factory.py",
+    "source_sha256": "4a1a2a6f7cc48faf95e264a6696863640044c5a222ddc8deadf5852ab91ad793",
+    "sha256": "040d302f4d23d31e1f06782f5c67e13ef28aa5c1d001ec0f0432dd72efbfc4db"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/admission-system.ps1",
+    "source": "clients/windows/admission-system.ps1",
+    "source_sha256": "5e881d2fb4c04e42023639fbab3836c0ded72cca4e2181cd30fbbd7178a37ce5",
+    "sha256": "d9215aa15f606b93e11f349254ac7cfadbdd34e8cfdb7bfa1ac79e54eecd4ef5"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/admission.ps1",
+    "source": "clients/windows/admission.ps1",
+    "source_sha256": "9bb1a203e5c0219005fa062f4eec1391b8d8ad61d25fd5abf9af2acfe6830a6a",
+    "sha256": "d07c5956c86c9022d97c492e828720e16119f19beb129b766a454a5821bece84"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/admission.py",
+    "source": "clients/windows/admission.py",
+    "source_sha256": "2ba97aabadc28f6c1d7e4f7561432d2b3efc89584dc0e1a1fb1191a1c6ec16a2",
+    "sha256": "6f92f123209fad11b4f73fa226289d99213b42609f7908c5118a7eb34b57c3b3"
+  },
+  {
+    "path": "src/integrity_client_memory/data/tools-current.json",
+    "source": "clients/windows/integrity-client-tools.json",
+    "source_sha256": "09b70292b3b5238755741095fda74107baa2d2d1d1a5e8867c51ee09a17b7fa5",
+    "sha256": "05034eb24f14a3e8d4a773e05c02b41ffa5dc91dbee3183364be56036a4a5102",
+    "disposition": "superseded-by-canonical-memory-api-2.11-tools"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/integrity-client-turn-broker.py",
+    "source": "clients/windows/integrity-client-turn-broker.py",
+    "source_sha256": "6b02d3dc24946d20bad6fc81c1111003d58fcdff6a7a067f5880b082a04968ab",
+    "sha256": "e9d36f991da9e52178a2f0b8d01cf3a9652cc929b00abdd565a7e1fd3c67594f"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/integrity_client_turn_envelope.py",
+    "source": "clients/windows/integrity_client_turn_envelope.py",
+    "source_sha256": "dc5913693b24df47a1d5674b55a89dfa731c6fd1efca510a90cf672d9e0dc52e",
+    "sha256": "57169720ca0729f23f09eb6c73774fd4fb4e60b91077ac2a9bef96491f20385a"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/integrity_delegation_codex.py",
+    "source": "native-source/integrity_delegation_codex.py",
+    "source_sha256": "278e9d807405b1c46bf883a8bf32d670720b137ddfe8f934f50e80bcf16417d9",
+    "sha256": "15921ae169887221d638685ead5baf70cd02ca1dae012bb2e0657975d2565a58"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/integrity_delegation_core.py",
+    "source": "native-source/integrity_delegation_core.py",
+    "source_sha256": "7290246e9600209e5aee7c055f0789560de10d60eaecab4a850a8a6f9ea87f35",
+    "sha256": "294f99862b5d08cef1430366c7ac7979f3ca557c4de8d7eca4a735c65094d52f"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/integrity_scope_synapse.py",
+    "source": "native-source/integrity_scope_synapse.py",
+    "source_sha256": "402e57da05e4a36ac7ae5e70f19531a2829cfbd300a8209d02a448994000b625",
+    "sha256": "30a7f924e3cd7e8d7a03366f1048be19b99d6b846d6a092d4a02a80177bf5f87"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/linux_admission_dispatcher.py",
+    "source": "native-source/linux_admission_dispatcher.py",
+    "source_sha256": "cfaa84cce1e940b2dcc6fdd935ec3e995bb8f2166c162daa7f9f37a252d2ef1a",
+    "sha256": "26b0d2e67091274aed41df0bfcf9eada0362dd617fe1d56b13dc7c240e2588ac"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/linux_admission_seam.py",
+    "source": "native-source/linux_admission_seam.py",
+    "source_sha256": "a5c4deae3051523d08a2abf361f3799ede7ca5c3e8cea962d9461f8466489bce",
+    "sha256": "1f54f842e5d27cfd8748c8de17f51e08252e35ad46defe9b60dea7ba4cd142c9"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/linux_delegation_provider.py",
+    "source": "native-source/linux_delegation_provider.py",
+    "source_sha256": "8ad860a809b156107feaf3126cf9a4871010a195bcfdd8b12b3c3f38a1796fac",
+    "sha256": "0470eab654dfb6f4b4a7d33ad3b152c5e04c5a55c88f5d41693fedd6142fb5d5"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/linux_native_peer_client.py",
+    "source": "native-source/linux_native_peer_client.py",
+    "source_sha256": "b94cc00a68235de5a50b1e6191ba5f659fd5ad44eb668c9e81943c91889a0462",
+    "sha256": "dbe293c4a98609c0ead89160d5dc865d5b4fd38ad288d7c9e28dce9c9275ef0b"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/linux_scope_capture.py",
+    "source": "native-source/linux_scope_capture.py",
+    "source_sha256": "827df0911d592a6bf8070e80b51bc306518c4c0a19b10d00b324040276320227",
+    "sha256": "e6d012e104868f8203032a9e7bfc7f45ae4daf669275bcf4e8381b5b84170251"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/linux_terminal_peer_bridge.py",
+    "source": "native-source/linux_terminal_peer_bridge.py",
+    "source_sha256": "be124d2df2ab7229f66cc8c9a117ad3dcda7ffd0572000a71b7c66178c15cdf7",
+    "sha256": "bfd74936399eb58f00c6f6616d1e4de8490ec1cc4a82738ce94c567c3d6717a2"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/linux_terminal_worker.py",
+    "source": "native-source/linux_terminal_worker.py",
+    "source_sha256": "0cc57a7088f22526f9e3eb0187d69349c9f6b0d7a4d033d540bb0b5b1412af1d",
+    "sha256": "b892f85d116c79ed29bb583f46c366f5f72ccd58ed50c2aec2cb48da9707a357"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/native_evidence_facade.py",
+    "source": "native-source/native_evidence_facade.py",
+    "source_sha256": "a6c157c47baf483b11c0e0f0ceea1b7a8f4c72635203e534ea8c2cc96c619bf2",
+    "sha256": "d6a5bca1b6916290a9d369eee62080e7ce79cac0dbd3588eae24ec7bf1b6e7f2"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/linux/native/native_evidence_peer_auth.py",
+    "source": "native-source/native_evidence_peer_auth.py",
+    "source_sha256": "5eb0a13595579cf75b5d424bdd435175eda6f670c5b92a9ae9fc55893e64d6d2",
+    "sha256": "7c2ec296f47a0f27f78ec0a4be8c99264ff1acef346ff87c7700a4bbb3fc4f40"
+  },
+  {
+    "path": "src/integrity_client_memory/owning_native.py",
+    "source": "native-source/integrity_owning_native.py",
+    "source_sha256": "e9e84502e5ac2e7d305d1c04830f1e38784bc650bd172878e6e27ab5109b642c",
+    "sha256": "b39c31ce74f85412931736d0e80fdaaaac5cd0c88f545820d056fae9bb7477be"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/common/generation_launcher.py",
+    "source": "guardian/plugins/integrity-memory/hooks/integrity-client-turn-launcher.py",
+    "source_sha256": "9269d20d7c8b47c907e34dba4a83a6016d94d80569b33f3f7e2cfd45107086a8",
+    "sha256": "1d52289f039792249d657d40387e87559bd51d52ab024090b94d4ddffefb5c40"
+  },
+  {
+    "path": "src/integrity_client_memory/resources/common/integrity_scope_synapse.py",
+    "source": "guardian/plugins/integrity-memory/hooks/integrity_scope_synapse.py",
+    "source_sha256": "baf13ab6bb2f3c94886ab703b54a53efae16b302f890e61c6512d71823436c2f",
+    "sha256": "988529e3543c4864f7ff1474f7d3c62e3b3b6f633277c2e96fd0f740fdce850a"
+  }
+]

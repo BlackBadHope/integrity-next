@@ -1,7 +1,7 @@
 {
   "distribution": "integrity-adapter-sdk",
   "facade_target_distribution": "integrity-guardian",
-  "facade_target_version": "6.0.0",
+  "facade_target_version": "6.1.0",
   "forbidden_wheel_prefixes": [
     "integrity_guardian/"
   ],
@@ -11,7 +11,7 @@
   "owned_import_roots": [
     "integrity_adapter_sdk"
   ],
-  "package_version": "2.0.0rc1",
+  "package_version": "2.0.0rc2",
   "production_authority": false,
   "protocol": "integrity-adapter-sdk/package-ownership/v1",
   "signed_document_version": "1.0.0a2"

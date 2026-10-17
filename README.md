@@ -1,6 +1,6 @@
 # Integrity Guardian
 
-This source release is version `6.0.0`.
+This source release is Guardian **6.1.0**, with memory MCP facade API **2.11.0**.
 
 Integrity Guardian is a local-first integrity layer for humans, automation and
 AI agents. It keeps four questions separate:
@@ -15,11 +15,13 @@ being mistaken for truth, permission or completion.
 
 ## Current status
 
-This repository contains the portable Guardian runtime and reviewed component
-and plugin source. Its exact file allowlist omits operational and deployment
-tools, Orbit scenarios, host instructions, runbooks, rollback notes, fixtures,
-retained evidence, history and release archives. The included package files are
-available under Apache-2.0.
+This repository contains one canonical Guardian runtime and 15 optional Python
+distributions. [COMPONENTS.json](COMPONENTS.json) records their independent
+versions, dependencies, import namespaces and entrypoints. Source for local
+archives, memory delivery, agent transports and the UI is included; user data,
+credentials, enrolled sessions, host bindings and retained operational evidence
+are not. Tests use synthetic inputs. Integrity source is Apache-2.0; bundled
+third-party code keeps its own [license notices](LICENSES.md).
 
 Installation does not silently connect to somebody else's infrastructure.
 Configure the included adapters with authority and credentials belonging to
@@ -37,11 +39,13 @@ agent stacks and external targets are the main purpose of this public project.
 ## Try it in five minutes
 
 Open **Code → Local → HTTPS** on this repository and copy its URL. Install the
-exact stable release by replacing `<copied-url>` below:
+current `main` source by replacing `<copied-url>` below. Record the checked-out
+commit when reporting a result:
 
 ```bash
 git clone --depth 1 <copied-url>
 cd integrity-next
+git rev-parse HEAD
 python -m venv .venv
 ```
 
@@ -110,9 +114,37 @@ guardian capabilities
 guardian lts-contracts
 ```
 
-`version --all` reports the public source profile. The other commands are
-read-only; continue with [BOOTSTRAP.md](BOOTSTRAP.md) to initialize local state
-and install the included functional components.
+`version --all` reports the public source profile. These commands do not enroll
+a host or grant action authority. Continue with [BOOTSTRAP.md](BOOTSTRAP.md) to
+select optional components and, separately, initialize your own local state.
+
+## Components
+
+All distributions require Python 3.11 or newer. Their versions describe
+different interfaces and deliberately do not all match the Guardian version.
+
+| Distribution | Version | Purpose |
+| --- | --- | --- |
+| `integrity-guardian` | 6.1.0 | Canonical protocol, evidence, authorization and memory core |
+| [`integrity-adapter-sdk`](components/integrity-adapter-sdk/README.md) | 2.0.0rc2 | Guardian-bound adapter facade |
+| [`integrity-execution-bridge`](components/integrity-execution-bridge/README.md) | 0.1.0rc5 | Verified execution and observation boundaries |
+| [`integrity-agents-api`](components/integrity-agents-api/README.md) | 0.1.0rc2 | Agent API integration |
+| [`integrity-codex-persistent`](components/integrity-codex-persistent/README.md) | 0.1.0rc3 | Persistent Codex adapter |
+| [`integrity-active-inquiry`](components/integrity-active-inquiry/README.md) | 0.1.0rc2 | Bounded active inquiry |
+| [`integrity-experience-adapters`](components/integrity-experience-adapters/README.md) | 0.1.0rc3 | Experience adapter interfaces |
+| [`integrity-resource-advisor`](components/integrity-resource-advisor/README.md) | 0.1.0rc6 | Local resource and usage projections |
+| [`integrity-action-log`](components/integrity-action-log/README.md) | 2.10.0 | Action Log HTTP service and read-session evidence |
+| [`integrity-memory-plane`](components/integrity-memory-plane/README.md) | 1.0.0 | Catalog synchronization, retention and storage tools |
+| [`integrity-client-memory`](components/integrity-client-memory/README.md) | 1.8.0 | Codex, Claude and Antigravity hook/broker profiles |
+| [`integrity-home`](components/integrity-home/README.md) | 0.2.0a1 | Home archive and Chronicle projections |
+| [`integrity-space`](components/integrity-space/README.md) | 0.2.0 | Read-only MCP Apps lab and workbench UI |
+| [`integrity-claude-code`](components/integrity-claude-code/README.md) | 0.1.0rc2 | Separately guarded Windows CLI executor |
+| [`integrity-llm-bus`](components/integrity-llm-bus/README.md) | 1.0.0 | Local queue, registry, relay and steering transports |
+| [`integrity-bridges`](components/integrity-bridges/README.md) | 0.7.0 | Hub, delegation and native peer transports |
+
+`components/integrity-seed` and `plugins/` also retain their specific plugin
+interfaces; they are not extra Python distributions. Historical source-profile
+metadata is documented in the [source layout](components/integrity-installed-runtime/README.md).
 
 ## Run the test suite
 
@@ -121,8 +153,10 @@ python -m pip install ".[dev]"
 python -m pytest -q
 ```
 
-Public CI verifies the closed export manifest, builds and installs the package,
-runs the three CLI smoke commands and executes the public functional suite.
+Public release checks verify the closed export manifest, component metadata,
+canonical source layout, package builds and dependency compatibility, CLI smoke
+commands and synthetic functional tests. See
+[architecture and verification boundaries](ARCHITECTURE.md#what-the-public-suite-verifies).
 
 ## How it fits together
 
@@ -153,7 +187,7 @@ provided or claimed; [ARCHITECTURE.md](ARCHITECTURE.md) lists each boundary.
 | Platform | Source/install | Public CI | Operational integration |
 | --- | --- | --- | --- |
 | Linux | Supported | Python 3.12 | Requires an independently configured adapter |
-| Windows | Supported | Locally acceptance-tested | Requires an independently configured adapter |
+| Windows | Portable core supported | Local source/package checks | POSIX-only custody and Windows-only executors have separate gates |
 | macOS | Expected from portable Python code | Not yet in public CI | Unverified |
 
 Platform support is a capability vector. An installation PASS does not imply
@@ -178,12 +212,13 @@ Reproducible defects belong in the repository's **Issues** tab.
 
 ## License
 
-Copyright 2026 Integrity Project contributors. Licensed under the
-[Apache License 2.0](LICENSE).
+Copyright 2026 Integrity Project contributors. Integrity source is licensed under
+the [Apache License 2.0](LICENSE). See [LICENSES.md](LICENSES.md) for bundled
+third-party notices and external dependency boundaries.
 
 ## Runtime source reference
 
-[Installed runtime source variants](components/integrity-installed-runtime/README.md)
-retain the implementation of additional package, memory, synchronization and
-client hook variants. This code-only reference is separate from the
-main package contract and does not activate or certify a deployment.
+[The canonical source layout](components/integrity-installed-runtime/README.md)
+replaces former copied kernel trees with one maintained implementation per
+namespace. Historical version matrices remain reference metadata, not active
+package versions or evidence of a deployment.

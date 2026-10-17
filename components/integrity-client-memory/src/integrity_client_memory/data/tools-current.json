@@ -1,0 +1,880 @@
+{
+  "id": 1,
+  "jsonrpc": "2.0",
+  "result": {
+    "tools": [
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Explicit recall from the admitted canonical Seed snapshot. scope=current uses the owning hook's frozen configured project; HOME/PROD select labels across projects; cross (default) keeps legacy access. Labels grant no authority or security isolation.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "include_legacy": {
+              "type": "boolean"
+            },
+            "limit": {
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "query": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            },
+            "scope": {
+              "enum": [
+                "current",
+                "cross",
+                "HOME",
+                "PROD",
+                "UNCLASSIFIED"
+              ]
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "query"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_seed_recall"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Read historical Seed evidence from the server-bound snapshot; do not infer task lifecycle from raw pages. Exact duplicates are denied.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "after_id": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "page_size": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "snapshot_event_id": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "type": "object"
+        },
+        "name": "integrity_read_events"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        },
+        "description": "Append one immutable client task, thought, or concept. Echo the context_admission_id returned for the current owner intent; missing, stale or mismatched bindings are denied before prepare, witness, native, ledger or append side effects, while the current binding enters the signed v2 decision and one-use Ledger grant.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "authority_decision": {
+              "type": "object"
+            },
+            "context_admission_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "details": {
+              "type": "object"
+            },
+            "event_uid": {
+              "pattern": "^client:[A-Za-z0-9][A-Za-z0-9._:-]{7,154}$",
+              "type": "string"
+            },
+            "kind": {
+              "enum": [
+                "concept",
+                "task",
+                "thought"
+              ]
+            },
+            "summary": {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            "tags": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 20,
+              "type": "array"
+            }
+          },
+          "required": [
+            "event_uid",
+            "kind",
+            "summary",
+            "context_admission_id"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_append_event"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        },
+        "description": "Register one machine/thread/turn and prompt digest in the canonical Turn Memory coverage ledger before semantic work begins.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "intent_id": {
+              "pattern": "^intent:[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "machine_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "prompt_sha256": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "thread_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "turn_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "required": [
+            "machine_id",
+            "thread_id",
+            "turn_id",
+            "prompt_sha256"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_turn_memory_open"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        },
+        "description": "Create exactly one signed terminal receipt. Supply events only when outcome=events; supply no_event_reason only when outcome=no-event. The server rejects missing or mixed alternatives.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "events": {
+              "items": {
+                "additionalProperties": false,
+                "properties": {
+                  "event_id": {
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "event_uid": {
+                    "type": "string"
+                  },
+                  "request_sha256": {
+                    "pattern": "^[a-f0-9]{64}$",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "event_uid",
+                  "event_id",
+                  "request_sha256"
+                ],
+                "type": "object"
+              },
+              "maxItems": 32,
+              "minItems": 1,
+              "type": "array"
+            },
+            "no_event_reason": {
+              "enum": [
+                "no-durable-state-change",
+                "read-only",
+                "repetition",
+                "social-response",
+                "user-cancelled"
+              ]
+            },
+            "outcome": {
+              "enum": [
+                "events",
+                "no-event"
+              ]
+            },
+            "registration_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "registration_id",
+            "outcome"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_turn_memory_close"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        },
+        "description": "Record signed coverage debt when a registered turn reaches an observer boundary without a terminal receipt; never classifies no-event.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "registration_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "stage": {
+              "enum": [
+                "stop",
+                "notify",
+                "reconciliation"
+              ]
+            }
+          },
+          "required": [
+            "registration_id",
+            "stage"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_turn_memory_gap"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Read bounded terminal and unresolved Turn Memory coverage for the canonical namespace.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "limit": {
+              "maximum": 500,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "machine_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "thread_id": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "name": "integrity_turn_memory_coverage"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Search the fixed separate Integrity Home in bounded pages. Supply exactly one of query (first page) or cursor (next page); the server rejects missing or mixed alternatives.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "cursor": {
+              "maxLength": 80,
+              "minLength": 8,
+              "type": "string"
+            },
+            "page_size": {
+              "maximum": 10,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "query": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "name": "integrity_home_search"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Fetch bounded Home evidence by opaque handle.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "maxLength": 80,
+              "minLength": 8,
+              "type": "string"
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_home_fetch"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        },
+        "description": "Preferred per-owner-intent hot path: invoke exactly once per owner intent/turn; each valid call rotates the isolated logical context inside the existing stdio transport, then adaptively selects a byte-bounded context capsule for the exact intent while retaining the complete immutable Seed/Mind projection inside the session for Guardian custody and append admission. Omit limit for adaptive mode; explicit limit is fixed/full compatibility only.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "not": {
+            "required": [
+              "limit",
+              "budget"
+            ]
+          },
+          "properties": {
+            "budget": {
+              "additionalProperties": false,
+              "properties": {
+                "max_candidates": {
+                  "maximum": 50,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "max_context_bytes": {
+                  "maximum": 262144,
+                  "minimum": 8192,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "intent": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            },
+            "limit": {
+              "description": "Deprecated fixed/full compatibility path; omit for adaptive selection.",
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "intent"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_context_admission"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        },
+        "description": "Preferred full-prompt hot path. Resolve the exact current owner prompt from the opaque one-use turn_ref staged by the owning hook; never copy, truncate, summarize, or reconstruct the prompt in tool arguments. Omit limit for adaptive selection.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "not": {
+            "required": [
+              "limit",
+              "budget"
+            ]
+          },
+          "properties": {
+            "budget": {
+              "additionalProperties": false,
+              "properties": {
+                "max_candidates": {
+                  "maximum": 50,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "max_context_bytes": {
+                  "maximum": 262144,
+                  "minimum": 8192,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "limit": {
+              "description": "Deprecated fixed/full compatibility path; omit for adaptive selection.",
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "turn_ref": {
+              "pattern": "^turnref:[A-Za-z0-9_-]{43}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "turn_ref"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_context_admission_current_turn"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Mandatory first admission step: read the closed LTS capability/source contract.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object"
+        },
+        "name": "integrity_memory_capabilities"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "After capabilities, freeze the server-side Seed cursor for the current isolated logical context.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {},
+          "type": "object"
+        },
+        "name": "integrity_seed_snapshot"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Mandatory third admission step: project the complete Action Log Mind over the frozen Seed snapshot, retain it internally, and return an adaptive digest-bound context capsule. Explicit limit selects the fixed/full compatibility path.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "not": {
+            "required": [
+              "limit",
+              "budget"
+            ]
+          },
+          "properties": {
+            "budget": {
+              "additionalProperties": false,
+              "properties": {
+                "max_candidates": {
+                  "maximum": 50,
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                "max_context_bytes": {
+                  "maximum": 262144,
+                  "minimum": 8192,
+                  "type": "integer"
+                }
+              },
+              "type": "object"
+            },
+            "intent": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            },
+            "limit": {
+              "description": "Deprecated fixed/full compatibility path; omit for adaptive selection.",
+              "maximum": 50,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "intent"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_mind_graph"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": false
+        },
+        "description": "Mandatory fourth admission step: persist the exact Mind receipt in the signed Guardian Ledger, checkpoint it, project Atlas, compile Connectome and return a verified authority-free Synapse route.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "mind_receipt_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "mind_receipt_id"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_architecture_admission"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Read canonical snapshot-bound task lifecycle. Every receipt has all status counts; default returns work/review cards, view=failed returns only failed cards, and complete bodies are deliberately unavailable.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "after_task_id": {
+              "maxLength": 256,
+              "type": "string"
+            },
+            "limit": {
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "view": {
+              "enum": [
+                "work_queue_review",
+                "failed"
+              ]
+            }
+          },
+          "required": [
+            "snapshot_id"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_seed_tasks"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Resolve one exact event_uid across the complete immutable Seed snapshot. Returns a deterministic found/not-found receipt and never performs a write.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "event_uid": {
+              "maxLength": 256,
+              "minLength": 1,
+              "type": "string"
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "event_uid"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_seed_event_uid"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Explain typed canonical Seed links with independent direct-link receipt. Supply exactly one of event_id or selection_seed; the server rejects missing or mixed alternatives.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "event_id": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "include_contextual": {
+              "type": "boolean"
+            },
+            "limit": {
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "selection_seed": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "snapshot_id"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_seed_connections"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Optionally resolve one canonical Seed entity into a bounded, provenance-bound article with definition, whereabouts, typed links, claim freshness, activity and same-snapshot task lifecycle. Never grants route or production authority.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "activity_limit": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "discovery_limit": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "max_context_bytes": {
+              "maximum": 262144,
+              "minimum": 8192,
+              "type": "integer"
+            },
+            "reference": {
+              "maxLength": 4096,
+              "minLength": 1,
+              "type": "string"
+            },
+            "relationship_limit": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "task_limit": {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "reference"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_memory_entity_brief"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Return the remaining suffix of one owner-configured, digest-bound read-only runbook path after exact session snapshot and Memory Link Graph admission. Empty configuration is BLOCKED and never grants execution or production authority.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "maxLength": 512,
+              "minLength": 1,
+              "type": "string"
+            },
+            "last_hop": {
+              "maxLength": 512,
+              "minLength": 1,
+              "type": "string"
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "goal",
+            "last_hop"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_memory_ttt_autofill"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Optionally page through bounded Memory Link Graph curation debt. Findings are unadmitted suggestions, never auto-applied canonical writes.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "cursor": {
+              "maxLength": 4096,
+              "type": "string"
+            },
+            "kinds": {
+              "items": {
+                "enum": [
+                  "artifact",
+                  "component",
+                  "concept",
+                  "decision",
+                  "event",
+                  "evidence",
+                  "location",
+                  "release",
+                  "subsystem",
+                  "system",
+                  "task",
+                  "term"
+                ]
+              },
+              "maxItems": 13,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "limit": {
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "max_context_bytes": {
+              "maximum": 262144,
+              "minimum": 8192,
+              "type": "integer"
+            },
+            "snapshot_id": {
+              "pattern": "^sha256:[a-f0-9]{64}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "snapshot_id"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_memory_link_audit"
+      },
+      {
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        },
+        "description": "Cold-replay a recorded Seed selection and receipt without reroll.",
+        "inputSchema": {
+          "additionalProperties": false,
+          "properties": {
+            "expected_event_id": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "expected_explanation_digest": {
+              "type": "string"
+            },
+            "expected_receipt_id": {
+              "type": "string"
+            },
+            "include_contextual": {
+              "type": "boolean"
+            },
+            "limit": {
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "selection_seed": {
+              "pattern": "^[a-f0-9]{64}$",
+              "type": "string"
+            },
+            "snapshot_id": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "snapshot_id",
+            "selection_seed",
+            "expected_event_id",
+            "expected_explanation_digest",
+            "expected_receipt_id"
+          ],
+          "type": "object"
+        },
+        "name": "integrity_seed_replay"
+      }
+    ]
+  }
+}

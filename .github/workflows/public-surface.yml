@@ -11,7 +11,14 @@ permissions:
 
 jobs:
   verify:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,22 +27,42 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install declared Linux containment prerequisite
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes bubblewrap
       - name: Verify manifest closure and privacy boundary
         run: python .github/scripts/public_surface_check.py --root .
-      - name: Build and install the public wheel
+      - name: Verify component versions and canonical source layout
         run: |
-          python -m pip wheel . --no-deps --wheel-dir dist
-          python -m pip install "pytest>=8.2,<10" dist/integrity_guardian-*.whl
+          python -m pip install "build>=1.2,<2" "packaging>=24,<27" "pytest>=8.2,<10"
+          python .github/scripts/component_catalog.py --root .
+          python components/integrity-installed-runtime/verify_sources.py
+          python -B components/integrity-seed/verify_public_surface.py
+      - name: Build and install all public distributions
+        run: |
+          python .github/scripts/build_components.py --root . --output "$RUNNER_TEMP/integrity-dist"
+          python .github/scripts/verify_wheels.py --root . --wheels "$RUNNER_TEMP/integrity-dist"
+          python .github/scripts/install_components.py --wheels "$RUNNER_TEMP/integrity-dist" --venv "$RUNNER_TEMP/integrity-check" --github-path "$GITHUB_PATH"
       - name: Verify installed public profile
         run: |
           guardian version --all
           guardian capabilities
           guardian lts-contracts
+          python -c "from integrity_adapter_sdk import require_guardian; print(require_guardian())"
       - name: Run the public functional suite
         env:
           PYTHONDONTWRITEBYTECODE: "1"
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
         run: python -B -m pytest -q -p no:cacheprovider
+      - name: Run component boundary and interoperability tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -B -m pytest -q -p no:cacheprovider --import-mode=importlib components/*/tests
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify the shipped UI models
+        working-directory: components/integrity-space
+        run: npm test

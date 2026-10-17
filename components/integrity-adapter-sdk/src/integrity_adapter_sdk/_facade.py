@@ -22,7 +22,7 @@ from types import MappingProxyType, ModuleType
 from typing import Any
 
 EXPECTED_GUARDIAN_DISTRIBUTION = "integrity-guardian"
-EXPECTED_GUARDIAN_VERSION = "6.0.0"
+EXPECTED_GUARDIAN_VERSION = "6.1.0"
 GUARDIAN_ORIGIN_MANIFEST_PROTOCOL = "integrity-adapter-sdk/guardian-origin-manifest/v1"
 GUARDIAN_PACKAGE_ROOT = "integrity_guardian"
 _MAX_GUARDIAN_FILE_BYTES = 8 * 1024 * 1024

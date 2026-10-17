@@ -1,11 +1,11 @@
 {
   "name": "integrity-seed",
-  "version": "0.1.13",
+  "version": "0.1.14",
   "description": "Catalogs workspace memory and events into bounded, source-linked continuity for Codex agents.",
   "author": {
     "name": "Integrity Project"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "keywords": [
     "codex",
     "agents",

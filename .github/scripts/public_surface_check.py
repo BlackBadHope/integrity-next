@@ -105,6 +105,23 @@ PATTERNS = {
     "action_log_anchor": re.compile(r"(?i)\bAction Log\s*#\d+\b"),
 }
 
+# Mandatory upstream license text is kept verbatim. These exceptions cover only
+# exact public attribution URLs in one independently reviewed, byte-bound file;
+# they do not permit owner history, credentials or a new URL in that file.
+LEGAL_NOTICE_URLS = {
+    "components/integrity-space/THIRD-PARTY-NOTICES.txt": (
+        "8dc98d01bfa625765ef9bbbcd863cd7d7b870cc080057ba11480af070f3d7c8f",
+        frozenset("https:" + "//" + target for target in (
+            "creativecommons.org/licenses/by/4.0/legalcode",
+            "github.com/garycourt/uri-js/" + "commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae",
+            "sindresorhus.com",
+            "www.cloudflare.com/",
+            "www.ietf.org/",
+            "www.sitepen.com/",
+        )),
+    ),
+}
+
 
 def sha256_bytes(value: bytes) -> str:
     return hashlib.sha256(value).hexdigest()
@@ -186,8 +203,13 @@ def line_number(value: str, offset: int) -> int:
 
 def scan_text(relative: str, value: str, private_literals: tuple[str, ...] = ()) -> list[dict[str, object]]:
     findings: list[dict[str, object]] = []
+    legal = LEGAL_NOTICE_URLS.get(relative)
+    legal_urls = (legal[1] if legal and sha256_bytes(value.encode("utf-8")) == legal[0]
+                  else frozenset())
     for label, pattern in PATTERNS.items():
         for match in pattern.finditer(value):
+            if label == "private_history_url" and match.group(0) in legal_urls:
+                continue
             findings.append(
                 {"path": relative, "line": line_number(value, match.start()), "marker": label}
             )
@@ -225,8 +247,12 @@ def scan_text(relative: str, value: str, private_literals: tuple[str, ...] = ())
                 }
             )
     for match in URL.finditer(value):
+        if match.group(0) in legal_urls:
+            continue
         if match.group(0) == "http://www.w3.org/2000/svg":
             continue  # Exact public XML namespace; no host-wide exception.
+        if match.group(0) == "https://*.example.com":
+            continue  # Reserved-domain CSP documentation in the bundled MCP SDK.
         try:
             parsed = urllib.parse.urlsplit(match.group(0))
             safe_host = url_host_safe(parsed.hostname)

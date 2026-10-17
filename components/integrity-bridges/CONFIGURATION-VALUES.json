@@ -1,0 +1,133 @@
+{
+  "delegation_source_thread_id": {
+    "kind": "identity",
+    "used_by": [
+      "bridges/hub/delegation_transport.py",
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py",
+      "bridges/hub/integrity_delegation_prepare_mcp.py"
+    ]
+  },
+  "delegation_target_thread_id": {
+    "kind": "identity",
+    "used_by": [
+      "bridges/hub/delegation_transport.py"
+    ]
+  },
+  "pin_9e26652d89d8": {
+    "kind": "pin",
+    "used_by": [
+      "bridges/hub/delegation_transport.py:18"
+    ]
+  },
+  "pin_d03d5e208f04": {
+    "kind": "pin",
+    "used_by": [
+      "bridges/hub/delegation_transport.py:21"
+    ]
+  },
+  "source_owner_uid": {
+    "kind": "uid",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py"
+    ]
+  },
+  "binding_target": {
+    "kind": "identity",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:26"
+    ]
+  },
+  "binding_source_host": {
+    "kind": "identity",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:28",
+      "bridges/hub/integrity_delegation_prepare_mcp.py:26"
+    ]
+  },
+  "binding_source_room": {
+    "kind": "identity",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:29",
+      "bridges/hub/integrity_delegation_prepare_mcp.py:27"
+    ]
+  },
+  "pin_da5fa25612d5": {
+    "kind": "pin",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:31"
+    ]
+  },
+  "path_863c29bb9a6e": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:20"
+    ]
+  },
+  "path_421d7209bec4": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:21"
+    ]
+  },
+  "path_6655dd9c8e44": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:22"
+    ]
+  },
+  "path_006aa8b9ced8": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:25"
+    ]
+  },
+  "path_92fad53f3db0": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_linux_mcp.py:30"
+    ]
+  },
+  "pin_f223e53008dd": {
+    "kind": "pin",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_mcp.py:29"
+    ]
+  },
+  "path_dd2435d503a6": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_mcp.py:20"
+    ]
+  },
+  "path_5164c4d20152": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_mcp.py:21"
+    ]
+  },
+  "path_04d9ee0e8d07": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_mcp.py:25"
+    ]
+  },
+  "path_70ff966bc499": {
+    "kind": "path",
+    "used_by": [
+      "bridges/hub/integrity_delegation_prepare_mcp.py:28"
+    ]
+  },
+  "command_b734f1f83ce5": {
+    "kind": "command",
+    "used_by": [
+      "bridges/hub/unified_mcp.py:59",
+      "bridges/private-memory/unified_mcp.py:59"
+    ]
+  },
+  "command_7f5a55cf3f88": {
+    "kind": "command",
+    "used_by": [
+      "bridges/private-memory/host_link.py:21"
+    ]
+  }
+}

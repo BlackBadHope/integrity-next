@@ -1,0 +1,80 @@
+[
+  {
+    "path": "src/integrity_bridges/resources/hub/delegation_transport.py",
+    "source": "bridges/hub/delegation_transport.py",
+    "source_sha256": "5617650244695ff3dbe539b33281c30c15018d7acf0de6261655793c9d4417a6",
+    "sha256": "fa6b6344a6113ba7d8737f71c5d53632ae8dab4c6b4b891746bb3347329994ed"
+  },
+  {
+    "path": "src/integrity_bridges/resources/hub/host_hub.py",
+    "source": "bridges/hub/host_hub.py",
+    "source_sha256": "56f30c96b6a236777fa3cb1f9d9acf02db89646e147ab69d1b63040be64d1d93",
+    "sha256": "da4f9a3e6deb00c23ad048846602b7f27acabed7c33042a6e3bdfecfe6e1d4cc"
+  },
+  {
+    "path": "src/integrity_bridges/resources/hub/host_node.py",
+    "source": "bridges/hub/host_node.py",
+    "source_sha256": "e33ea3e625783a9f7a82556ca1479a92b88cb427f5a39c4dc15b9a673620ecf8",
+    "sha256": "3d1694d4933c442f35c2b5373733dc05a4e07de35cabe457cb5d1e61b2b06065"
+  },
+  {
+    "path": "src/integrity_bridges/resources/hub/integrity_delegation_prepare_linux_mcp.py",
+    "source": "bridges/hub/integrity_delegation_prepare_linux_mcp.py",
+    "source_sha256": "35f7360f93283f3ceea5ab1bc8578612222c9f565dd356174e0bb6cd2fc5e5e9",
+    "sha256": "007807a9b9c52d9860c05c2fcfc0de6263f5a5a872b18a38769cae95f2c5f6f0"
+  },
+  {
+    "path": "src/integrity_bridges/resources/hub/integrity_delegation_prepare_mcp.py",
+    "source": "bridges/hub/integrity_delegation_prepare_mcp.py",
+    "source_sha256": "b8aee1adb715615840871f9033e3eb43002154281587213680a27435e7ef7498",
+    "sha256": "b7a12d3c91d3da9494f816552a5a754fd797e80fa3ad04e7cd353fa1ba0d42b2"
+  },
+  {
+    "path": "src/integrity_bridges/resources/hub/unified_mcp.py",
+    "source": "bridges/hub/unified_mcp.py",
+    "source_sha256": "33c18e3a3f1c021d338eda79330507171198980bb259f1b5aaa607c0fce9300a",
+    "sha256": "0c5eebe6a94ae827b0a0256ef5d31d6492a7211a7604bf0bea05e0542038263c"
+  },
+  {
+    "path": "src/integrity_bridges/resources/hub/unix_ws_stdio.py",
+    "source": "bridges/hub/unix_ws_stdio.py",
+    "source_sha256": "3ff13927501706ca5fe6495b280e7c0d53e3d4520a93d145443f28661c509b40",
+    "sha256": "610be65bfd89dd2d579086f833411877f3fec3c9ad9ecd067ee31c87ef293f34"
+  },
+  {
+    "path": "src/integrity_bridges/resources/private-memory/claude_owner.py",
+    "source": "bridges/private-memory/claude_owner.py",
+    "source_sha256": "c648abef410ecb29dc1b089afed4933e3e321ac455d6c846e468c4127704e4d3",
+    "sha256": "ae50a77aa4ce1ffc396c08284a0d96e36993f200dea1c9fa97a9cee56e55dab8"
+  },
+  {
+    "path": "src/integrity_bridges/resources/private-memory/host_hub.py",
+    "source": "bridges/private-memory/host_hub.py",
+    "source_sha256": "99a6ef53ebb5e24a8fb82668b091394b86dd53f8b4005f3f1e346c7ae5ffd900",
+    "sha256": "0ecaeaf89bd0dd1098f850a650a5f94b89b6ebd33732fab3c6fdc4cca42d4daa"
+  },
+  {
+    "path": "src/integrity_bridges/resources/private-memory/host_link.py",
+    "source": "bridges/private-memory/host_link.py",
+    "source_sha256": "59980ab33fca9fb5f6fece50eabd878bd71091830a11ebfb3ba2a8d1d7b22fb7",
+    "sha256": "8b7aaf0e315f06ac6687245f9c554e8e5b7136b864c88bfe006cd15399d6796b"
+  },
+  {
+    "path": "src/integrity_bridges/resources/private-memory/host_node.py",
+    "source": "bridges/private-memory/host_node.py",
+    "source_sha256": "efb3c927a63396c7dc78c85c99e22281589008c9f810e9520b847bb52c58bf3f",
+    "sha256": "0f932e8bfb96014e134c22b6839e48d6536cfb4a88320cd8c0c11544c24e73ea"
+  },
+  {
+    "path": "src/integrity_bridges/resources/private-memory/ping_pong.py",
+    "source": "bridges/private-memory/ping_pong.py",
+    "source_sha256": "25abf180a8d5b287affdf7181e399b0e91da090f7d013e44ea07b1dc82f536dc",
+    "sha256": "78b23fb8ca75228170117d03efcdf44c715058ee30d273a2141185671a99694c"
+  },
+  {
+    "path": "src/integrity_bridges/resources/private-memory/unified_mcp.py",
+    "source": "bridges/private-memory/unified_mcp.py",
+    "source_sha256": "46fda787069e903ac91b78a1a918de56868a30894ebfa0d939ba90cc892790f4",
+    "sha256": "5b4403404c842a6fdbba841ef7db79026cea1d3aafc0da8531bab8a22a3755bd"
+  }
+]

@@ -17,7 +17,3 @@ plugins/integrity-seed/runtime/mind_hook.py
 plugins/integrity-seed/skills/integrity-seed/SKILL.md
 plugins/integrity-seed/skills/integrity-seed/references/claim-boundary.md
 plugins/integrity-seed/skills/integrity-seed/scripts/integrity_seed.py
-plugins/integrity-seed/tests/test_hook_fail_open.py
-plugins/integrity-seed/tests/test_integrity_seed.py
-plugins/integrity-seed/tests/test_runtime_security.py
-plugins/integrity-seed/tests/test_windows_token_acl.py

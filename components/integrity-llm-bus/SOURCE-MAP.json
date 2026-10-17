@@ -1,0 +1,86 @@
+[
+  {
+    "path": "src/integrity_llm_bus/resources/agent_registry.py",
+    "source": "coordination/llm-bus/agent_registry.py",
+    "source_sha256": "6c88e4a256a3e46081415a1fccf4274c0fb51ad390fe12c9bcc8c999a22a564b",
+    "sha256": "63a704f761d20c0aab3399c07c75d55d3b00894cbfaed59940f322fb591df6f8"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/bus.py",
+    "source": "coordination/llm-bus/bus.py",
+    "source_sha256": "1af0851cd73777532933d418454ee7354ac371ed20efb5332ca5a6b0f8c45785",
+    "sha256": "8ccfc363d7b8a262b22c1da31c6c25dbc8f9a21652cedc13f676a9d0e0763a44"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/bus_claude_hook.py",
+    "source": "coordination/llm-bus/bus_claude_hook.py",
+    "source_sha256": "a9525def7abb64bb686d72f7a3c832deb15208bc96708a24d86c30688dd30b4e",
+    "sha256": "7bb48af3b61f431f0f27d2ebbf039f4631439496a30c7f5e38be1bfc9c448ff0"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/bus_health.py",
+    "source": "coordination/llm-bus/bus_health.py",
+    "source_sha256": "14147222221d95c92f1f328faa198696877303e6734c9e70b35ce9662a0982c0",
+    "sha256": "dd71122730689cec5865ec7fad888cb647be89e4b82643fdaf83b1e7b9ad35d5"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/bus_integrity_adapter.py",
+    "source": "coordination/llm-bus/bus_integrity_adapter.py",
+    "source_sha256": "37077d74c037dea07ec6592f93240f47960e39c4a8112cd1e4b8d2d186b13ff1",
+    "sha256": "432747497c29ed970ec1d1149b9eb6482663676d81e1a2a76868bb011d3a5785"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/codex_outbox.py",
+    "source": "coordination/llm-bus/codex_outbox.py",
+    "source_sha256": "c0e7c64e4d3b07d77180ddac68b8df4a546892a4a5b3d75445597d4364bde3fe",
+    "sha256": "8a788f370a237f1d34e36d34e79ba65495cb932478913ba0dad92342042adbe6"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/codex_steer.py",
+    "source": "coordination/llm-bus/codex_steer.py",
+    "source_sha256": "f5d52870492646b79a41ffdeb07a657d3552826e31773fa078c0462bf08df25a",
+    "sha256": "c88c379a1c3b3b22781ba1cc7266df93c3b5f1bbed7233bd5ce835dbf28a5fce"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/codex_steer_hook.py",
+    "source": "coordination/llm-bus/codex_steer_hook.py",
+    "source_sha256": "794c07e641f4ae1a19dbfbb6db0b9a7ec10957469389c9769255f727805deec8",
+    "sha256": "c22c8fe3ec2ed4a691b11fb86145afdbb994ed333ff2d3ce4809c3133ba114b3"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/file_bridge.py",
+    "source": "coordination/llm-bus/file_bridge.py",
+    "source_sha256": "71979a05b6a92b59e9d93969c17a1ea48e1231715b017a15df35f5d1f6b745d1",
+    "sha256": "7982c0e6569611b04d5338ba58e40369ef424b6f2f4d2d52b8993cf8eb549efa"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/grok_cache.py",
+    "source": "coordination/llm-bus/grok_cache.py",
+    "source_sha256": "2fb56b1af538be431bd34c3b9500e9318dc31ef78cef2824e29c057fee890803",
+    "sha256": "f0599ba87a967f32ca8ca55c523f3b802c66b3365a0c0306cb8e27de4262087e"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/launcher.py",
+    "source": "coordination/llm-bus/launcher.py",
+    "source_sha256": "c68f55b168aed9c71d487e305dbce5fbeb62ba54f189ac5e3346ae61151b4848",
+    "sha256": "a4c2a810c49ba71a078a5280f83d5e44d6da89345d8d422337054062a5755830"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/local_cli.py",
+    "source": "coordination/llm-bus/local_cli.py",
+    "source_sha256": "a6779eab83b9475b93cc48baa3cc8ed4fe8464d9ce3102de75e1b0798891014e",
+    "sha256": "5b91b4e41595adecc2cfa143cbd2fa9d121075c2bdd973d7427e3a41c7b4d6bb"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/relay.py",
+    "source": "coordination/llm-bus/relay.py",
+    "source_sha256": "e3711264d80e80c1941fa2ef3e8fa731adbdb69ed73e317dd7fdb4f8249924dd",
+    "sha256": "13d095cd0f30dfae463001ea3d878c698e7ecb249a373eeec6fcc6064b8160a2"
+  },
+  {
+    "path": "src/integrity_llm_bus/resources/win_acl.py",
+    "source": "coordination/llm-bus/win_acl.py",
+    "source_sha256": "b547ecb2c0817722ca4cf9a17ae1394c0ef183ff8dd191f78e1bdd3357e94633",
+    "sha256": "fd322a86dd14c07c07e2ff068c1ffdc563b18331804bb9e42b6d3277f1b5828e"
+  }
+]

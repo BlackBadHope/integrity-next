@@ -3,3 +3,7 @@ Copyright 2026 Integrity Project contributors
 
 This product includes software developed by Integrity Project contributors.
 Third-party Python dependencies retain their respective licenses.
+
+Optional Integrity distributions retain their component LICENSE and NOTICE files.
+The bundled Space UI and Execution Bridge supporting code retain their original
+third-party notices. See LICENSES.md for the notice locations.

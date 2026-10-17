@@ -1,0 +1,20 @@
+[
+  {
+    "path": "src/integrity_action_log/resources/codex_action_log.py",
+    "source": "action-log/codex_action_log.py",
+    "source_sha256": "97a4583a7599295631edfe54b6810af8837d4d7d40e120bc20e71bd7bf8939b9",
+    "sha256": "0cfd04f01d062a6364749a14a14bf4fa80ba419425d9b02a95fc46b754ba3373"
+  },
+  {
+    "path": "src/integrity_action_log/resources/mind_retrieval.py",
+    "source": "action-log/mind_retrieval.py",
+    "source_sha256": "7a8bd35fce0418488dcef1ef4ecf8aba36e571bf0d4eb16238066c68f03bc100",
+    "sha256": "4df6c4cb1f8537b3d6d4be88d4941ef96f5c42030314ab3aef5f17f7e7ae9075"
+  },
+  {
+    "path": "src/integrity_action_log/read_session.py",
+    "source": "action-log/read_session.py",
+    "source_sha256": "f905e4c899ac3d3def37b3935e63846d442cdc5277bea7045365507a482c6bda",
+    "sha256": "a540529448b3833ca74bff2cd9fd6cb4ed50b928d07955ce697061d534b4814f"
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "bus": {
+    "path": "resources/bus.py"
+  },
+  "bus_claude_hook": {
+    "path": "resources/bus_claude_hook.py"
+  },
+  "bus_integrity_adapter": {
+    "path": "resources/bus_integrity_adapter.py"
+  },
+  "codex_steer_hook": {
+    "path": "resources/codex_steer_hook.py"
+  },
+  "file_bridge": {
+    "path": "resources/file_bridge.py"
+  },
+  "launcher": {
+    "path": "resources/launcher.py"
+  },
+  "local_cli": {
+    "path": "resources/local_cli.py"
+  },
+  "relay": {
+    "path": "resources/relay.py"
+  }
+}

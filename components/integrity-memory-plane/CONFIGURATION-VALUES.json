@@ -1,0 +1,715 @@
+{
+  "path_97373521e3ad": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/action_log_full_backup.py:45",
+      "memory-plane/action_log_tail_archive.py:24",
+      "memory-plane/p1_segment_verify.py:27",
+      "memory-plane/p1_segment_witness.py:27",
+      "memory-plane/restore_drill.py:48"
+    ]
+  },
+  "path_c59340f58c1d": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/action_log_full_backup.py:46"
+    ]
+  },
+  "path_4e44c119019c": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/action_log_full_backup.py:48",
+      "memory-plane/action_log_tail_archive.py:27",
+      "memory-plane/offhost_windows_replica.py:37",
+      "memory-plane/restore_drill.py:46"
+    ]
+  },
+  "path_29857010143f": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/action_log_full_backup.py:49",
+      "memory-plane/action_log_tail_archive.py:28",
+      "memory-plane/offhost_windows_replica.py:42",
+      "memory-plane/restore_drill.py:50",
+      "memory-plane/seed_run_retention.py:28"
+    ]
+  },
+  "path_efcbe20e087d": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/action_log_full_backup.py:56",
+      "memory-plane/capacity_guard.py:150"
+    ]
+  },
+  "command_7f5a55cf3f88": {
+    "kind": "command",
+    "used_by": [
+      "memory-plane/action_log_full_backup.py:221",
+      "memory-plane/action_log_full_backup.py:223",
+      "memory-plane/capacity_guard.py:309"
+    ]
+  },
+  "path_f99c29cce43c": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/action_log_tail_archive.py:26",
+      "memory-plane/offhost_windows_replica.py:38",
+      "memory-plane/restore_drill.py:47"
+    ]
+  },
+  "path_6c566dbbf48b": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/build_seed_delta_release.py:143",
+      "memory-plane/p2_attachment_capacity.py:347",
+      "memory-plane/p2_attachment_enforcement.py:464",
+      "memory-plane/p2_attachment_ingress.py:273"
+    ]
+  },
+  "endpoint_d70a81d63709": {
+    "kind": "endpoint",
+    "used_by": [
+      "memory-plane/capacity_guard.py:147"
+    ]
+  },
+  "path_0dcb1df88675": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/capacity_guard.py:117",
+      "memory-plane/p2_billion_capacity.py:230",
+      "memory-plane/p2_compact_billion_gate.py:1529"
+    ]
+  },
+  "path_e93e1c8def2a": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/capacity_guard.py:119"
+    ]
+  },
+  "path_aaa8eeb896a5": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/capacity_guard.py:121"
+    ]
+  },
+  "path_fde3788c3a5e": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/capacity_guard.py:133"
+    ]
+  },
+  "path_6ded83bac4a7": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/capacity_guard.py:134"
+    ]
+  },
+  "endpoint_f5891d8ae959": {
+    "kind": "endpoint",
+    "used_by": [
+      "memory-plane/offhost_windows_replica.py:45",
+      "memory-plane/p2_billion_capacity.py:231",
+      "memory-plane/p2_client_canary_bootstrap.py:109",
+      "memory-plane/p2_compact_billion_gate.py:1462",
+      "memory-plane/p2_compact_offhost_dispatch.py:132",
+      "memory-plane/p2_offhost_dispatch.py:91",
+      "memory-plane/p2_offhost_restore_drill.py:185"
+    ]
+  },
+  "path_83bf3efd1843": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/offhost_windows_replica.py:51"
+    ]
+  },
+  "path_5164c4d20152": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/offhost_windows_replica.py:54",
+      "memory-plane/offhost_windows_replica.py:55",
+      "memory-plane/p2_compact_offhost_dispatch.py:141",
+      "memory-plane/p2_compact_offhost_dispatch.py:142",
+      "memory-plane/p2_offhost_dispatch.py:100",
+      "memory-plane/p2_offhost_dispatch.py:101",
+      "memory-plane/p2_offhost_restore_drill.py:193",
+      "memory-plane/p2_offhost_restore_drill.py:194"
+    ]
+  },
+  "path_bacb81ae4ea5": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/offhost_windows_replica.py:41"
+    ]
+  },
+  "endpoint_4fc20356fbf3": {
+    "kind": "endpoint",
+    "used_by": [
+      "memory-plane/p1_golden_eval.py:27"
+    ]
+  },
+  "path_def59ca62c26": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p1_golden_eval.py:24",
+      "memory-plane/p2_dual_golden_eval.py:140"
+    ]
+  },
+  "path_1ba0c7fb8a53": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p1_golden_eval.py:25",
+      "memory-plane/p1_projection.py:32",
+      "memory-plane/p1_retrieval.py:26",
+      "memory-plane/p1_transition_gate.py:91",
+      "memory-plane/p2_compact_dual_golden_eval.py:100",
+      "memory-plane/p2_dual_golden_eval.py:141",
+      "memory-plane/p2_dual_read.py:95",
+      "memory-plane/p2_hot_cold_dual.py:213"
+    ]
+  },
+  "path_5350cd670b63": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p1_golden_eval.py:26",
+      "memory-plane/p1_projection.py:31",
+      "memory-plane/p1_retrieval.py:27",
+      "memory-plane/p1_segment_verify.py:26",
+      "memory-plane/p1_segment_witness.py:28",
+      "memory-plane/p1_transition_gate.py:90",
+      "memory-plane/p2_compact_dual_golden_eval.py:101",
+      "memory-plane/p2_dual_golden_eval.py:142",
+      "memory-plane/p2_dual_read.py:96",
+      "memory-plane/p2_hot_cold_dual.py:214"
+    ]
+  },
+  "path_efaf193b4c54": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p1_golden_eval.py:28",
+      "memory-plane/p1_transition_gate.py:93"
+    ]
+  },
+  "path_1a518d87181f": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p1_projection.py:33"
+    ]
+  },
+  "seed_namespace": {
+    "kind": "namespace",
+    "used_by": [
+      "memory-plane/p1_segment_witness.py:30",
+      "memory-plane/p2_attachment_capacity.py:120",
+      "memory-plane/p2_edge_relay.py:50",
+      "memory-plane/p2_fault_lab.py:270",
+      "memory-plane/p2_projection.py:28",
+      "memory-plane/p2_quarantine_bus_message.py:24"
+    ]
+  },
+  "path_4f0ff2fe92a7": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p1_transition_gate.py:92"
+    ]
+  },
+  "path_34cb67a175d2": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p1_transition_gate.py:94"
+    ]
+  },
+  "path_edfc7d2638fe": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_attachment_capacity.py:351"
+    ]
+  },
+  "endpoint_1940bdd68a0a": {
+    "kind": "endpoint",
+    "used_by": [
+      "memory-plane/p2_attachment_credentials.py:103",
+      "memory-plane/p2_attachment_enforcement.py:462",
+      "memory-plane/p2_attachment_ingress.py:272",
+      "memory-plane/p2_billion_capacity.py:229",
+      "memory-plane/p2_capacity_supplement.py:589",
+      "memory-plane/p2_compact_billion_gate.py:1461",
+      "memory-plane/p2_compact_index.py:816",
+      "memory-plane/p2_compact_retrieval.py:177",
+      "memory-plane/p2_compact_runtime.py:94",
+      "memory-plane/p2_dlq.py:127",
+      "memory-plane/p2_dual_read.py:82",
+      "memory-plane/p2_dual_reader_bootstrap.py:75",
+      "memory-plane/p2_dual_reader_verify.py:36",
+      "memory-plane/p2_edge_relay.py:902",
+      "memory-plane/p2_gap_guard.py:241",
+      "memory-plane/p2_guard_bootstrap.py:102",
+      "memory-plane/p2_guard_verify.py:38",
+      "memory-plane/p2_hot_cold_dual.py:152",
+      "memory-plane/p2_least_privilege_verify.py:156",
+      "memory-plane/p2_offhost_bootstrap.py:59",
+      "memory-plane/p2_offhost_export.py:172",
+      "memory-plane/p2_offhost_verify.py:26",
+      "memory-plane/p2_projection.py:363",
+      "memory-plane/p2_projection_bootstrap.py:146",
+      "memory-plane/p2_retrieval.py:285",
+      "memory-plane/p2_s3_bootstrap.py:160",
+      "memory-plane/p2_scoped_credentials.py:201"
+    ]
+  },
+  "path_2c1826989a4a": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_attachment_credentials.py:102",
+      "memory-plane/p2_dual_reader_bootstrap.py:73",
+      "memory-plane/p2_guard_bootstrap.py:100",
+      "memory-plane/p2_offhost_bootstrap.py:58",
+      "memory-plane/p2_projection_bootstrap.py:144",
+      "memory-plane/p2_scoped_credentials.py:199"
+    ]
+  },
+  "path_e2bbc4323d03": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_attachment_credentials.py:107"
+    ]
+  },
+  "endpoint_72b0e86b156f": {
+    "kind": "endpoint",
+    "used_by": [
+      "memory-plane/p2_attachment_enforcement.py:463",
+      "memory-plane/p2_edge_relay.py:888",
+      "memory-plane/seed_delta_sync.py:532"
+    ]
+  },
+  "path_731bbb2bf224": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_attachment_enforcement.py:465",
+      "memory-plane/p2_capacity_supplement.py:591"
+    ]
+  },
+  "path_5ff234173927": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_attachment_enforcement.py:471"
+    ]
+  },
+  "path_a0681b2e17fc": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_attachment_enforcement.py:476"
+    ]
+  },
+  "path_21965e89ee01": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_attachment_ingress.py:277"
+    ]
+  },
+  "path_3002b53ff3e8": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_billion_capacity.py:237"
+    ]
+  },
+  "endpoint_37a28bd31428": {
+    "kind": "endpoint",
+    "used_by": [
+      "memory-plane/p2_capacity_supplement.py:590",
+      "memory-plane/p2_gap_guard.py:242",
+      "memory-plane/p2_nats_capacity_reconcile.py:1078",
+      "memory-plane/p2_regional_gate.py:206"
+    ]
+  },
+  "path_a2a38cd4c8c1": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_capacity_supplement.py:592",
+      "memory-plane/p2_nats_capacity_reconcile.py:1082"
+    ]
+  },
+  "path_93cad4be9012": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_capacity_supplement.py:601"
+    ]
+  },
+  "pin_80e56ca384f1": {
+    "kind": "pin",
+    "used_by": [
+      "memory-plane/p2_client_canary_bootstrap.py:21"
+    ]
+  },
+  "endpoint_7ac78b8f0bd5": {
+    "kind": "endpoint",
+    "used_by": [
+      "memory-plane/p2_client_canary_bootstrap.py:22"
+    ]
+  },
+  "path_221cb698ccb4": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_client_canary_bootstrap.py:125"
+    ]
+  },
+  "path_815eab4c81f8": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_billion_gate.py:1468"
+    ]
+  },
+  "path_ad1bcafc7441": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_billion_gate.py:1469"
+    ]
+  },
+  "path_f18d26ced31b": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_billion_gate.py:1470"
+    ]
+  },
+  "path_a7db3f473263": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_billion_gate.py:1480"
+    ]
+  },
+  "path_02ebb2142aa5": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_billion_gate.py:1481",
+      "memory-plane/p2_compact_offhost_dispatch.py:131"
+    ]
+  },
+  "path_921dd9207d14": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_billion_gate.py:1482",
+      "memory-plane/p2_compact_dual_golden_eval.py:107"
+    ]
+  },
+  "path_4eca12dbe6bf": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_dual_golden_eval.py:99"
+    ]
+  },
+  "path_2bc0a1dc9ccf": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_dual_golden_eval.py:102",
+      "memory-plane/p2_compact_offhost_export.py:119",
+      "memory-plane/p2_hot_cold_dual.py:215"
+    ]
+  },
+  "path_545661f97ab7": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_dual_golden_eval.py:103",
+      "memory-plane/p2_compact_offhost_export.py:120",
+      "memory-plane/p2_hot_cold_dual.py:216"
+    ]
+  },
+  "path_f5a9a1727fe8": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_dual_golden_eval.py:106",
+      "memory-plane/p2_compact_index.py:814",
+      "memory-plane/p2_compact_retrieval.py:174",
+      "memory-plane/p2_compact_runtime.py:92",
+      "memory-plane/p2_dual_golden_eval.py:145",
+      "memory-plane/p2_dual_read.py:99",
+      "memory-plane/p2_edge_relay.py:891",
+      "memory-plane/p2_gap_guard.py:239",
+      "memory-plane/p2_hot_cold_dual.py:219",
+      "memory-plane/p2_offhost_export.py:170",
+      "memory-plane/p2_projection.py:359",
+      "memory-plane/p2_retrieval.py:283"
+    ]
+  },
+  "path_16db7d64e654": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_offhost_dispatch.py:138"
+    ]
+  },
+  "path_842e373e982a": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_offhost_dispatch.py:128",
+      "memory-plane/p2_compact_offhost_export.py:122"
+    ]
+  },
+  "path_0b6cc4f54ed3": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_offhost_dispatch.py:129",
+      "memory-plane/p2_compact_offhost_export.py:121"
+    ]
+  },
+  "path_0142cbe1b8f7": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_compact_offhost_dispatch.py:130"
+    ]
+  },
+  "path_b476072d92ff": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_dlq.py:128",
+      "memory-plane/p2_gap_guard.py:243"
+    ]
+  },
+  "path_77511ec53d36": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_dual_golden_eval.py:146",
+      "memory-plane/p2_dual_read.py:100",
+      "memory-plane/p2_hot_cold_dual.py:220"
+    ]
+  },
+  "path_f4132be049c7": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_dual_reader_bootstrap.py:72"
+    ]
+  },
+  "path_13faba5553a5": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_edge_relay.py:39",
+      "memory-plane/p2_gap_guard.py:26",
+      "memory-plane/p2_offhost_export.py:27"
+    ]
+  },
+  "path_9b0a73c6e071": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_edge_relay.py:890",
+      "memory-plane/p2_least_privilege_verify.py:154"
+    ]
+  },
+  "path_fbea448fef79": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_edge_relay.py:892"
+    ]
+  },
+  "path_6e77c79d3982": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_edge_relay.py:893",
+      "memory-plane/p2_quarantine_bus_message.py:73"
+    ]
+  },
+  "path_9f38c0c82693": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_edge_relay.py:894"
+    ]
+  },
+  "path_f4763e7ac785": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_fault_lab.py:318"
+    ]
+  },
+  "path_0bec209d2ff3": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_fault_lab.py:319"
+    ]
+  },
+  "path_06873fbc0d01": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_fault_lab.py:306"
+    ]
+  },
+  "path_d114ac7a68e9": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_fault_lab.py:307"
+    ]
+  },
+  "path_3278d0a97107": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_guard_bootstrap.py:99"
+    ]
+  },
+  "path_038fa4ee2256": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_nats_bootstrap.py:328"
+    ]
+  },
+  "path_170508bd7c92": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_bootstrap.py:57"
+    ]
+  },
+  "path_bed84c86fbe2": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_dispatch.py:97"
+    ]
+  },
+  "path_a3114bdbc720": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_dispatch.py:87",
+      "memory-plane/p2_offhost_export.py:174"
+    ]
+  },
+  "path_806caa795eda": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_dispatch.py:88",
+      "memory-plane/p2_offhost_export.py:173"
+    ]
+  },
+  "path_d91576ab5b73": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_dispatch.py:89",
+      "memory-plane/p2_offhost_restore_drill.py:183",
+      "memory-plane/p2_regional_gate.py:208"
+    ]
+  },
+  "path_aaa8aa64c11b": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_dispatch.py:90"
+    ]
+  },
+  "path_be535046aac6": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_export.py:175"
+    ]
+  },
+  "path_c0ab81a72ace": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_offhost_restore_drill.py:184"
+    ]
+  },
+  "path_723c1b74bd25": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_projection.py:364"
+    ]
+  },
+  "path_a64a3373ff59": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_projection_bootstrap.py:143"
+    ]
+  },
+  "path_1cc8a565c593": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_regional_canary_verify.py:199"
+    ]
+  },
+  "path_c1a60a74857f": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_regional_gate.py:209"
+    ]
+  },
+  "path_51a568597975": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_regional_gate.py:210"
+    ]
+  },
+  "path_0feb606df08b": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_regional_gate.py:211"
+    ]
+  },
+  "path_0530856699a0": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_s3_bootstrap.py:164"
+    ]
+  },
+  "path_b758804704c1": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_scoped_credentials.py:198"
+    ]
+  },
+  "path_3cdcb28c5cbe": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/p2_shadow_bootstrap.py:43"
+    ]
+  },
+  "path_bbd715b15233": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/restore_drill.py:49"
+    ]
+  },
+  "path_3a1c616db98a": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/restore_drill.py:51"
+    ]
+  },
+  "path_fa0fad3a672c": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/restore_drill.py:52"
+    ]
+  },
+  "path_a08e852b28cf": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/restore_drill.py:53"
+    ]
+  },
+  "path_dbe216bb3340": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/seed_run_retention.py:25"
+    ]
+  },
+  "path_0307d9cac2d9": {
+    "kind": "path",
+    "used_by": [
+      "memory-plane/seed_run_retention.py:27"
+    ]
+  },
+  "pin_613e383a917d": {
+    "kind": "pin",
+    "used_by": [
+      "memory-plane/verify_seed_delta_release.py:78"
+    ]
+  },
+  "pin_87943255e51f": {
+    "kind": "pin",
+    "used_by": [
+      "memory-plane/verify_seed_delta_release.py:81"
+    ]
+  },
+  "pin_5361b8daf0cb": {
+    "kind": "pin",
+    "used_by": [
+      "memory-plane/verify_seed_delta_release.py:84"
+    ]
+  },
+  "pin_1309109372e4": {
+    "kind": "pin",
+    "used_by": [
+      "memory-plane/verify_seed_delta_release.py:87"
+    ]
+  }
+}

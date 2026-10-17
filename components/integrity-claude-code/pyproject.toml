@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling>=1.32.4,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "integrity-claude-code"
+version = "0.1.0rc2"
+description = "Optional SDK-mediated Windows Claude Code executor with content-free audit records"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+dependencies = ["integrity-adapter-sdk==2.0.0rc2"]
+
+[project.scripts]
+integrity-claude-code = "integrity_claude_code.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/integrity_claude_code"]

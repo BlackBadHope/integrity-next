@@ -528,6 +528,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--evidence-root", type=legacy.Path)
     parser.add_argument("--evidence-source-prefix", type=legacy.Path)
     parser.add_argument("--architecture-root", type=legacy.Path)
+    parser.add_argument(
+        "--native-intent-creation-mode", choices=("enabled", "rollback-read-close"),
+        default="enabled",
+    )
+    parser.add_argument(
+        "--bootstrap-native-intent-store", action="store_true",
+        help="Explicitly initialize a separate native lifecycle store; never migrate legacy history.",
+    )
     parser.add_argument("--snapshot-root", type=legacy.Path)
     parser.add_argument("--architecture-source-key", type=legacy.Path)
     parser.add_argument("--architecture-checkpoint-key", type=legacy.Path)

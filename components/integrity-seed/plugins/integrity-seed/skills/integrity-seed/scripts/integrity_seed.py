@@ -29,7 +29,7 @@ from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_ope
 PLUGIN_ROOT = Path(__file__).resolve().parents[3]
 RUNTIME_SOURCE = PLUGIN_ROOT / "runtime" / "action_log.py"
 PROVIDER_GUARD_SOURCE = PLUGIN_ROOT / "hooks" / "canonical-provider-guard.py"
-VERSION = "0.1.3"
+VERSION = "0.1.4"
 RUNTIME_SCHEMA = "integrity.seed.runtime.v1"
 STATE_ROOT_SCHEMA = "integrity.seed.state-root.v1"
 STATE_MARKER_NAME = ".integrity-seed-root.json"
@@ -936,6 +936,25 @@ def _terminate_spawned_process(process: subprocess.Popen[Any]) -> None:
             pass
 
 
+def _runtime_python_executable() -> str:
+    # Windows venv python.exe is a redirector: its Popen PID and image are not
+    # the child runtime PID/image. This service uses only the standard library,
+    # so invoke this interpreter's exact base executable directly and keep all
+    # receipt/process identity checks unchanged.
+    selected = sys.executable
+    if os.name == "nt" and sys.prefix != sys.base_prefix:
+        selected = getattr(sys, "_base_executable", None)
+        if not isinstance(selected, str) or not selected:
+            raise RuntimeError("Windows venv base Python executable is unavailable")
+    candidate = Path(selected)
+    if not candidate.is_absolute():
+        raise RuntimeError("Integrity runtime Python executable is not absolute")
+    candidate = candidate.resolve(strict=True)
+    if not candidate.is_file():
+        raise RuntimeError("Integrity runtime Python executable is not a regular file")
+    return str(candidate)
+
+
 def start_runtime(resolved: dict[str, Any], token: str) -> dict[str, Any]:
     if not RUNTIME_SOURCE.is_file():
         raise RuntimeError(f"Integrity runtime is missing: {RUNTIME_SOURCE}")
@@ -992,7 +1011,7 @@ def start_runtime(resolved: dict[str, Any], token: str) -> dict[str, Any]:
     try:
         try:
             process = subprocess.Popen(
-                [sys.executable, "-I", str(RUNTIME_SOURCE)],
+                [_runtime_python_executable(), "-I", "-B", str(RUNTIME_SOURCE)],
                 cwd=str(resolved["home"]),
                 env=env,
                 stdin=subprocess.DEVNULL,

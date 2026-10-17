@@ -8,6 +8,12 @@ authority scope through MCP arguments.
 
 from __future__ import annotations
 
+from .context_delivery import evaluate_context_delivery
+from .canonical_read_context import build_read_context, selectors as read_context_selectors
+from .mind_retrieval import derive_prompt_topic
+from dataclasses import replace as _replace_budget
+from .integrity_topic_context import validate_hint
+
 import argparse
 import atexit
 import datetime as dt
@@ -40,6 +46,8 @@ try:
 except ImportError:  # The production Memory LTS service is Linux-only.
     _fcntl = None
 
+from .read_session import validate as validate_read_session, request_proof as read_session_proof
+
 from .action_log_reader import (
     ActionLogReaderAuthError,
     ActionLogReaderTransportError,
@@ -48,6 +56,9 @@ from .action_log_reader import (
     require_action_log_reader_token,
 )
 from .authority_scope import memory_authority_contract
+from .event_recovery import validate_recovery
+from .project_scope import ProjectScopeError, validated_metadata
+from .historical_archive import ArchivePolicy
 
 try:
     import syslog as _syslog
@@ -100,9 +111,9 @@ from .signing import public_key_fingerprint
 from .turn_memory import (
     NO_EVENT_REASONS,
     TurnMemoryError,
-    TurnMemoryStore,
     namespace_fingerprint,
 )
+from .turn_memory_profiles import VersionedTurnMemoryService as TurnMemoryStore
 
 BRIDGE_PROTOCOL = "integrity-client-memory-mcp/v3"
 MIND_PROJECTION_PROTOCOL = "integrity.action-log.mind-projection/v1"
@@ -161,6 +172,11 @@ RELEASE_ACTION_WITNESS_RE = re.compile(
 SUPPORTED_MCP_VERSIONS = {"2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25"}
 DEFAULT_MCP_VERSION = "2025-06-18"
 CURRENT_TOOL_CONTRACT_PROFILE = "current"
+ARCHIVE_TOOL_CONTRACT_PROFILE = "historical-archive-v1"
+PRE_NATIVE_INTENT_TOOL_CONTRACT_PROFILE = "pre-native-intent"
+PRE_PROJECT_SCOPE_TOOL_CONTRACT_PROFILE = "pre-project-scope"
+PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE = "pre-pending-witness"
+PROJECT_SCOPE_PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE = "project-scope-pre-pending-witness"
 PRE_TTT_TOOL_CONTRACT_PROFILE = "pre-ttt"
 PRE_V4_TOOL_CONTRACT_PROFILE = "pre-v4"
 LEGACY_TURN_BROKER_TOOL_CONTRACT_PROFILE = "turn-broker-1.2.1"
@@ -180,6 +196,10 @@ CONTEXT_ADMISSION_REPLAY_RESERVE_METHOD = (
     "integrity/context_admission_replay_reserve"
 )
 CONTEXT_ADMISSION_REPLAY_ACK_METHOD = "integrity/context_admission_replay_ack"
+CONTEXT_REATTACH_CAPABILITY = "integrityClientContextReattach"
+CONTEXT_REATTACH_PROTOCOL = "integrity-client/context-reattach/v1"
+CONTEXT_REATTACH_METHOD = "integrity/context_reattach"
+CONTEXT_REATTACH_RETIRE_METHOD = "integrity/context_reattach_retire"
 CONTEXT_ADMISSION_REPLAY_RESERVATION_PROTOCOL = (
     "integrity-client/context-admission-replay-reservation/v1"
 )
@@ -199,6 +219,12 @@ MAX_CONTEXT_ADMISSION_REPLAY_RESERVATION_BYTES = 1_024
 # current tools() surface changed; retire it only after installed broker state
 # has been independently migrated and observed.
 RETAINED_BROKER_TOOL_SURFACE_SHA256 = {
+    # Deployed owner-host 1.4.1 broker: 21 tools with TTT, before pending witness.
+    # Keep this exact schema/annotation digest for upstream-first upgrade and
+    # client-first rollback; broker version alone does not identify a catalog.
+    "sha256:e947fae9d9c8eb1751212d3530622d0d19589d6c211ca3cb733fd52c520b2372",
+    # Feature-only successor of that installed catalog; no witness upgrade.
+    "sha256:ea7b2748a61581a5ee9f7a7e548c84f3bf6503d47a28ad7c4d2e525393fd15a9",
     "sha256:4fa06b9e25e652fd47deacef85136a08a477d2e6782b4de432c8831a98dc61e7",
     "sha256:6d0b9a3a5c02aa9257ac05423ee279eb6ab539ced593ede338ab0315d9999914",
     "sha256:e092f9005b35f611cd5469fe18ada48351f63e172cf318e0418c397c3b201c7e",
@@ -229,8 +255,48 @@ WRITE_PLANE_RECOVERY_INITIAL_COOLDOWN_SECONDS = 5.0
 WRITE_PLANE_RECOVERY_MAX_COOLDOWN_SECONDS = 300.0
 
 
+def _validated_attachment_context(value, binding, authenticated):
+    """Search-only evidence from the authenticated own broker; no new authority."""
+    if value is None:
+        return None
+    keys = {"protocol", "prompt_sha256", "turn_ref_digest", "attachment_sha256",
+            "attachment_path_sha256", "topic", "authority", "thread_sha256"}
+    if not authenticated or binding is None or not isinstance(value, dict) or set(value) != keys:
+        raise McpFacadeError("attachment search context requires the authenticated own prompt")
+    if (value["protocol"] != "integrity-attachment-search-context/v1"
+            or value["authority"] != "none"
+            or value["prompt_sha256"] != binding["prompt_sha256"]
+            or value["turn_ref_digest"] != binding["turn_ref_digest"]
+            or any(not isinstance(value[key], str) or re.fullmatch(r"[a-f0-9]{64}", value[key]) is None
+                   for key in ("prompt_sha256", "attachment_sha256", "attachment_path_sha256", "thread_sha256"))
+            or not isinstance(value["topic"], str) or not value["topic"].strip()
+            or len(value["topic"]) > 200 or any(ord(char) < 32 for char in value["topic"])):
+        raise McpFacadeError("attachment search context binding is invalid")
+    return dict(value)
+
+
 class McpFacadeError(RuntimeError):
     """One bounded facade denial."""
+
+
+class AppendPlaneUnavailableError(McpFacadeError):
+    """Confirmed pre-dispatch denial, distinct from an unknown sent append."""
+
+    def __init__(self, component_status: dict[str, str]) -> None:
+        super().__init__("Uroboros append action boundary is unavailable")
+        self.component_status = {k: v for k, v in component_status.items()
+                                 if k in {"architecture", "action_witness", "security_admission",
+                                          "turn_memory", "native_session", "outcome"}
+                                 and v in {"ready", "unavailable"}}
+
+
+class ContextBindingUnavailableError(McpFacadeError):
+    """A lost logical binding, before any canonical append action."""
+
+    def __init__(self, message: str, *, generation: int, loss_reason: str) -> None:
+        super().__init__(message)
+        self.generation = generation
+        self.loss_reason = loss_reason
 
 
 class InputValidationError(McpFacadeError):
@@ -779,7 +845,9 @@ def _validated_turn_binding(value: Any, prompt: str) -> dict[str, Any]:
         "truncation",
         "generation",
     }
-    if not isinstance(value, dict) or set(value) != expected_keys:
+    optional_keys = {"project_scope", "project_scope_sha256"}
+    if (not isinstance(value, dict)
+            or set(value) not in (expected_keys, expected_keys | optional_keys)):
         raise InputValidationError(
             "turn envelope binding is invalid",
             reason_code="turn_envelope_invalid",
@@ -803,6 +871,17 @@ def _validated_turn_binding(value: Any, prompt: str) -> dict[str, Any]:
             "turn envelope binding does not match the exact full prompt",
             reason_code="turn_envelope_mismatch",
         )
+    if "project_scope" in value:
+        try:
+            scope = validated_metadata(value["project_scope"])
+        except ProjectScopeError as exc:
+            raise InputValidationError(
+                "turn project scope is invalid", reason_code="turn_envelope_invalid"
+            ) from exc
+        if value["project_scope_sha256"] != _sha256_hex(scope):
+            raise InputValidationError(
+                "turn project scope digest does not match", reason_code="turn_envelope_mismatch"
+            )
     return dict(value)
 
 
@@ -842,6 +921,11 @@ class ActionLogClient:
         self._session_snapshot_event_id: int | None = None
         self._session_snapshot_event_count: int | None = None
         self._seen_read_request_ids: set[str] = set()
+        self._project_scope: dict[str, Any] | None = None
+
+    def bind_project_scope(self, scope: dict[str, Any] | None) -> None:
+        """Bind only the owning hook's authenticated, frozen optional metadata."""
+        self._project_scope = validated_metadata(scope) if scope is not None else None
 
     def reset_context(self) -> None:
         """Forget every snapshot-bound value before admitting a new owner intent."""
@@ -849,6 +933,7 @@ class ActionLogClient:
         self._session_snapshot_event_id = None
         self._session_snapshot_event_count = None
         self._seen_read_request_ids.clear()
+        self._project_scope = None
 
     def bind_snapshot(self, snapshot_event_id: int, event_count: int) -> None:
         """Bind all event reads in this stdio session to one server snapshot."""
@@ -874,7 +959,7 @@ class ActionLogClient:
 
         if self._session_snapshot_event_id is None or self._session_snapshot_event_count is None:
             raise McpFacadeError("integrity_seed_snapshot admission is required before Mind Graph")
-        _reject_unknown(arguments, {"intent", "limit", "_integrity_exact_prompt"})
+        _reject_unknown(arguments, {"intent", "limit", "_integrity_exact_prompt", "_integrity_retrieval_topic", "_integrity_read_session"})
         intent = arguments.get("intent")
         if not isinstance(intent, str) or not intent.strip():
             raise McpFacadeError("intent must be non-empty")
@@ -882,13 +967,21 @@ class ActionLogClient:
         if not isinstance(exact_prompt, bool):
             raise McpFacadeError("exact prompt selector is invalid")
         segments = _full_prompt_segments(intent)
+        retrieval_topic = arguments.get("_integrity_retrieval_topic")
+        auxiliary_fields = {"retrieval_policy": "bounded-topic-prompt-terms-v1"}
+        if retrieval_topic is not None:
+            auxiliary_fields["retrieval_topic"] = retrieval_topic
         limit = _integer(arguments, "limit", 20, 1, 50)
-        if not exact_prompt and len(intent) <= 4_096 and len(segments) == 1:
+        session = arguments.get("_integrity_read_session")
+        if session is not None:
+            session = validate_read_session(session, prompt_sha256=hashlib.sha256(intent.encode()).hexdigest())
+        if session is None and not exact_prompt and len(intent) <= 4_096 and len(segments) == 1:
             response = self.request(
                 "GET",
                 "/api/mind",
                 query={
                     "q": intent.strip(),
+                    **auxiliary_fields,
                     "compact": "true",
                     "limit": str(limit),
                     "snapshot_event_id": str(self._session_snapshot_event_id),
@@ -900,11 +993,20 @@ class ActionLogClient:
                 "/api/mind",
                 payload={
                     "q_segments": segments,
+                    **auxiliary_fields,
                     "compact": True,
                     "limit": limit,
                     "snapshot_event_id": self._session_snapshot_event_id,
+                    **({"session_id": session["session_id"], "read_session": {
+                        "declaration": session, "snapshot_event_id": self._session_snapshot_event_id,
+                        "proof": read_session_proof(session, snapshot_event_id=self._session_snapshot_event_id,
+                            token=require_action_log_reader_token(self._auth_token))}} if session is not None else {}),
                 },
             )
+        if session is not None:
+            validate_read_session(session)
+            if response.get("reader_session") != session or response.get("capsule", {}).get("door") != "admitted":
+                raise McpFacadeError("Action Log did not admit the exact reader session")
         try:
             return admit_mind_companion(
                 response,
@@ -1036,6 +1138,10 @@ class ActionLogClient:
         details = arguments.get("details", {})
         if not isinstance(details, dict) or RESERVED_DETAILS_KEY in details:
             raise McpFacadeError("details must be an object without the reserved marker")
+        try:
+            validate_recovery(event_uid, details)
+        except ValueError as exc:
+            raise McpFacadeError(str(exc)) from exc
         if len(canonical_json(details)) > MAX_DETAILS_BYTES:
             raise McpFacadeError("details exceed the facade limit")
         raw_tags = arguments.get("tags", [])
@@ -1067,6 +1173,10 @@ class ActionLogClient:
             "immutable_event_uid": event_uid,
             "request_sha256": request_sha256,
         }
+        if self._project_scope is not None:
+            stored_details[RESERVED_DETAILS_KEY]["project_scope"] = validated_metadata(
+                self._project_scope
+            )
         if route_context is not None:
             legacy_fields = {
                 "architecture_admission_id",
@@ -1599,6 +1709,7 @@ class MemorySynapseMcp:
         native_trust: NativeTrustStore | None = None,
         native_device_id: str | None = None,
         turn_memory: TurnMemoryStore | None = None,
+        archive_policy: ArchivePolicy | None = None,
         memory_ttt_path_catalog: RunbookPathCatalog | None = None,
         write_plane_reinitializer: Callable[[], WritePlaneRuntime] | None = None,
         write_plane_recovery_initial_cooldown_seconds: float = (
@@ -1646,6 +1757,9 @@ class MemorySynapseMcp:
         self.native_trust = native_trust
         self.native_device_id = native_device_id
         self.turn_memory = turn_memory
+        if archive_policy is not None and not isinstance(archive_policy, ArchivePolicy):
+            raise McpFacadeError("archive policy must be an explicit immutable ArchivePolicy")
+        self.archive_policy = archive_policy
         configured_ttt = memory_ttt_path_catalog or RunbookPathCatalog()
         configured_ttt.validate()
         self._memory_ttt_path_documents = tuple(
@@ -1695,16 +1809,21 @@ class MemorySynapseMcp:
         self._session_capabilities: dict[str, Any] | None = None
         self._session_snapshot: dict[str, Any] | None = None
         self._session_mind: dict[str, Any] | None = None
+        self._session_project_scope: dict[str, Any] | None = None
         self._session_architecture: dict[str, Any] | None = None
         self._session_memory_link_graph: MemoryLinkGraph | None = None
         self._session_memory_ttt_path_catalog: RunbookPathCatalog | None = None
         self._native_session_lease: dict[str, Any] | None = None
         self._context_generation = 0
         self._context_admission_id: str | None = None
+        self._context_loss_reason = "not-admitted"
         self._tool_contract_profile = CURRENT_TOOL_CONTRACT_PROFILE
         self._session_write_plane_status = dict(self.write_plane_status)
         self._context_admission_replay_enabled = False
         self._context_admission_replay_control_enabled = False
+        self._context_reattach_enabled = False
+        self._context_reattach_control_only = False
+        self._context_reattach_read_only = False
         self._broker_tool_surface_authenticated = False
         architecture_root = getattr(architecture, "root", None)
         self._context_admission_replay_root = (
@@ -2380,6 +2499,7 @@ class MemorySynapseMcp:
                     continue
                 record_match = record_pattern.fullmatch(name)
                 catalog_match = catalog_pattern.fullmatch(name)
+                reservation_match = reservation_pattern.fullmatch(name)
                 if record_match is not None:
                     details = details_for(name)
                     if max(0.0, now - details.st_mtime) >= CONTEXT_ADMISSION_REPLAY_TTL_SECONDS:
@@ -2502,10 +2622,49 @@ class MemorySynapseMcp:
                 0,
                 int(reservation["record_bytes"]) - record_consumed,
             )
-            total_bytes += max(
-                0,
-                int(reservation["catalog_bytes"]) - catalog_consumed,
-            )
+            catalog_budget = int(reservation["catalog_bytes"])
+            # COMMITTED freezes the catalog before any delivery acknowledgement.
+            # Accounting releases its unused growth allowance only. The record,
+            # catalog, reservation, UNKNOWN status and TTL remain byte-identical;
+            # the full 32MiB record allowance and all restore digest guards stay.
+            if (not self._replay_migrations and replay_hex in record_sizes
+                    and replay_hex in catalog_sizes
+                    and not temporary_record_sizes.get(replay_hex, 0)
+                    and not temporary_catalog_sizes.get(replay_hex, 0)):
+                try:
+                    record_name = replay_hex + ".json"
+                    original_details = details_for(record_name)
+                    descriptor = os.open(record_name, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0), dir_fd=root_descriptor)
+                    with os.fdopen(descriptor, "rb") as stream:
+                        before_identity = self._context_replay_record_identity(os.fstat(stream.fileno()))
+                        if before_identity != self._context_replay_record_identity(original_details):
+                            raise McpFacadeError("accounting replay record changed")
+                        encoded = stream.read(MAX_CONTEXT_ADMISSION_REPLAY_BYTES + 1)
+                        after_identity = self._context_replay_record_identity(os.fstat(stream.fileno()))
+                    if before_identity != after_identity or len(encoded) > MAX_CONTEXT_ADMISSION_REPLAY_BYTES:
+                        raise McpFacadeError("accounting replay record changed")
+                    observed = json.loads(encoded)
+                    request_digest = observed.get("request_digest") if isinstance(observed, dict) else None
+                    if not isinstance(request_digest, str) or re.fullmatch(r"sha256:[a-f0-9]{64}", request_digest) is None:
+                        raise McpFacadeError("accounting replay digest missing")
+                    record = self._load_context_replay("sha256:" + replay_hex, request_digest)
+                    binding = record.get("state", {}).get("frozen_catalog") if isinstance(record, dict) else None
+                    catalog_details = details_for(replay_hex + ".catalog.sqlite3")
+                    if (record == observed and record.get("phase") == "committed"
+                            and isinstance(binding, dict)
+                            and binding.get("protocol") == "integrity-client/context-admission-frozen-catalog/v1"
+                            and binding.get("name") == replay_hex + ".catalog.sqlite3"
+                            and isinstance(binding.get("sha256"), str)
+                            and re.fullmatch(r"sha256:[a-f0-9]{64}", binding["sha256"]) is not None
+                            and type(binding.get("bytes")) is int
+                            and 0 < binding["bytes"] == catalog_details.st_size == catalog_consumed <= catalog_budget
+                            and self._context_replay_record_identity(details_for(record_name)) == after_identity):
+                        catalog_budget = catalog_consumed
+                except (McpFacadeError, OSError, ValueError, TypeError, KeyError):
+                    # An incomplete, corrupt, racing or migrated subject retains
+                    # the original conservative reservation; no repair/renewal.
+                    pass
+            total_bytes += max(0, catalog_budget - catalog_consumed)
             if replay_hex not in record_sizes:
                 effective_record_count += 1
         return total_bytes, effective_record_count
@@ -2869,6 +3028,14 @@ class MemorySynapseMcp:
                     raise McpFacadeError(
                         "context admission replay acknowledgement digest mismatch"
                     )
+                if self._context_reattach_enabled:
+                    # Delivery is acknowledged once. Retain the exact committed
+                    # snapshot under the existing 24h / 128 records / 2GiB budget.
+                    # A resume never changes this marker or refreshes its TTL.
+                    if record.get("delivered_response_digest") != response_digest:
+                        retained = {**record, "delivered_response_digest": response_digest}
+                        self._store_context_replay(retained, expected_phase="committed")
+                    return True
             elif record is not None and record.get("phase") != "prepared":
                 raise McpFacadeError("context admission replay phase changed")
             record_name = self._context_replay_name(replay_id)
@@ -2892,6 +3059,172 @@ class MemorySynapseMcp:
                 if changed:
                     os.fsync(self._prepare_context_replay_custody())
         return True
+
+    def _reattach_delivered_context(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Resume retained reads only; never re-admit, sign, or replay a write."""
+        fields = {"replay_id", "request_digest", "response_digest", "context_admission_id",
+                  "snapshot_id", "prompt_binding", "logical_generation"}
+        if not self._context_reattach_enabled or set(arguments) != fields:
+            raise McpFacadeError("context reattach is not negotiated or arguments are invalid")
+        generation = arguments["logical_generation"]
+        if isinstance(generation, bool) or not isinstance(generation, int) or generation < 1:
+            raise McpFacadeError("context reattach logical generation is invalid")
+        for field in fields - {"prompt_binding", "logical_generation"}:
+            if not isinstance(arguments[field], str) or re.fullmatch(
+                r"sha256:[a-f0-9]{64}", arguments[field]
+            ) is None:
+                raise McpFacadeError("context reattach identity is invalid")
+        if not isinstance(arguments["prompt_binding"], dict):
+            raise McpFacadeError("context reattach prompt binding is invalid")
+        # An existing admitted context must never be silently replaced.
+        if self._session_snapshot is not None or self._context_admission_id is not None:
+            raise McpFacadeError("context reattach requires an empty logical context")
+        replay_id = arguments["replay_id"]
+        with self._context_replay_lock(replay_id, timeout_seconds=0.0):
+            record = self._load_context_replay(replay_id, arguments["request_digest"])
+            if record is None or record.get("phase") != "committed":
+                raise McpFacadeError("delivered context is not retained")
+            result = record["result"]
+            binding = result.get("prompt_binding")
+            actual_digest = _sha256(_tool_result(result))
+            snapshot = result.get("snapshot")
+            if (record.get("delivered_response_digest") != arguments["response_digest"]
+                    or actual_digest != arguments["response_digest"]
+                    or result.get("context_admission_id") != arguments["context_admission_id"]
+                    or not isinstance(snapshot, dict)
+                    or snapshot.get("snapshot_id") != arguments["snapshot_id"]
+                    or result.get("logical_generation") != generation
+                    or record.get("state", {}).get("logical_generation") != generation
+                    or binding != arguments["prompt_binding"]
+                    or not isinstance(binding, dict)
+                    or record.get("state", {}).get("frozen_catalog") is None):
+                raise McpFacadeError("delivered context reattach binding mismatch")
+            # Validate inventory/TTL before acquiring the retained catalog. Do
+            # not prune while holding this record's shard lock; expiry is a deny.
+            root = self._prepare_context_replay_custody()
+            info = os.stat(self._context_replay_name(replay_id), dir_fd=root,
+                           follow_symlinks=False)
+            if max(0.0, time.time() - info.st_mtime) >= CONTEXT_ADMISSION_REPLAY_TTL_SECONDS:
+                raise McpFacadeError("delivered context retention expired")
+            try:
+                self._restore_context_replay(record)
+            except Exception:
+                self._clear_intent_context(reason="context-reattach-failed")
+                self._deny_migrated_action_authority()
+                self._context_reattach_read_only = True
+                raise
+            self._deny_migrated_action_authority()
+            self._context_reattach_read_only = True
+            return {"protocol": CONTEXT_REATTACH_PROTOCOL, "restored": True,
+                    "context_admission_id": arguments["context_admission_id"],
+                    "snapshot_id": arguments["snapshot_id"], "prompt_binding": binding,
+                    "logical_generation": generation,
+                    "response_digest": actual_digest, "read_only": True,
+                    "canonical_writes": 0, "action_authority": False,
+                    "automatic_retry_allowed": False}
+
+    def _retire_delivered_context(self, arguments: dict[str, Any]) -> dict[str, Any]:
+        """Retire one private DELIVERED cache; canonical/lifecycle state is untouched.
+
+        The fixed-root client helper verifies the original private producer claim,
+        SAME owner, and genuine successor intent before exposing this control to
+        the broker. Public model tools never receive a retirement interface.
+        """
+        fields = {"replay_id", "request_digest", "response_digest", "context_admission_id",
+                  "snapshot_id", "prompt_binding", "logical_generation", "successor_prompt_binding"}
+        if (not self._context_reattach_enabled or not self._broker_tool_surface_authenticated
+                or not isinstance(arguments, dict) or set(arguments) != fields
+                or self._active_context_replay_id is not None):
+            raise McpFacadeError("delivered context retirement is not available")
+        generation = arguments["logical_generation"]
+        if isinstance(generation, bool) or not isinstance(generation, int) or generation < 1:
+            raise McpFacadeError("retirement logical generation is invalid")
+        for field in fields - {"prompt_binding", "logical_generation", "successor_prompt_binding"}:
+            if not isinstance(arguments[field], str) or re.fullmatch(r"sha256:[a-f0-9]{64}", arguments[field]) is None:
+                raise McpFacadeError("retirement identity is invalid")
+        binding = arguments["prompt_binding"]
+        successor = arguments["successor_prompt_binding"]
+        prompt_fields = {"protocol", "generation", "turn_ref_digest", "prompt_sha256",
+                         "prompt_bytes", "segment_count", "prompt_coverage", "truncation"}
+        if (not isinstance(binding, dict) or not isinstance(successor, dict)
+                or set(successor) not in (prompt_fields, prompt_fields | {"project_scope_sha256"})
+                or successor.get("protocol") != TURN_ENVELOPE_PROTOCOL
+                or successor.get("prompt_coverage") != "text-only" or successor.get("truncation") is not False):
+            raise McpFacadeError("retirement successor binding is invalid")
+        for field in ("generation", "prompt_bytes", "segment_count"):
+            if isinstance(successor[field], bool) or not isinstance(successor[field], int) or successor[field] < 1:
+                raise McpFacadeError("retirement successor counter is invalid")
+        for field in ("prompt_sha256", "project_scope_sha256"):
+            value = successor.get(field)
+            if (field in successor and
+                    (not isinstance(value, str) or re.fullmatch(r"[a-f0-9]{64}", value) is None)):
+                raise McpFacadeError("retirement successor digest is invalid")
+        if (not isinstance(successor["turn_ref_digest"], str)
+                or re.fullmatch(r"sha256:[a-f0-9]{64}", successor["turn_ref_digest"]) is None
+                or isinstance(binding.get("generation"), bool) or not isinstance(binding.get("generation"), int)
+                or successor["generation"] <= binding["generation"]
+                or successor["turn_ref_digest"] == binding.get("turn_ref_digest")):
+            raise McpFacadeError("retirement requires a distinct successor owner intent")
+        replay_id = arguments["replay_id"]
+        with self._context_replay_lock(replay_id, timeout_seconds=0.0):
+            record = self._load_context_replay(replay_id, arguments["request_digest"])
+            if record is None:
+                # The prior retirement may have succeeded before its successor
+                # admission failed. Observe only exact derived-file absence;
+                # this is not proof of original delivery or a canonical outcome.
+                if self._context_admission_id is not None or self._session_snapshot is not None:
+                    raise McpFacadeError("absent retirement cannot replace an active context")
+                with self._context_replay_maintenance_lock(timeout_seconds=0.0):
+                    self._context_replay_inventory(prune=False)
+                    root = self._prepare_context_replay_custody()
+                    for name in (self._context_replay_name(replay_id),
+                                 replay_id.split(":", 1)[1] + ".catalog.sqlite3",
+                                 self._context_replay_reservation_name(replay_id)):
+                        try:
+                            os.stat(name, dir_fd=root, follow_symlinks=False)
+                        except FileNotFoundError:
+                            continue
+                        raise McpFacadeError("retirement has partially retained derived evidence")
+                return {"protocol": CONTEXT_REATTACH_PROTOCOL, "retired": False,
+                        "retained": False, "retirement_status": "already-absent",
+                        "replay_id": replay_id, "scope": "derived-delivered-context-only",
+                        "canonical_writes": 0, "action_authority": False, "automatic_retry_allowed": False}
+            if record.get("phase") != "committed":
+                raise McpFacadeError("retirement requires a retained committed response")
+            result = record["result"]
+            snapshot = result.get("snapshot")
+            # critb fix 2-pre: a committed record whose delivery ACK was lost keeps
+            # delivered_response_digest=None; the exact recomputed digest below still binds it.
+            if (record.get("delivered_response_digest") not in (None, arguments["response_digest"])
+                    or _sha256(_tool_result(result)) != arguments["response_digest"]
+                    or result.get("context_admission_id") != arguments["context_admission_id"]
+                    or not isinstance(snapshot, dict) or snapshot.get("snapshot_id") != arguments["snapshot_id"]
+                    or result.get("prompt_binding") != binding
+                    or result.get("logical_generation") != generation
+                    or record.get("state", {}).get("logical_generation") != generation
+                    or record.get("state", {}).get("frozen_catalog") is None):
+                raise McpFacadeError("retirement delivered context binding mismatch")
+            if (self._context_admission_id is not None or self._session_snapshot is not None):
+                if (self._context_admission_id != arguments["context_admission_id"]
+                        or self._session_snapshot != snapshot or self._archive_prompt_binding != binding):
+                    raise McpFacadeError("retirement cannot replace another active context")
+            with self._context_replay_maintenance_lock(timeout_seconds=0.0):
+                self._context_replay_inventory(prune=False)
+                root = self._prepare_context_replay_custody()
+                # Only exact owned derived files; no glob/TTL pruning or journal cleanup.
+                for name in (self._context_replay_name(replay_id),
+                             replay_id.split(":", 1)[1] + ".catalog.sqlite3",
+                             self._context_replay_reservation_name(replay_id)):
+                    try:
+                        os.unlink(name, dir_fd=root)
+                    except FileNotFoundError:
+                        pass
+                os.fsync(root)
+            if self._context_admission_id == arguments["context_admission_id"]:
+                self._clear_intent_context(reason="owner-intent-superseded")
+        return {"protocol": CONTEXT_REATTACH_PROTOCOL, "retired": True,
+                "replay_id": replay_id, "scope": "derived-delivered-context-only",
+                "canonical_writes": 0, "action_authority": False, "automatic_retry_allowed": False}
 
     def _install_context_replay_catalog(
         self,
@@ -2952,6 +3285,10 @@ class MemorySynapseMcp:
             raise McpFacadeError("context admission replay is not committed")
         state = record["state"]
         result = record["result"]
+        if "reader_session" in result:
+            binding = result.get("prompt_binding", {})
+            validate_read_session(result["reader_session"], prompt_sha256=binding.get("prompt_sha256"),
+                                  turn_ref_digest=binding.get("turn_ref_digest"))
         self._clear_intent_context()
         generation = state.get("logical_generation")
         if isinstance(generation, bool) or not isinstance(generation, int) or generation < 1:
@@ -2975,10 +3312,20 @@ class MemorySynapseMcp:
             self._context_generation = generation
             raise McpFacadeError("context admission replay snapshot changed")
         self._session_mind = state.get("mind")
+        scope = state.get("project_scope")
+        public_binding = result.get("prompt_binding", {})
+        expected_scope_digest = public_binding.get("project_scope_sha256")
+        if scope is not None:
+            if _sha256_hex(validated_metadata(scope)) != expected_scope_digest:
+                raise McpFacadeError("context replay project scope digest changed")
+        elif expected_scope_digest is not None:
+            raise McpFacadeError("context replay project scope is missing")
+        self._bind_project_scope(scope)
         self._session_architecture = state.get("architecture")
         self._session_write_plane_status = dict(state.get("write_plane", {}))
         self._native_session_lease = state.get("native_session")
         self._context_admission_id = result.get("context_admission_id")
+        self._archive_prompt_binding = result.get("prompt_binding")
         migration = self._replay_migration(str(record["request_id"]))
         if migration is not None:
             self._deny_migrated_action_authority()
@@ -2989,6 +3336,8 @@ class MemorySynapseMcp:
 
     def _require_turn_memory(self) -> TurnMemoryStore:
         if self.turn_memory is None:
+            self._maybe_recover_write_plane(stage="pre-turn-memory-lifecycle")
+        if self.turn_memory is None:
             raise McpFacadeError("Turn Memory Receipt service is unavailable")
         return self.turn_memory
 
@@ -2997,21 +3346,22 @@ class MemorySynapseMcp:
         if name == "open":
             _reject_unknown(
                 arguments,
-                {"machine_id", "thread_id", "turn_id", "prompt_sha256"},
+                {"machine_id", "thread_id", "turn_id", "prompt_sha256", "intent_id"},
             )
             required = {"machine_id", "thread_id", "turn_id", "prompt_sha256"}
-            if set(arguments) != required:
+            if set(arguments) not in (required, required | {'intent_id'}):
                 raise McpFacadeError("turn registration requires one complete identity")
             result = store.open_turn(**arguments)
         elif name == "close":
             _reject_unknown(
                 arguments,
-                {"registration_id", "outcome", "events", "no_event_reason"},
+                {"registration_id", "outcome", "events", "no_event_reason", "recovery_binding"},
             )
             registration_id = arguments.get("registration_id")
             outcome = arguments.get("outcome")
             events = arguments.get("events")
             no_event_reason = arguments.get("no_event_reason")
+            recovery_binding = arguments.get("recovery_binding")
             if outcome == "events":
                 if no_event_reason is not None:
                     raise McpFacadeError("events outcome cannot include a no-event reason")
@@ -3021,6 +3371,8 @@ class MemorySynapseMcp:
                     raise McpFacadeError("events outcome requires event references")
                 if self.action_witness is None:
                     raise McpFacadeError("canonical event witness is unavailable")
+                if recovery_binding is not None:
+                    self._verify_recovery_seed_binding(recovery_binding, events)
                 verified: list[dict[str, Any]] = []
                 for item in events:
                     _reject_unknown(item, {"event_uid", "event_id", "request_sha256"})
@@ -3044,6 +3396,8 @@ class MemorySynapseMcp:
                     events=verified,
                 )
             elif outcome == "no-event":
+                if recovery_binding is not None:
+                    raise McpFacadeError("owning recovery binding requires witnessed events")
                 if events is not None or no_event_reason not in NO_EVENT_REASONS:
                     raise McpFacadeError("no-event outcome requires one closed reason")
                 result = store.close_turn(
@@ -3065,6 +3419,12 @@ class MemorySynapseMcp:
                 thread_id=arguments.get("thread_id"),
                 limit=_integer(arguments, "limit", 100, 1, 500),
             )
+        if name == 'coverage':
+            from .turn_curator import decorate_coverage, CuratorError
+            try:
+                result = decorate_coverage(self, result, arguments)
+            except CuratorError as error:
+                raise McpFacadeError(str(error)) from None
         self.audit(
             {
                 "protocol": BRIDGE_PROTOCOL + "/turn-memory-audit/v1",
@@ -3072,12 +3432,64 @@ class MemorySynapseMcp:
                 "observed_utc": _utc_now(),
                 "operation": name,
                 "arguments_digest": _sha256(arguments),
-                "outcome": "observed",
+                "outcome": "incomplete" if result.get('complete') is False else "observed",
+                "identity_profile": ('aggregate-v2' if name=='coverage' else
+                    ('native-intent-v1' if 'intent_id' in result.get('receipt',result.get('terminal_receipt',{})).get('identity',{}) else 'legacy-v1')),
                 "namespace_fingerprint": store.namespace,
                 "production_authority": False,
             }
         )
         return result
+
+    def _verify_recovery_seed_binding(
+        self, binding: object, events: list[dict[str, Any]]
+    ) -> None:
+        """Canonical join for the private owning-runtime historical handoff.
+
+        The broker's protected factory verifies the original Native input,
+        signed registration and consumed context/request checkpoint. This
+        boundary independently reads canonical Seed, rather than accepting
+        event marker fields from the client. The existing fresh Action Log
+        witness still runs after this check and before the terminal write.
+        """
+        if not isinstance(binding, dict) or set(binding) != {
+            "context_admission_id", "logical_generation"
+        }:
+            raise McpFacadeError("owning recovery binding shape is invalid")
+        context = binding["context_admission_id"]
+        generation = binding["logical_generation"]
+        if (
+            not isinstance(context, str)
+            or re.fullmatch(r"sha256:[a-f0-9]{64}", context) is None
+            or isinstance(generation, bool)
+            or not isinstance(generation, int)
+            or generation < 1
+            or not 1 <= len(events) <= 32
+        ):
+            raise McpFacadeError("owning recovery binding identity is invalid")
+        snapshot = self.lts.snapshot()
+        for item in events:
+            _reject_unknown(item, {"event_uid", "event_id", "request_sha256"})
+            lookup = self.lts.event_uid_lookup(
+                expected_snapshot_id=snapshot["snapshot_id"],
+                event_uid=item.get("event_uid"),
+            )
+            event = lookup.get("event")
+            details = event.get("details") if isinstance(event, dict) else None
+            marker = details.get(RESERVED_DETAILS_KEY) if isinstance(details, dict) else None
+            uroboros = marker.get("uroboros") if isinstance(marker, dict) else None
+            if (
+                lookup.get("outcome") != "found"
+                or not isinstance(event, dict)
+                or event.get("id") != item.get("event_id")
+                or not isinstance(marker, dict)
+                or marker.get("immutable_event_uid") != item.get("event_uid")
+                or marker.get("request_sha256") != item.get("request_sha256")
+                or not isinstance(uroboros, dict)
+                or uroboros.get("context_admission_id") != context
+                or uroboros.get("logical_generation") != generation
+            ):
+                raise McpFacadeError("owning recovery canonical context join rejected")
 
     @staticmethod
     def _close_write_plane_services(
@@ -3239,12 +3651,13 @@ class MemorySynapseMcp:
         reason_digest: str | None = None,
         component_reason_digests: dict[str, str] | None = None,
         retry_after_seconds: float | None = None,
+        stage: str = "post-read-pre-architecture-admission",
     ) -> None:
         receipt: dict[str, Any] = {
             "protocol": BRIDGE_PROTOCOL + "/write-plane-recovery/v1",
             "source_label": SOURCE_LABEL,
             "observed_utc": _utc_now(),
-            "stage": "post-read-pre-architecture-admission",
+            "stage": stage,
             "outcome": outcome,
             "component_status": dict(component_status),
             "elapsed_ms": max(0, elapsed_ms),
@@ -3262,7 +3675,11 @@ class MemorySynapseMcp:
         except Exception:  # noqa: BLE001, S110 - audit failure must preserve the read plane
             pass
 
-    def _maybe_recover_write_plane(self) -> None:
+    def _maybe_recover_write_plane(
+        self, *, stage: str = "post-read-pre-architecture-admission"
+    ) -> None:
+        if self._context_reattach_read_only:
+            return
         # The stdio transport can outlive its startup admission. A fresh owner
         # intent must revalidate that admission before advertising write readiness.
         if not self._security_admission_is_active(self.security_admission):
@@ -3299,6 +3716,7 @@ class MemorySynapseMcp:
                 outcome="ready",
                 elapsed_ms=elapsed_ms,
                 component_status=dict(self.write_plane_status),
+                stage=stage,
             )
             return
         if candidate is not None:
@@ -3352,6 +3770,7 @@ class MemorySynapseMcp:
             outcome="unavailable",
             elapsed_ms=elapsed_ms,
             component_status=component_status,
+            stage=stage,
             reason_digest=_sha256(
                 {
                     "exception_type": type(failure).__name__,
@@ -3406,23 +3825,31 @@ class MemorySynapseMcp:
             and self._session_mind is None
         ):
             return False
-        self._clear_intent_context()
+        self._clear_intent_context(reason="idle-cleanup")
         return True
 
-    def _clear_intent_context(self) -> None:
+    def _bind_project_scope(self, scope: dict[str, Any] | None) -> None:
+        self._session_project_scope = validated_metadata(scope) if scope is not None else None
+        self.action_log.bind_project_scope(self._session_project_scope)
+
+    def _clear_intent_context(self, *, reason: str = "context-cleared") -> None:
         """Destroy logical owner-intent state while retaining shared services."""
 
+        self._context_reattach_read_only = False
         frozen_catalog = self._frozen_catalog
         self._frozen_catalog = None
         self.lts = self._base_lts
         self._session_capabilities = None
+        self._archive_prompt_binding = None
         self._session_snapshot = None
         self._session_mind = None
+        self._session_project_scope = None
         self._session_architecture = None
         self._session_memory_link_graph = None
         self._session_memory_ttt_path_catalog = None
         self._native_session_lease = None
         self._context_admission_id = None
+        self._context_loss_reason = reason
         self._session_write_plane_status = dict(self.write_plane_status)
         cleanup_errors: list[Exception] = []
         home_cleanup = getattr(self.home, "reset_context", None) or getattr(
@@ -3546,6 +3973,8 @@ class MemorySynapseMcp:
         # part of the receipt only for the authenticated current-turn path.
         if prompt_binding is not None:
             receipt_material["prompt_binding"] = prompt_binding
+        if "canonical_read_context" in mind:
+            receipt_material["canonical_read_context_digest"] = _sha256(mind["canonical_read_context"])
         return _sha256(receipt_material)
 
     def _bind_append_to_current_context(
@@ -3559,12 +3988,16 @@ class MemorySynapseMcp:
         current = self._context_admission_id
         if current is None and self._context_generation == 0:
             if supplied is not None:
-                raise McpFacadeError(
-                    "append context binding DENY: no composite context admission is active"
+                raise ContextBindingUnavailableError(
+                    "append context binding DENY: no composite context admission is active",
+                    generation=self._context_generation, loss_reason=self._context_loss_reason,
                 )
             return event_arguments, None
         if current is None:
-            raise McpFacadeError("append context binding DENY: current logical context is empty")
+            raise ContextBindingUnavailableError(
+                "append context binding DENY: current logical context is empty",
+                generation=self._context_generation, loss_reason=self._context_loss_reason,
+            )
         if not isinstance(supplied, str) or re.fullmatch(r"sha256:[a-f0-9]{64}", supplied) is None:
             raise McpFacadeError("append context binding DENY: context_admission_id is required")
         if not hmac.compare_digest(supplied, current):
@@ -3700,7 +4133,16 @@ class MemorySynapseMcp:
             or self._session_architecture is None
             or self.security_admission is None
         ):
-            raise McpFacadeError("Uroboros append action boundary is unavailable")
+            status = dict(self._session_write_plane_status)
+            status["outcome"] = "unavailable"
+            for component, value in (("architecture", self.architecture),
+                                     ("action_witness", self.action_witness),
+                                     ("security_admission", self.security_admission)):
+                if value is None:
+                    status[component] = "unavailable"
+            if self._session_architecture is None:
+                status["architecture"] = "unavailable"
+            raise AppendPlaneUnavailableError(status)
         architecture = self._session_architecture.get("architecture")
         if not isinstance(architecture, dict):
             raise McpFacadeError("architecture admission state is invalid")
@@ -4004,6 +4446,11 @@ class MemorySynapseMcp:
                     "home_record_count": value.get("home_record_count"),
                 }
             )
+        elif name == "integrity_seed_recall":
+            answer_receipt = value.get("receipt", {})
+            receipt.update({key: answer_receipt.get(key) for key in (
+                "snapshot_id", "selectors_digest", "result_digest", "result_count", "receipt_id"
+            )})
         elif name == "integrity_mind_graph":
             answer_receipt = value.get("admission_receipt", {})
             receipt.update(
@@ -4176,6 +4623,23 @@ class MemorySynapseMcp:
         return {"home": payload, "receipt": receipt}
 
     def call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        if name == 'integrity_turn_memory_reconcile':
+            if self._tool_contract_profile != 'turn-curator-v1':
+                raise McpFacadeError('curator requires its authenticated negotiated profile')
+            from .turn_curator import reconcile, CuratorError
+            try:
+                return reconcile(self, arguments)
+            except CuratorError as error:
+                raise McpFacadeError(str(error)) from None
+        if self._context_reattach_control_only and name in {
+            "integrity_context_admission", "integrity_admit_intent", "integrity_turn_memory_open",
+            "integrity_append_event", "integrity_archive_import"
+        }:
+            raise McpFacadeError("control-only connection cannot admit a new intent or grant new action authority")
+        if self._context_reattach_read_only and name in {
+            "integrity_append_event", "integrity_archive_import", "integrity_turn_memory_open"
+        }:
+            raise McpFacadeError("reattached context permits reads and existing lifecycle only")
         if name == "integrity_turn_memory_open":
             return self._turn_memory_call("open", arguments)
         if name == "integrity_turn_memory_close":
@@ -4184,6 +4648,14 @@ class MemorySynapseMcp:
             return self._turn_memory_call("gap", arguments)
         if name == "integrity_turn_memory_coverage":
             return self._turn_memory_call("coverage", arguments)
+        if name in {"integrity_archive_import", "integrity_archive_read"}:
+            from .historical_archive import ArchiveImportError, call as archive_call
+            if self._tool_contract_profile not in {ARCHIVE_TOOL_CONTRACT_PROFILE, 'turn-curator-v1'}:
+                raise McpFacadeError("archive feature requires its negotiated tool profile")
+            try:
+                return archive_call(self, name, arguments)
+            except ArchiveImportError as exc:
+                raise McpFacadeError(str(exc)) from exc
         if name == "integrity_context_admission_current_turn":
             raise InputValidationError(
                 "current-turn admission must be resolved by the authenticated local broker",
@@ -4214,7 +4686,7 @@ class MemorySynapseMcp:
             replay_id = admission_arguments.pop(CONTEXT_ADMISSION_REPLAY_FIELD, None)
             _reject_unknown(
                 admission_arguments,
-                {"intent", "limit", "budget", TURN_ENVELOPE_BINDING_FIELD},
+                {"intent", "limit", "budget", TURN_ENVELOPE_BINDING_FIELD, "_integrity_retrieval_hint", "_integrity_read_session", "_integrity_attachment_context"},
             )
             if replay_id is not None and not isinstance(replay_id, str):
                 raise McpFacadeError("context admission replay identity is invalid")
@@ -4230,6 +4702,14 @@ class MemorySynapseMcp:
             arguments = admission_arguments
             intent = arguments.get("intent")
             raw_prompt_binding = arguments.get(TURN_ENVELOPE_BINDING_FIELD)
+            retrieval_hint = arguments.get("_integrity_retrieval_hint")
+            if retrieval_hint is not None:
+                if raw_prompt_binding is None or not self._broker_tool_surface_authenticated:
+                    raise McpFacadeError("retrieval context requires an authenticated own broker envelope")
+                try:
+                    retrieval_hint = validate_hint(retrieval_hint)
+                except ValueError as exc:
+                    raise McpFacadeError("retrieval context is invalid") from exc
             if raw_prompt_binding is not None and not self._broker_tool_surface_authenticated:
                 raise InputValidationError(
                     "turn envelope binding requires an authenticated local broker surface",
@@ -4251,6 +4731,15 @@ class MemorySynapseMcp:
                 if raw_prompt_binding is not None
                 else None
             )
+            attachment_context = _validated_attachment_context(
+                arguments.get("_integrity_attachment_context"), raw_prompt_binding,
+                self._broker_tool_surface_authenticated)
+            read_session = arguments.get("_integrity_read_session")
+            if read_session is not None:
+                if raw_prompt_binding is None or not self._broker_tool_surface_authenticated:
+                    raise McpFacadeError("reader session requires an authenticated own broker envelope")
+                validate_read_session(read_session, prompt_sha256=raw_prompt_binding["prompt_sha256"],
+                                      turn_ref_digest=raw_prompt_binding["turn_ref_digest"])
             try:
                 policy = resolve_context_budget(
                     intent.strip(),
@@ -4300,10 +4789,16 @@ class MemorySynapseMcp:
                     raise McpFacadeError("context admission replay snapshot changed")
                 mind = prepared["mind"]
                 self._session_mind = replay["state"]["mind"]
+                self._bind_project_scope(
+                    prompt_binding.get("project_scope") if prompt_binding else None
+                )
             else:
                 generation = self._context_generation + 1
                 self._context_generation = generation
-                self._clear_intent_context()
+                self._clear_intent_context(reason="context-rotation")
+                self._bind_project_scope(
+                    prompt_binding.get("project_scope") if prompt_binding else None
+                )
                 try:
                     capabilities = self.call("integrity_memory_capabilities", {})
                     snapshot = self.call("integrity_seed_snapshot", {})
@@ -4313,6 +4808,12 @@ class MemorySynapseMcp:
                     }
                     if prompt_binding is not None:
                         mind_arguments[TURN_ENVELOPE_BINDING_FIELD] = prompt_binding
+                    if read_session is not None:
+                        mind_arguments["_integrity_read_session"] = read_session
+                    if retrieval_hint is not None:
+                        mind_arguments["_integrity_retrieval_hint"] = retrieval_hint
+                    if attachment_context is not None:
+                        mind_arguments["_integrity_attachment_context"] = attachment_context
                     if policy.mode == "fixed-compat":
                         mind_arguments["limit"] = policy.transport_candidate_cap
                     else:
@@ -4327,7 +4828,10 @@ class MemorySynapseMcp:
                     if isinstance(replay_id, str):
                         self._check_context_replay_deadline()
                 except Exception as exc:  # Every read fault must leave EMPTY.
-                    self._clear_intent_context()
+                    try:
+                        self._clear_intent_context(reason="read-initialization-failed")
+                    except Exception as cleanup_error:  # noqa: BLE001 - retain the primary read fault
+                        exc.add_note(f"secondary context cleanup failed: {type(cleanup_error).__name__}")
                     self._context_generation = generation
                     if isinstance(exc, McpFacadeError):
                         raise
@@ -4354,6 +4858,8 @@ class MemorySynapseMcp:
                             "state": {
                                 "logical_generation": generation,
                                 "mind": self._session_mind,
+                                **({"project_scope": self._session_project_scope}
+                                   if self._session_project_scope is not None else {}),
                             },
                         }
                     )
@@ -4473,8 +4979,28 @@ class MemorySynapseMcp:
                 "production_authority": False,
                 "authority_contract": memory_authority_contract(coordination_status),
             }
+            if read_session is not None:
+                validate_read_session(read_session)
+                result["reader_session"] = read_session
+            delivery = mind.get("context_delivery")
+            if "canonical_read_context" in mind:
+                result["canonical_read_context"] = mind["canonical_read_context"]
+            if isinstance(delivery, dict):
+                result["context_delivery"] = delivery
+                result["health"] = delivery["health"]
+                result["status"] = delivery["status"]
+                if delivery["notify_owner_required"]:
+                    result["owner_notice"] = (
+                        "INTEGRITY CONTEXT DELIVERY DEGRADED: " + delivery["status"] +
+                        "; reasons=" + ",".join(delivery["reasons"]) +
+                        ". Tell the owner before continuing. Canonical read plane remains ready; "
+                        "continue bounded canonical reads. This does not deny separately authorized target work."
+                    )
             if prompt_binding is not None:
-                result["prompt_binding"] = prompt_binding
+                result["prompt_binding"] = {
+                    key: value for key, value in prompt_binding.items() if key != "project_scope"
+                }
+            self._archive_prompt_binding = result.get("prompt_binding")
             if policy.mode == "adaptive":
                 result["presentation_mode"] = policy.mode
             if isinstance(replay_id, str):
@@ -4488,6 +5014,8 @@ class MemorySynapseMcp:
                     "state": {
                         "logical_generation": generation,
                         "mind": self._session_mind,
+                        **({"project_scope": self._session_project_scope}
+                           if self._session_project_scope is not None else {}),
                         "architecture": self._session_architecture,
                         "write_plane": self._session_write_plane_status,
                         "native_session": self._native_session_lease,
@@ -4506,13 +5034,50 @@ class MemorySynapseMcp:
                 if stored != record:
                     return self._restore_context_replay(stored)
             return result
+        if name == "integrity_seed_recall":
+            snapshot = self._require_seed_snapshot()
+            _reject_unknown(arguments, {"snapshot_id", "query", "scope", "include_legacy", "limit"})
+            if arguments.get("snapshot_id") != snapshot.get("snapshot_id"):
+                raise McpFacadeError("snapshot_id does not match session admission")
+            query = arguments.get("query")
+            if not isinstance(query, str) or not query.strip() or len(query) > 4096:
+                raise McpFacadeError("query must contain 1 to 4096 characters")
+            scope = arguments.get("scope", "cross")
+            if scope not in {"current", "cross", "HOME", "PROD", "UNCLASSIFIED"}:
+                raise McpFacadeError("recall scope is invalid")
+            include_legacy = arguments.get("include_legacy", False)
+            if not isinstance(include_legacy, bool):
+                raise McpFacadeError("include_legacy must be boolean")
+            selectors: dict[str, Any] = {}
+            warning = None
+            if scope == "current":
+                current = self._session_project_scope
+                if current is not None and current.get("status") == "configured":
+                    selectors = {"project_area": current["area"],
+                                 "project_host": current["host_id"],
+                                 "project_id": current["project_id"]}
+                else:
+                    warning = "current project is unclassified; recall retains cross-scope compatibility"
+            elif scope != "cross":
+                selectors = {"project_area": scope}
+            value = self.lts.recall(
+                expected_snapshot_id=str(snapshot["snapshot_id"]), query=query,
+                limit=_integer(arguments, "limit", 20, 1, 200),
+                include_legacy=include_legacy, **selectors,
+            )
+            value["scope"] = scope
+            if warning:
+                value["warning"] = warning
+            return self._audit_lts_read(name, arguments, value)
         if name == "integrity_read_events":
             self._require_seed_snapshot()
             return self.action_log.read(arguments)
         if name == "integrity_append_event":
             event_arguments, context_binding = self._bind_append_to_current_context(arguments)
+            if not self._security_admission_is_active(self.security_admission):
+                self._mark_session_write_plane_unavailable("security_admission")
             if self._session_write_plane_status.get("outcome") != "ready":
-                raise McpFacadeError("Uroboros append action boundary is unavailable")
+                raise AppendPlaneUnavailableError(self._session_write_plane_status)
             self._require_architecture_admission()
             return self._event_append_action(
                 event_arguments,
@@ -4541,7 +5106,7 @@ class MemorySynapseMcp:
             snapshot = self._require_seed_snapshot()
             _reject_unknown(
                 arguments,
-                {"snapshot_id", "intent", "limit", "budget", TURN_ENVELOPE_BINDING_FIELD},
+                {"snapshot_id", "intent", "limit", "budget", TURN_ENVELOPE_BINDING_FIELD, "_integrity_retrieval_hint", "_integrity_read_session", "_integrity_attachment_context"},
             )
             expected_snapshot_id = str(arguments.get("snapshot_id", ""))
             if expected_snapshot_id != snapshot.get("snapshot_id"):
@@ -4550,6 +5115,14 @@ class MemorySynapseMcp:
                 raise McpFacadeError("Mind Graph admission is already fixed for this session")
             intent = arguments.get("intent")
             raw_prompt_binding = arguments.get(TURN_ENVELOPE_BINDING_FIELD)
+            retrieval_hint = arguments.get("_integrity_retrieval_hint")
+            if retrieval_hint is not None:
+                if raw_prompt_binding is None or not self._broker_tool_surface_authenticated:
+                    raise McpFacadeError("retrieval context requires an authenticated own broker envelope")
+                try:
+                    retrieval_hint = validate_hint(retrieval_hint)
+                except ValueError as exc:
+                    raise McpFacadeError("retrieval context is invalid") from exc
             if raw_prompt_binding is not None and not self._broker_tool_surface_authenticated:
                 raise McpFacadeError("turn envelope binding is not authenticated")
             if not isinstance(intent, str) or not intent.strip() or (
@@ -4558,6 +5131,15 @@ class MemorySynapseMcp:
                 raise McpFacadeError("intent must contain 1 to 4096 characters")
             if raw_prompt_binding is not None:
                 _validated_turn_binding(raw_prompt_binding, intent)
+            attachment_context = _validated_attachment_context(
+                arguments.get("_integrity_attachment_context"), raw_prompt_binding,
+                self._broker_tool_surface_authenticated)
+            read_session = arguments.get("_integrity_read_session")
+            if read_session is not None:
+                if raw_prompt_binding is None or not self._broker_tool_surface_authenticated:
+                    raise McpFacadeError("reader session requires an authenticated own broker envelope")
+                validate_read_session(read_session, prompt_sha256=raw_prompt_binding["prompt_sha256"],
+                                      turn_ref_digest=raw_prompt_binding["turn_ref_digest"])
             try:
                 policy = resolve_context_budget(
                     intent.strip(),
@@ -4574,6 +5156,19 @@ class MemorySynapseMcp:
             }
             if raw_prompt_binding is not None:
                 action_log_arguments["_integrity_exact_prompt"] = True
+            # critb fix 2 (A): an explicit owner topic line outranks the registry search hint.
+            try:
+                prompt_topic = derive_prompt_topic(intent)
+            except (ValueError, TypeError):  # out-of-bound prompt: keep the previous behaviour
+                prompt_topic = ""
+            if attachment_context is not None:
+                action_log_arguments["_integrity_retrieval_topic"] = attachment_context["topic"]
+            elif prompt_topic:
+                action_log_arguments["_integrity_retrieval_topic"] = prompt_topic
+            elif retrieval_hint is not None:
+                action_log_arguments["_integrity_retrieval_topic"] = retrieval_hint["topic"]
+            if read_session is not None:
+                action_log_arguments["_integrity_read_session"] = read_session
             value = self.action_log.mind(action_log_arguments)
             admission_receipt = value.get("admission_receipt")
             if not isinstance(admission_receipt, dict):
@@ -4593,23 +5188,67 @@ class MemorySynapseMcp:
             source_mind = value.get("mind")
             if not isinstance(source_mind, dict):
                 raise McpFacadeError("Mind Graph returned an invalid projection")
+            # Read explicit IDs/UIDs and current-prompt topical evidence before background lanes.
+            # Keep the existing 8192-byte safety reserve and original identity/snapshot bindings.
+            pinned_context = None
+            capsule_policy = policy
+            try:
+                read_selection = read_context_selectors(intent, search_topic=attachment_context["topic"] if attachment_context else None)
+                pinned_ids = read_selection["event_ids"] or read_selection["event_uids"] or read_selection["query"]
+            except (ValueError, TypeError):  # out-of-bound prompt: keep the previous behaviour
+                pinned_ids = []
+            if pinned_ids and policy.max_context_bytes >= 16384:
+                pinned_context = build_read_context(
+                    prompt=intent,
+                    registry_topic=retrieval_hint["topic"] if retrieval_hint else None,
+                    snapshot=snapshot, byte_budget=policy.max_context_bytes - 8192,
+                    exact_read=self.lts.exact_read_context_events,
+                    recall=lambda **args: self.call("integrity_seed_recall", args),
+                    search_context=attachment_context,
+                )
+                if pinned_context is not None:
+                    capsule_policy = _replace_budget(
+                        policy, max_context_bytes=policy.max_context_bytes
+                        - len(canonical_json(pinned_context)) - 64)
             try:
                 capsule, selection_receipt = build_context_capsule(
                     source_mind,
                     value["admission_receipt"],
-                    policy,
+                    capsule_policy,
                 )
                 validate("memory-synapse-context-selection", selection_receipt)
             except ValidationError as exc:
                 raise McpFacadeError("context selection receipt schema is invalid") from exc
             except ContextBudgetError as exc:
                 raise McpFacadeError(str(exc)) from exc
+            delivery = evaluate_context_delivery(source_mind, capsule, selection_receipt)
+            if delivery["source_event_count"] is not None and delivery["source_event_count"] > 0 and "auxiliary_recall" not in source_mind:
+                delivery.update(health="degraded", status="memory-not-delivered", notify_owner_required=True)
+                delivery["reasons"].append("auxiliary-retrieval-not-supported")
             presented = {
+                "context_delivery": delivery,
                 "mind": capsule,
                 "admission_receipt": value["admission_receipt"],
                 "selection_receipt": selection_receipt,
             }
             self._session_mind = value
+            if pinned_context is not None:
+                presented["canonical_read_context"] = pinned_context
+            elif delivery.get("status") == "memory-not-delivered":
+                # Existing canonical Seed reads are admitted independently of
+                # the closed speaker capsule. Preserve that capsule and its
+                # alarm; attach only bounded read evidence from the same view.
+                remaining = policy.max_context_bytes - len(canonical_json(capsule))
+                supplement = build_read_context(
+                    prompt=intent,
+                    registry_topic=retrieval_hint["topic"] if retrieval_hint else None,
+                    snapshot=snapshot, byte_budget=remaining,
+                    exact_read=self.lts.exact_read_context_events,
+                    recall=lambda **args: self.call("integrity_seed_recall", args),
+                    search_context=attachment_context,
+                )
+                if supplement is not None:
+                    presented["canonical_read_context"] = supplement
             return self._audit_lts_read(name, arguments, presented)
         if name == "integrity_architecture_admission":
             return self._architecture_admission(arguments)
@@ -4902,8 +5541,20 @@ def _tool_contract_profile(initialize_params: dict[str, Any]) -> str:
     # Broker 1.3+ declares the exact local surface digest and negotiates older
     # local catalogs through _broker_tool_surface_ack instead.
     requested = _requested_broker_tool_surface(initialize_params)
+    if requested == _tool_surface_sha256(tools(profile='turn-curator-v1')):
+        return 'turn-curator-v1'
+    if requested == _tool_surface_sha256(tools(profile=ARCHIVE_TOOL_CONTRACT_PROFILE)):
+        return ARCHIVE_TOOL_CONTRACT_PROFILE
     if requested == _tool_surface_sha256(tools()):
         return CURRENT_TOOL_CONTRACT_PROFILE
+    if requested == _tool_surface_sha256(tools(profile=PRE_NATIVE_INTENT_TOOL_CONTRACT_PROFILE)):
+        return PRE_NATIVE_INTENT_TOOL_CONTRACT_PROFILE
+    if requested == _tool_surface_sha256(tools(profile=PRE_PROJECT_SCOPE_TOOL_CONTRACT_PROFILE)):
+        return PRE_PROJECT_SCOPE_TOOL_CONTRACT_PROFILE
+    if requested == _tool_surface_sha256(tools(profile=PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE)):
+        return PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE
+    if requested == _tool_surface_sha256(tools(profile=PROJECT_SCOPE_PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE)):
+        return PROJECT_SCOPE_PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE
     if requested == _tool_surface_sha256(tools(profile=PRE_TTT_TOOL_CONTRACT_PROFILE)):
         return PRE_TTT_TOOL_CONTRACT_PROFILE
     return PRE_V4_TOOL_CONTRACT_PROFILE
@@ -4953,7 +5604,10 @@ def _broker_tool_surface_ack(initialize_params: dict[str, Any]) -> dict[str, Any
     if requested is None:
         return None
     supported = {
+        _tool_surface_sha256(tools(profile='turn-curator-v1')),
+        _tool_surface_sha256(tools(profile=ARCHIVE_TOOL_CONTRACT_PROFILE)),
         _tool_surface_sha256(tools()),
+        _tool_surface_sha256(tools(profile=PRE_NATIVE_INTENT_TOOL_CONTRACT_PROFILE)),
         *RETAINED_BROKER_TOOL_SURFACE_SHA256,
     }
     if requested not in supported:
@@ -5020,10 +5674,20 @@ def _broker_supports_replay_control_only(initialize_params: dict[str, Any]) -> b
 
 
 def tools(*, profile: str = CURRENT_TOOL_CONTRACT_PROFILE) -> list[dict[str, Any]]:
+    if profile == 'turn-curator-v1':
+        from .turn_curator import TOOL
+        return [*tools(profile=ARCHIVE_TOOL_CONTRACT_PROFILE), json.loads(json.dumps(TOOL))]
+    if profile == ARCHIVE_TOOL_CONTRACT_PROFILE:
+        from .historical_archive import archive_tools
+        return tools(profile=CURRENT_TOOL_CONTRACT_PROFILE) + archive_tools()
     """Closed backwards-compatible allowlist; there is no generic write tool."""
 
     if profile not in {
         CURRENT_TOOL_CONTRACT_PROFILE,
+        PRE_NATIVE_INTENT_TOOL_CONTRACT_PROFILE,
+        PRE_PROJECT_SCOPE_TOOL_CONTRACT_PROFILE,
+        PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE,
+        PROJECT_SCOPE_PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE,
         PRE_TTT_TOOL_CONTRACT_PROFILE,
         PRE_V4_TOOL_CONTRACT_PROFILE,
         LEGACY_TURN_BROKER_TOOL_CONTRACT_PROFILE,
@@ -5044,6 +5708,22 @@ def tools(*, profile: str = CURRENT_TOOL_CONTRACT_PROFILE) -> list[dict[str, Any
         },
     }
     exposed = [
+        {
+            "name": "integrity_seed_recall",
+            "description": "Explicit recall from the admitted canonical Seed snapshot. scope=current uses the owning hook's frozen configured project; HOME/PROD select labels across projects; cross (default) keeps legacy access. Labels grant no authority or security isolation.",
+            "inputSchema": {
+                "type": "object", "additionalProperties": False,
+                "required": ["snapshot_id", "query"],
+                "properties": {
+                    "snapshot_id": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+                    "query": {"type": "string", "minLength": 1, "maxLength": 4096},
+                    "scope": {"enum": ["current", "cross", "HOME", "PROD", "UNCLASSIFIED"]},
+                    "include_legacy": {"type": "boolean"},
+                    "limit": {"type": "integer", "minimum": 1, "maximum": 200},
+                },
+            },
+            "annotations": _annotations(read_only=True),
+        },
         {
             "name": "integrity_read_events",
             "description": "Read historical Seed evidence from the server-bound snapshot; do not infer task lifecycle from raw pages. Exact duplicates are denied.",
@@ -5094,6 +5774,7 @@ def tools(*, profile: str = CURRENT_TOOL_CONTRACT_PROFILE) -> list[dict[str, Any
                     "machine_id": {"type": "string", "minLength": 1, "maxLength": 256},
                     "thread_id": {"type": "string", "minLength": 1, "maxLength": 256},
                     "turn_id": {"type": "string", "minLength": 1, "maxLength": 256},
+                    "intent_id": {"type": "string", "pattern": "^intent:[a-f0-9]{64}$"},
                     "prompt_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
                 },
             },
@@ -5421,6 +6102,16 @@ def tools(*, profile: str = CURRENT_TOOL_CONTRACT_PROFILE) -> list[dict[str, Any
             "annotations": _annotations(read_only=True),
         },
     ]
+    if profile != CURRENT_TOOL_CONTRACT_PROFILE:
+        # Older installed brokers pin schemas, not just tool names. Preserve
+        # their exact open schema while the dispatcher still serves legacy.
+        for item in exposed:
+            if item['name'] == 'integrity_turn_memory_open':
+                item['inputSchema']['properties'].pop('intent_id',None)
+    if profile not in {CURRENT_TOOL_CONTRACT_PROFILE, PRE_NATIVE_INTENT_TOOL_CONTRACT_PROFILE, PROJECT_SCOPE_PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE}:
+        exposed = [item for item in exposed if item["name"] != "integrity_seed_recall"]
+    if profile in {PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE, PROJECT_SCOPE_PRE_PENDING_WITNESS_TOOL_CONTRACT_PROFILE}:
+        exposed = [item for item in exposed if item["name"] != "integrity_pending_append_witness"]
     if profile in {
         PRE_TTT_TOOL_CONTRACT_PROFILE,
         PRE_V4_TOOL_CONTRACT_PROFILE,
@@ -5509,14 +6200,31 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
         capabilities: dict[str, Any] = {"tools": {"listChanged": False}}
         broker_surface_ack = _broker_tool_surface_ack(params)
         server._broker_tool_surface_authenticated = broker_surface_ack is not None
-        requested_replay_ack = _broker_context_admission_replay_ack(
-            params,
-            durable_replay_available=(
-                server._supports_context_admission_replay_control()
-            ),
+        replay_control_available = server._supports_context_admission_replay_control()
+        client_caps = params.get("capabilities")
+        client_experimental = (client_caps.get("experimental", {})
+                               if isinstance(client_caps, dict) else {})
+        requested_reattach = (client_experimental.get(CONTEXT_REATTACH_CAPABILITY)
+                             if isinstance(client_experimental, dict) else None)
+        replay_declaration = (client_experimental.get(CONTEXT_ADMISSION_REPLAY_CAPABILITY)
+                              if isinstance(client_experimental, dict) else None)
+        control_only = bool(
+            broker_surface_ack is not None and replay_control_available
+            and _broker_supports_replay_control_only(params)
+            and requested_reattach == {"protocol": CONTEXT_REATTACH_PROTOCOL, "control_only": True}
+            and replay_declaration == {"protocol": CONTEXT_ADMISSION_REPLAY_PROTOCOL,
+                "request_identity_field": CONTEXT_ADMISSION_REPLAY_FIELD,
+                "request_identity_format": "sha256/v1"}
         )
+        server._context_reattach_control_only = control_only
+        # An explicit control declaration must never fall through to admission
+        # allocation, even when its identity/surface/declaration is invalid.
+        control_declared = isinstance(requested_reattach, dict) and "control_only" in requested_reattach
+        requested_replay_ack = (None if control_declared else _broker_context_admission_replay_ack(
+            params, durable_replay_available=replay_control_available,
+        ))
         server._context_admission_replay_control_enabled = (
-            requested_replay_ack is not None
+            requested_replay_ack is not None or control_only
         )
         replay_reserved = bool(
             requested_replay_ack is not None
@@ -5535,7 +6243,19 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
                 ),
             }
         server._context_admission_replay_enabled = replay_reserved
+        server._context_reattach_enabled = bool(
+            control_only or (requested_replay_ack is not None
+                and requested_reattach == {"protocol": CONTEXT_REATTACH_PROTOCOL})
+        )
         experimental: dict[str, Any] = {}
+        if server._context_reattach_enabled:
+            experimental[CONTEXT_REATTACH_CAPABILITY] = {
+                "protocol": CONTEXT_REATTACH_PROTOCOL, "method": CONTEXT_REATTACH_METHOD,
+                "retire_method": CONTEXT_REATTACH_RETIRE_METHOD,
+                **({"control_only": True, "ack_method": CONTEXT_ADMISSION_REPLAY_ACK_METHOD}
+                   if control_only else {}),
+                "read_only": True, "retention_seconds": CONTEXT_ADMISSION_REPLAY_TTL_SECONDS,
+            }
         if broker_surface_ack is not None:
             experimental[BROKER_TOOL_SURFACE_CAPABILITY] = broker_surface_ack
         if replay_ack is not None:
@@ -5564,6 +6284,7 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
             }
         reserved = bool(
             server._context_admission_replay_control_enabled
+            and not server._context_reattach_control_only
             and server._supports_context_admission_replay(reservation_id)
         )
         if reserved:
@@ -5595,6 +6316,26 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
             "replay_id": str(params["replay_id"]),
             "retired": retired,
         }
+    elif message["method"] == CONTEXT_REATTACH_RETIRE_METHOD:
+        try:
+            result = server._retire_delivered_context(params)
+        except (McpFacadeError, OSError, KeyError, TypeError, ValueError) as exc:
+            try:  # Fixed facade text or exception type only; never request content.
+                server.audit({"protocol": "integrity-client-memory-mcp/v3/context-retirement-fault/v1",
+                              "error_type": type(exc).__name__,
+                              "error": str(exc)[:200] if isinstance(exc, McpFacadeError) else "",
+                              "observed_utc": _utc_now(), "canonical_writes": 0,
+                              "production_authority": False})
+            except Exception:  # noqa: BLE001 - audit failure must not change the response
+                pass
+            return {"jsonrpc": "2.0", "id": request_id,
+                    "error": {"code": -32000, "message": "context retirement unavailable"}}
+    elif message["method"] == CONTEXT_REATTACH_METHOD:
+        try:
+            result = server._reattach_delivered_context(params)
+        except (McpFacadeError, OSError, KeyError, TypeError, ValueError):
+            return {"jsonrpc": "2.0", "id": request_id,
+                    "error": {"code": -32000, "message": "context reattach unavailable"}}
     elif message["method"] == "tools/list":
         result = {"tools": tools(profile=server._tool_contract_profile)}
     elif message["method"] == "tools/call":
@@ -5624,6 +6365,34 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
                 "outcome": "denied",
                 "reason": str(exc)[:500],
             }
+            if isinstance(exc, ContextBindingUnavailableError):
+                receipt.update({
+                    "failure_layer": "context-binding",
+                    "reason_code": "current_context_unavailable",
+                    "context_binding_state": "empty",
+                    "logical_generation": exc.generation,
+                    "context_loss_reason": exc.loss_reason,
+                    "read_plane_status": "not-admitted",
+                    "append_plane_status": "not-evaluated",
+                    "request_sent": False,
+                    "canonical_writes": 0,
+                    "automatic_retry_allowed": False,
+                    "terminal_receipt": False,
+                    "coverage_disposition": "preserve-registration-and-gap",
+                })
+            if isinstance(exc, AppendPlaneUnavailableError):
+                receipt.update({
+                    "failure_layer": "append-plane-admission",
+                    "reason_code": "append_boundary_unavailable",
+                    "component_status": exc.component_status,
+                    "read_plane_status": "ready" if server._session_snapshot else "not-admitted",
+                    "request_sent": False,
+                    "canonical_writes": 0,
+                    "automatic_retry_allowed": False,
+                    "reconciliation_required": False,
+                    "terminal_receipt": False,
+                    "coverage_debt": "unclosed-until-explicit-terminal-receipt",
+                })
             if isinstance(exc, InputValidationError):
                 receipt.update(
                     {
@@ -5800,7 +6569,7 @@ def _build_write_plane_runtime(
     try:
         if native_trust is not None:
             security = native_trust.security_admission(
-                artifact_digest=package_lts.capabilities()["artifact_digest"],
+                artifact_digest=package_lts.package_digest(),
             )
         else:
             security_authority_key = load_medor_trusted_public_key(
@@ -5809,7 +6578,7 @@ def _build_write_plane_runtime(
             )
             security = load_medor_security_bundle(
                 args.security_admission_bundle,
-                expected_artifact_digest=package_lts.capabilities()["artifact_digest"],
+                expected_artifact_digest=package_lts.package_digest(),
                 at_time=_utc_now(),
                 decision_key=security_authority_key,
             )
@@ -5850,7 +6619,11 @@ def _build_write_plane_runtime(
                     ),
                 ),
                 signer=architecture.keys.checkpoint_signer,
+                modern_creation_enabled=(getattr(args,'native_intent_creation_mode','enabled')=='enabled'),
+                initialize_native=getattr(args,'bootstrap_native_intent_store',False),
             )
+            if not turn_memory.complete:
+                mark_unavailable('turn_memory',McpFacadeError('versioned Turn Memory coverage is incomplete'))
         except (
             McpFacadeError,
             MemorySynapseLtsError,
@@ -5888,6 +6661,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--evidence-root", type=Path)
     parser.add_argument("--evidence-source-prefix", type=Path)
     parser.add_argument("--architecture-root", type=Path)
+    parser.add_argument('--native-intent-creation-mode',choices=('enabled','rollback-read-close'),default='enabled')
+    parser.add_argument('--bootstrap-native-intent-store',action='store_true',
+        help='Owner-approved initialization of the separate native lifecycle store; never migrate the legacy store.')
     parser.add_argument("--snapshot-root", type=Path)
     parser.add_argument("--replay-migration", nargs=2, action="append", default=[],
                         metavar=("ADMISSION_FILE", "SHA256"))

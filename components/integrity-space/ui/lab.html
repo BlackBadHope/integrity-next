@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Integrity · Проекты</title>
+<style>
+:root {
+  font-family:var(--font-sans,Inter,system-ui,sans-serif);font-size:14px;color-scheme:light;
+  --fallback-ink:#172723;--fallback-page:#f6f8f7;--fallback-card:#fff;
+  --fallback-soft:#edf4ef;--fallback-muted:#51665c;--fallback-line:#bdcfc4;
+  --fallback-link:#226347;--fallback-pill-bg:#edf1ee;--fallback-pill-ink:#40584b;
+  --fallback-warn-bg:#fff1d4;--fallback-warn-ink:#765822;
+  --fallback-danger-bg:#f3e3df;--fallback-danger-ink:#853d29;
+  --ink:var(--color-text-primary,var(--fallback-ink));
+  --page:var(--color-background-primary,var(--fallback-page));
+  --card:var(--color-background-secondary,var(--fallback-card));
+  --soft:var(--color-background-tertiary,var(--fallback-soft));
+  --muted:var(--color-text-secondary,var(--fallback-muted));
+  --line:var(--color-border-primary,var(--fallback-line));
+  --link:var(--color-text-success,var(--fallback-link));
+  --pill-bg:var(--color-background-success,var(--fallback-pill-bg));
+  --pill-ink:var(--color-text-success,var(--fallback-pill-ink));
+  --warn-bg:var(--color-background-warning,var(--fallback-warn-bg));
+  --warn-ink:var(--color-text-warning,var(--fallback-warn-ink));
+  --danger-bg:var(--color-background-danger,var(--fallback-danger-bg));
+  --danger-ink:var(--color-text-danger,var(--fallback-danger-ink));
+  --accent:#226347;color:var(--ink);background:var(--page);
+}
+:root[data-theme="dark"] {
+  color-scheme:dark;--fallback-ink:#edf3ef;--fallback-page:#141a17;
+  --fallback-card:#202924;--fallback-soft:#2b3831;--fallback-muted:#b4c5bb;
+  --fallback-line:#657c6e;--fallback-link:#8dd8b2;
+  --fallback-pill-bg:#254234;--fallback-pill-ink:#bae6cc;
+  --fallback-warn-bg:#45391d;--fallback-warn-ink:#f5d79a;
+  --fallback-danger-bg:#472b25;--fallback-danger-ink:#ffc4b0;
+}
+@media(prefers-color-scheme:dark) {
+  :root:not([data-theme]) {
+    color-scheme:dark;--fallback-ink:#edf3ef;--fallback-page:#141a17;
+    --fallback-card:#202924;--fallback-soft:#2b3831;--fallback-muted:#b4c5bb;
+    --fallback-line:#657c6e;--fallback-link:#8dd8b2;
+    --fallback-pill-bg:#254234;--fallback-pill-ink:#bae6cc;
+    --fallback-warn-bg:#45391d;--fallback-warn-ink:#f5d79a;
+    --fallback-danger-bg:#472b25;--fallback-danger-ink:#ffc4b0;
+  }
+}
+*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;color:var(--ink);background:var(--page)}
+button,select,input{font:inherit;color:var(--ink)}
+button{cursor:pointer;border:1px solid var(--line);border-radius:9px;padding:10px 15px;background:var(--card)}
+button:hover{background:var(--soft)}button:disabled{opacity:.5;cursor:default}
+:focus-visible{outline:2px solid var(--link);outline-offset:3px}
+button.primary{background:var(--accent);color:#fff;border:0}
+header{display:flex;justify-content:space-between;align-items:center;padding:24px 28px;border-bottom:1px solid var(--line);gap:20px}
+h1{font-size:22px;margin:0;letter-spacing:-.6px}h2{font-size:19px;margin:0 0 14px}h3{font-size:14px;margin:0 0 10px}
+p{line-height:1.55}small,.muted{color:var(--muted)}
+.brand{display:flex;align-items:center;gap:12px}.mark{background:var(--accent);color:#fff;font-weight:700;border-radius:10px;padding:9px 13px}
+.label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+main{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:600px}
+aside{border-right:1px solid var(--line);padding:24px 18px}.content{padding:28px;max-width:1050px}
+select,input{width:100%;border:1px solid var(--line);padding:10px;border-radius:8px;background:var(--card)}
+.task-list{display:flex;flex-direction:column;gap:8px;margin-top:18px}.task-card{text-align:left;padding:14px;width:100%}
+.task-card.active{border-color:var(--link);background:var(--soft)}
+.task-card strong{display:block;line-height:1.5;margin-bottom:8px;font-weight:550}
+.pill{display:inline-block;font-size:11px;background:var(--pill-bg);color:var(--pill-ink);padding:4px 8px;border-radius:20px}
+.pill.warn{background:var(--warn-bg);color:var(--warn-ink)}.pill.stale{background:var(--danger-bg);color:var(--danger-ink)}
+.card{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid .card{margin-bottom:0}
+.actions{display:flex;gap:10px;margin:20px 0 8px;flex-wrap:wrap}
+.notice{padding:14px 18px;background:var(--soft);color:var(--ink);border-radius:10px;line-height:1.55;margin-bottom:18px}
+.notice.error{background:var(--danger-bg);color:var(--danger-ink)}.notice:empty{display:none}
+.link{border:0;padding:0;background:none;color:var(--link);text-decoration:underline;font-size:12px}
+ul{padding-left:18px}li{line-height:1.6;margin:8px 0}
+.relation{border-bottom:1px solid var(--line);padding:12px 0}.relation:last-child{border:0}.relation span{margin:6px 0}
+.source{overflow-wrap:anywhere}.source-panel{margin-top:20px;border-left:3px solid var(--link);padding:15px 20px;background:var(--soft);color:var(--ink)}
+details{margin-top:14px;font-size:12px;overflow-wrap:anywhere}.empty{padding:50px 20px;text-align:center;color:var(--muted)}
+#login{max-width:420px;margin:45px auto}#login label{display:block;margin:15px 0 8px}#login p{color:var(--muted)}
+.count{font-size:12px;margin:14px 0}.updated{font-size:12px;margin-top:5px}.split{display:flex;align-items:center;justify-content:space-between;gap:12px}
+@media(max-width:700px){main{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}header,.content{padding:20px}.grid{grid-template-columns:1fr}.task-list{max-height:250px;overflow:auto}}
+</style></head><body>
+<header><div class="brand"><div class="mark">I</div><div><h1>Integrity</h1><div class="updated">Проекты, контекст и непрерывность работы</div></div></div><span class="pill">Частная версия · тестовые данные</span></header>
+<section id="login" hidden><h2>Локальное подключение</h2><p>Введите код из transport.token тестового runtime. Источники проверяются на backend при каждом чтении.</p><form id="login-form"><label for="token">Код подключения</label><input id="token" type="password" autocomplete="off" required><div class="actions"><button class="primary">Подключить</button></div></form></section>
+<div id="status" class="notice" role="status" aria-live="polite"></div>
+<main id="workspace" hidden><aside><label class="label" for="project">Проект</label><select id="project" aria-label="Выбор проекта"></select><p class="count" id="counts"></p><div class="split"><h3>Существующие задачи</h3><button id="refresh" aria-label="Обновить проект">↻</button></div><div id="tasks" class="task-list"></div><button id="more" hidden>Ещё задачи</button></aside><section class="content"><div id="view"></div><div id="sources" class="source-panel" hidden></div></section></main>
+<script>/* APP_BUNDLE */</script></body></html>

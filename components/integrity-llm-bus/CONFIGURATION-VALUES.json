@@ -1,0 +1,46 @@
+{
+  "state_directory": {
+    "kind": "path",
+    "used_by": [
+      "coordination/llm-bus/agent_registry.py",
+      "coordination/llm-bus/bus_claude_hook.py:58",
+      "coordination/llm-bus/bus_health.py:17",
+      "coordination/llm-bus/bus_health.py:23",
+      "coordination/llm-bus/bus_health.py:18",
+      "coordination/llm-bus/bus_integrity_adapter.py:16",
+      "coordination/llm-bus/bus_integrity_adapter.py:17",
+      "coordination/llm-bus/bus_integrity_adapter.py:41",
+      "coordination/llm-bus/codex_steer.py:21",
+      "coordination/llm-bus/file_bridge.py:192",
+      "coordination/llm-bus/launcher.py:16",
+      "coordination/llm-bus/relay.py:372",
+      "coordination/llm-bus/relay.py:171",
+      "coordination/llm-bus/relay.py:364"
+    ]
+  },
+  "path_d4f3db5417f4": {
+    "kind": "path",
+    "used_by": [
+      "coordination/llm-bus/file_bridge.py:38"
+    ]
+  },
+  "path_dd2435d503a6": {
+    "kind": "path",
+    "used_by": [
+      "coordination/llm-bus/launcher.py:32",
+      "coordination/llm-bus/relay.py:152"
+    ]
+  },
+  "endpoint_173b0c3b2ac1": {
+    "kind": "endpoint",
+    "used_by": [
+      "coordination/llm-bus/relay.py:167"
+    ]
+  },
+  "native_peer_port_49481": {
+    "kind": "port",
+    "used_by": [
+      "coordination/llm-bus/relay.py:75"
+    ]
+  }
+}
