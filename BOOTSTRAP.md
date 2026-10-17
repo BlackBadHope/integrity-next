@@ -29,7 +29,7 @@ guardian capabilities
 guardian lts-contracts
 ```
 
-The expected Guardian version is `6.1.0`; the memory MCP facade is `2.11.0`.
+The expected Guardian version is `6.1.1`; the memory MCP facade is `2.11.0`.
 Record the commit above alongside test results: `main` can advance. This guide
 does not depend on an unpublished version tag. The source tree contains no owner credentials,
 release signatures or deployment activation. Configure each adapter with
@@ -48,8 +48,8 @@ python -m pip install ./components/integrity-active-inquiry
 python -m pip install ./components/integrity-resource-advisor
 ```
 
-The SDK is bound to Guardian `6.1.0`; the Claude executor requires SDK
-`2.0.0rc2`. Supplying local package paths together lets the resolver use the
+The SDK is bound to Guardian `6.1.1`; the Claude executor requires SDK
+`2.0.0rc3`. Supplying local package paths together lets the resolver use the
 matching source rather than look for an unpublished version on an index.
 For example:
 
@@ -87,9 +87,9 @@ Missing session or delivery evidence must remain visible as a degraded result.
 Memory read availability and authorization to act on another target are separate.
 
 Historical deployment and replay schemas retain their original version pins.
-Installing 6.1.0 does not revalidate an older signed deployment receipt. In
+Installing 6.1.1 does not revalidate an older signed deployment receipt. In
 particular, the retained reviewed 5.5.1-to-6.0 replay path is not a migration
-path to 6.1.0; create and review the appropriate new evidence for a new deployment.
+path to 6.1.1; create and review the appropriate new evidence for a new deployment.
 
 ## First read-only check
 
@@ -115,7 +115,7 @@ temporary demo directory when finished, then return to the checkout.
 
 ```bash
 python -m pip wheel . --no-deps --wheel-dir dist
-python -m pip install --force-reinstall dist/integrity_guardian-6.1.0-py3-none-any.whl
+python -m pip install --force-reinstall dist/integrity_guardian-6.1.1-py3-none-any.whl
 guardian version --all
 ```
 
@@ -126,15 +126,34 @@ a wildcard.
 ## Initialize a local instance
 
 Initialization creates local trust material and persistent state. Choose a
-private directory that is not inside the repository:
+private directory that is not inside the repository. Both roots below are
+filesystem paths, not instance or architecture identifiers. Run the block
+for your shell from the checkout; the absolute paths keep state outside it.
+
+Bash (Linux/macOS):
 
 ```bash
 guardian native-trust-bootstrap \
   --state-root "$HOME/.local/state/integrity-guardian" \
   --instance-id "instance:personal" \
   --device-id "device:local" \
-  --architecture-root "architecture:personal"
+  --architecture-root "$HOME/.local/state/integrity-guardian/architecture"
 ```
+
+PowerShell (Windows):
+
+```powershell
+$stateRoot = Join-Path $HOME '.local/state/integrity-guardian'
+guardian native-trust-bootstrap `
+  --state-root $stateRoot `
+  --instance-id "instance:personal" `
+  --device-id "device:local" `
+  --architecture-root (Join-Path $stateRoot 'architecture')
+```
+
+The command reports the database path in `database`. Verify that it is under
+your chosen private architecture directory and outside the checkout before
+using the instance. Keep generated trust material and databases out of Git.
 
 This command does not configure credentials, production endpoints or external
 action authority. Before connecting an adapter, review its included component

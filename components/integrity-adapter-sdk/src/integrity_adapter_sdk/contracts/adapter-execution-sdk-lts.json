@@ -19,7 +19,7 @@
   "forbidden_wheel_prefixes": [
     "integrity_guardian/"
   ],
-  "guardian_dependency": "integrity-guardian==6.1.0",
+  "guardian_dependency": "integrity-guardian==6.1.1",
   "implementation_boundary": "transitional-guardian-facade",
   "implementation_extraction": "later-major-boundary",
   "invariants": [
@@ -42,7 +42,7 @@
   "owned_import_roots": [
     "integrity_adapter_sdk"
   ],
-  "package_version": "2.0.0rc2",
+  "package_version": "2.0.0rc3",
   "production_authority": false,
   "protocol": "integrity-adapter-sdk/lts-support-contract/v1",
   "signed_document_version": "1.0.0a2",

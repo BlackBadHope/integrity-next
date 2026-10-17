@@ -87,7 +87,7 @@
       "status": "historical-reference-not-current-runtime"
     }
   ],
-  "release_version": "6.1.0",
+  "release_version": "6.1.1",
   "retired_duplicate_groups": [
     "action-log",
     "client-hooks",
