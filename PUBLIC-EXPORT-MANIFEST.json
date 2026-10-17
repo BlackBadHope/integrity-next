@@ -6176,7 +6176,7 @@
       "sha256": "178e2f0d53cb7fecb5fd2b422e2aa2db22c268d809b820399f35c7a9bcccc9b9"
     }
   ],
-  "generated_file_count": 21,
+  "generated_file_count": 29,
   "generated_files": [
     {
       "bytes": 1041,
@@ -6291,11 +6291,11 @@
       "sha256": "09090df578c23da70a583367ce3a32481835fde9e627d79504b8a01789313e4b"
     },
     {
-      "bytes": 9351,
+      "bytes": 9682,
       "mode": "0o644",
       "path": "README.md",
       "sanitization_edits": 0,
-      "sha256": "0994f6f10d340a0b5006b85302f5f6a062176253fe236b2fdfc92218a929e564"
+      "sha256": "bd4f41fcdc8cad37c223ae5f10f884e6f869f1cbb734b3b5855530145c8508d7"
     },
     {
       "bytes": 1132,
@@ -6312,6 +6312,62 @@
       "sha256": "ffce49919331e0cfbc8c19e3c4e922e2e5f533338e4703cdf551cffc3a6536bb"
     },
     {
+      "bytes": 8236,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/REPORT_RU.md",
+      "sanitization_edits": 0,
+      "sha256": "e4db8e978846c9bf83725d75f9fc5623a4c90f7e1fe2875a5ef8d3610696c6b8"
+    },
+    {
+      "bytes": 623,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/SHA256SUMS",
+      "sanitization_edits": 0,
+      "sha256": "5b362f0c67ee111800d7ff4221e7d4160f46e260a74bb0069b1cb3488f811017"
+    },
+    {
+      "bytes": 2142,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/benchmarks.json",
+      "sanitization_edits": 0,
+      "sha256": "d4b4340c3da607719587257026ac21a939ad3c522036eb3b5ab57987b5db32cc"
+    },
+    {
+      "bytes": 320,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/evidence/linux-6.1.0-pytest.log",
+      "sanitization_edits": 0,
+      "sha256": "7d8b9a1ae98e55e89d2a1d7a362b8cc764b17a239966c9c6f9a566f99d00f4fe"
+    },
+    {
+      "bytes": 1148,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/evidence/linux-6.1.1-pytest.log",
+      "sanitization_edits": 0,
+      "sha256": "f4f8110015ac9b716e2c945e2ba4d6ac45a3339eaf6c11a59707b3f0e04344cd"
+    },
+    {
+      "bytes": 561,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/evidence/windows-6.1.1-pytest.log",
+      "sanitization_edits": 0,
+      "sha256": "74c04ae9cf21a0c9045c194da4017a80e504fbb7e2cae44279cbf56400c11b25"
+    },
+    {
+      "bytes": 20567,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/results.json",
+      "sanitization_edits": 0,
+      "sha256": "ce41fce6f3364b6255a5a6f13661b31e8f5a5aa65d243b867b422554e83d0a11"
+    },
+    {
+      "bytes": 2197,
+      "mode": "0o644",
+      "path": "docs/audits/installation-6.1.1-20261017/source-evidence.json",
+      "sanitization_edits": 0,
+      "sha256": "357c939ae645c8d9d726760a9cdd732eba1aba6d029b8dbdaf3101df08e1c5dd"
+    },
+    {
       "bytes": 1565,
       "mode": "0o644",
       "path": "pyproject.toml",
@@ -6326,7 +6382,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:fdd0ae60402e4b18e64cb8b18f46672c308b679eb8d873ab5297ac67626da78a",
+  "projection_digest": "sha256:1b147eca782f9de6871505888ab381377616acdee3e45259a82f103a9d12d0fe",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",

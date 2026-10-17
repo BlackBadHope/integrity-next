@@ -1,0 +1,13 @@
+........................................................................ [ 28%]
+.....s.................................................................. [ 56%]
+.................ss..................................................... [ 84%]
+..........................ssss..........                                 [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_memory_ttt_review.py (line 99): the private literal corpus is not part of the public export
+SKIPPED [1] tests/test_seed_runtime_process_boundary.py (line 82): Windows virtualenv redirector boundary
+SKIPPED [1] tests/test_seed_runtime_process_boundary.py (line 92): Windows virtualenv redirector boundary
+SKIPPED [1] tests/test_windows_directory_custody.py (line 54): requires native Windows DACL APIs
+SKIPPED [1] tests/test_windows_directory_custody.py (line 67): requires native Windows DACL APIs
+SKIPPED [1] tests/test_windows_directory_custody.py (line 78): requires native Windows DACL APIs
+SKIPPED [1] tests/test_windows_directory_custody.py (line 91): requires native Windows DACL APIs
+249 passed, 7 skipped in 22.20s

@@ -1,0 +1,63 @@
+{
+  "schema": "integrity.acceptance-timings/v1",
+  "reused_existing_runs": true,
+  "product_performance_benchmark": "NOT_RUN",
+  "comparative_speedup_claim": null,
+  "method": "One original run per release/environment. Harness wall time and pytest-reported time are distinct. Installation timings include variable dependency acquisition. No percentiles or cross-platform speed comparison are justified.",
+  "observations": [
+    {
+      "case_id": "linux-6.1.0",
+      "date": "2026-10-17",
+      "sample_count": 1,
+      "measurement_kind": "acceptance-command-wall-time-not-product-performance",
+      "create_venv_seconds": 2.21,
+      "core_pip_install_seconds": 6.63,
+      "pytest_process_wall_seconds": 23.17,
+      "pytest_reported_seconds": null,
+      "bootstrap_process_wall_seconds": 0.41,
+      "sum_of_command_wall_seconds": 46.92,
+      "excludes": [
+        "environment preparation",
+        "host reboot",
+        "artifact download/staging",
+        "cleanup"
+      ]
+    },
+    {
+      "case_id": "linux-6.1.1",
+      "date": "2026-10-17",
+      "sample_count": 1,
+      "measurement_kind": "acceptance-command-wall-time-not-product-performance",
+      "create_venv_seconds": 2.21,
+      "core_pip_install_seconds": 6.63,
+      "pytest_process_wall_seconds": 22.5,
+      "pytest_reported_seconds": 22.2,
+      "bootstrap_process_wall_seconds": 0.4,
+      "sum_of_command_wall_seconds": 49.93,
+      "excludes": [
+        "environment preparation",
+        "host reboot",
+        "artifact download/staging",
+        "cleanup"
+      ]
+    },
+    {
+      "case_id": "windows-6.1.1",
+      "date": "2026-10-17",
+      "sample_count": 1,
+      "measurement_kind": "acceptance-command-wall-time-not-product-performance",
+      "create_venv_seconds": 10.12,
+      "core_pip_install_seconds": 18.16,
+      "pytest_process_wall_seconds": 162.69,
+      "pytest_reported_seconds": 161.5,
+      "bootstrap_process_wall_seconds": 7.64,
+      "sum_of_command_wall_seconds": 287.66,
+      "excludes": [
+        "environment preparation",
+        "host reboot",
+        "artifact download/staging",
+        "cleanup"
+      ]
+    }
+  ]
+}

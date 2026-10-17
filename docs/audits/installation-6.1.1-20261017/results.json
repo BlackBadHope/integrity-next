@@ -1,0 +1,772 @@
+{
+  "schema": "integrity.public-install-acceptance/v1",
+  "scope": "Core/README CLI/literal BOOTSTRAP; historical 6.1.0 and corrected 6.1.1",
+  "contains_user_context": false,
+  "contains_operational_endpoints": false,
+  "cases": [
+    {
+      "case_id": "linux-6.1.0",
+      "release": "6.1.0",
+      "source_commit": "47b3af592578c17e35648273ec6748268448835b",
+      "environment": {
+        "isolator": "disposable WSL2",
+        "python": "3.14.8",
+        "shell": "Bash",
+        "administrative_guest": false
+      },
+      "installation": "PASS",
+      "readme_cli": "PASS",
+      "bootstrap_runtime": "PASS",
+      "bootstrap_database_outside_checkout": false,
+      "onboarding_acceptance": "NOT_PASS",
+      "pytest": {
+        "passed": 249,
+        "skipped": 7,
+        "failed": 0,
+        "full_suite_runs": 1
+      },
+      "observations": {
+        "total": 25,
+        "command_count": 25,
+        "raw_pass": 25,
+        "raw_fail": 0
+      },
+      "steps": [
+        {
+          "step": "baseline-git",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.0,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "baseline-python",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.0,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "baseline-packages",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.19,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "clone-public-release",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 1.34,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "record-commit",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.0,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "create-venv",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 2.21,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "activate-as-readme",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-install-core-only",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 6.63,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-check-core",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.18,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "installed-origin",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.24,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-version",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.26,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-platform",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.25,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-capabilities",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.26,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-lts-contracts",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.27,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-create-demo",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.02,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-create-observation",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.0,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-canonicalize",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.26,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-digest",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.26,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-install-dev-extra",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 4.89,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-root-suite",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 23.17,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "core-only-inventory-before-optional",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.22,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "bootstrap-sdk-install",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 4.8,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-check-sdk",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.22,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "sdk-origin-outside-checkout",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.83,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "bootstrap-literal-bash",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.41,
+          "diagnostic": false,
+          "timed_out": false
+        }
+      ],
+      "limitations": [
+        "Core checked before optional SDK installation; other optional clients NOT_RUN.",
+        "Only the observed disposable Linux/Python environment is covered."
+      ]
+    },
+    {
+      "case_id": "linux-6.1.1",
+      "release": "6.1.1",
+      "source_commit": "a727c12f6d2504de5cdfdf7e540ab7837f499146",
+      "environment": {
+        "isolator": "disposable WSL2",
+        "python": "3.14.8",
+        "shell": "Bash",
+        "administrative_guest": false
+      },
+      "installation": "PASS",
+      "readme_cli": "PASS",
+      "bootstrap_runtime": "PASS",
+      "bootstrap_database_outside_checkout": true,
+      "onboarding_acceptance": "PASS_WITH_LIMITATIONS",
+      "pytest": {
+        "passed": 249,
+        "skipped": 7,
+        "failed": 0,
+        "full_suite_runs": 1
+      },
+      "observations": {
+        "total": 23,
+        "command_count": 23,
+        "raw_pass": 23,
+        "raw_fail": 0
+      },
+      "steps": [
+        {
+          "step": "baseline-python",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.0,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "baseline-packages",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.17,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "public-archive-closure-and-privacy",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 3.12,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "create-venv",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 2.21,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "activate-as-readme",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.01,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-install-core-only",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 6.63,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-check-core",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.3,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "installed-origin",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.27,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-version",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.29,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-platform",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.27,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-capabilities",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.3,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-lts-contracts",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.35,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-create-demo",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.03,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-create-observation",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.0,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-canonicalize",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.39,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-digest",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.27,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-install-dev-extra",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 5.49,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-root-suite",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 22.5,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "core-only-inventory-before-optional",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.2,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "bootstrap-sdk-install",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 5.75,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-check-sdk",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.2,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "sdk-origin-outside-checkout",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.78,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "bootstrap-literal-bash",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.4,
+          "diagnostic": false,
+          "timed_out": false
+        }
+      ],
+      "limitations": [
+        "Core checked before optional SDK installation; other optional clients NOT_RUN.",
+        "Only the observed disposable Linux/Python environment is covered.",
+        "Verified public release tar.gz used instead of Git clone."
+      ]
+    },
+    {
+      "case_id": "windows-6.1.1",
+      "release": "6.1.1",
+      "source_commit": "a727c12f6d2504de5cdfdf7e540ab7837f499146",
+      "environment": {
+        "isolator": "Windows Sandbox",
+        "python": "3.12.10",
+        "shell": "Windows PowerShell 5.1.26100.9711",
+        "administrative_guest": true
+      },
+      "installation": "PASS",
+      "readme_cli": "PASS",
+      "bootstrap_runtime": "PASS",
+      "bootstrap_database_outside_checkout": true,
+      "onboarding_acceptance": "PASS_WITH_LIMITATIONS",
+      "pytest": {
+        "passed": 255,
+        "skipped": 1,
+        "failed": 0,
+        "full_suite_runs": 1
+      },
+      "observations": {
+        "total": 34,
+        "command_count": 25,
+        "raw_pass": 33,
+        "raw_fail": 1
+      },
+      "steps": [
+        {
+          "step": "guest-identity-and-shell",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 12.53,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "new-guest-integrity-state",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "baseline-python",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.06,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "baseline-packages",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 12.3,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "no-preinstalled-integrity",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "source-zip-sha256",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "python-nuget-sha256",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "public-source-file-count",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "public-archive-closure-and-privacy",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 12.49,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "create-venv",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 10.12,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-install-core-only",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 18.16,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "pip-check-core",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 1.11,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "installed-origin",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 1.48,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-version",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.97,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-platform",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 1.27,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-capabilities",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 1.05,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "guardian-lts-contracts",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.94,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-create-observation-powershell",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 5.0,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-canonicalize",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.83,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-digest",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.91,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "diagnostic-canonicalize-python-utf8",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.94,
+          "diagnostic": true,
+          "timed_out": false
+        },
+        {
+          "step": "diagnostic-digest-python-utf8",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.86,
+          "diagnostic": true,
+          "timed_out": false
+        },
+        {
+          "step": "unicode-create-observation-powershell",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 4.62,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "unicode-input-roundtrip",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "unicode-canonicalize",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.92,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-install-dev-extra",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 20.34,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "readme-root-suite",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 162.69,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "core-only-inventory",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.88,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "one-published-powershell-bootstrap",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "bootstrap-literal-powershell",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 7.64,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "bootstrap-native-result",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "bootstrap-physical-database-path",
+          "status": "PASS",
+          "diagnostic": false
+        },
+        {
+          "step": "native-trust-exact-acl",
+          "status": "PASS",
+          "exit_code": 0,
+          "seconds": 0.8,
+          "diagnostic": false,
+          "timed_out": false
+        },
+        {
+          "step": "architecture-directory-and-database-acl",
+          "status": "FAIL",
+          "exit_code": 1,
+          "seconds": 8.75,
+          "diagnostic": false,
+          "timed_out": false
+        }
+      ],
+      "reviewed_gates": {
+        "clean_guest_and_source": "PASS",
+        "core_installation": "PASS",
+        "readme_cli": "PASS",
+        "unicode": "PASS",
+        "root_suite": "PASS",
+        "literal_powershell_bootstrap": "PASS",
+        "physical_database_outside_checkout": "PASS",
+        "native_trust_acl": "PASS",
+        "architecture_and_database_acl": "PASS"
+      },
+      "raw_harness_status": "FAIL",
+      "acl_adjudication": {
+        "status": "PASS",
+        "reason": "Audit checker false positive: OWNER RIGHTS resolves to the actual trusted object owner (Administrators). Exact-current-user ownership was not an architecture-directory contract.",
+        "product_changed": false,
+        "acl_changed": false,
+        "tests_repeated": false,
+        "separate_native_trust_exact_owner_gate": "PASS"
+      },
+      "limitations": [
+        "Release ZIP and official portable Python NuGet used inside the guest.",
+        "Explicit virtualenv interpreter and Scripts PATH; literal Activate.ps1 NOT_RUN.",
+        "Child process output explicitly UTF-8.",
+        "Core and dev tests only; fifteen optional distributions NOT_RUN.",
+        "Later unelevated-token and separate standard-user access NOT_RUN."
+      ],
+      "cleanup": {
+        "guest": "PASS",
+        "rdp": "PASS",
+        "tunnel": "PASS"
+      }
+    }
+  ],
+  "historical_windows_6_1_0": {
+    "status": "NOT_RUN",
+    "reason": "Git prerequisite failed before product installation."
+  }
+}

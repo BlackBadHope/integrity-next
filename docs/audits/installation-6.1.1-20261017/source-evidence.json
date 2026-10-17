@@ -1,0 +1,33 @@
+{
+  "schema": "integrity.public-evidence-provenance/v1",
+  "source_results_retained_locally": true,
+  "projection": "Allowlisted fields only; source result files are not published. Public pytest logs normalize .py:N: line-number syntax, relative path separators and H:MM:SS elapsed notation to avoid address-parser ambiguity. Original stdout SHA256 values remain in sources; projected file SHA256 values are in SHA256SUMS. No memory events, model conversation, signatures, user identity, host names, operational routes, databases or keys are included.",
+  "sources": [
+    {
+      "case_id": "linux-6.1.0",
+      "raw_result_sha256": "957cbb5707450175f3eb8e395517db5bd54c3431dd859f30aab72c74fd1d248d",
+      "final_result_sha256": "3e6ff46545c857f67d55867a9e856b0f94e664bf74218b5e3f886c08bd527a84",
+      "pytest_stdout_sha256": "7d8b9a1ae98e55e89d2a1d7a362b8cc764b17a239966c9c6f9a566f99d00f4fe",
+      "bootstrap_stdout_sha256": "5ea43dfa82324932dbb883f72c3d97368d37d670b01101d0a9d346c65eba590b"
+    },
+    {
+      "case_id": "linux-6.1.1",
+      "raw_result_sha256": "f1655a48809bc3ccdc68a0ffde72345bb815543fd939a0aa3bcfd9ac5ceef87e",
+      "final_result_sha256": "0e26d8295ed9b32aa013cb288fd66ce158d81a1b465f624bca430a5b2fd266eb",
+      "pytest_stdout_sha256": "c5d0abf9b7dd6ffa7d8b003a7d60e34ed9e070bdb199eeca5214993682f84306",
+      "bootstrap_stdout_sha256": "6d5cd7523b4adc0140f2d49f5d9e26ce33b9c64ca2a77848453aee0b790fe29d"
+    },
+    {
+      "case_id": "windows-6.1.1",
+      "raw_result_sha256": "8b654cb0b862c384e08fab949cf8cba541f64598c94e23f6fcb114911c675916",
+      "final_result_sha256": "9691c90168432409b41f3553cc00ae6d3ef2226b4509cd857390696f62591361",
+      "pytest_stdout_sha256": "0c7f4909dae797f862705da26944f6ff90129030e501553262389a6af57cde67",
+      "bootstrap_stdout_sha256": "ec8ae528c60f844c55fdf45a6fa683a9d13526bb6126cbe272f777103b896e21",
+      "acl_adjudication_sha256": "0e66bb2280667f6828cda8e2f7f234460a9e03a874dabacfae6eddc78c28adc6"
+    }
+  ],
+  "release_archives": {
+    "6.1.1_zip_sha256": "9d5395597e0934a07ad2f6e388ab85f8abe073cff77c9da840ffd43889df2135",
+    "6.1.1_tar_gz_sha256": "605a8bcee7e0aab444fb719c3e3b832f5dcdcdfc6388609438480c5025b7925d"
+  }
+}
