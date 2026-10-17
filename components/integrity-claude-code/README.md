@@ -1,7 +1,7 @@
-# Integrity Claude Code executor 0.1.0rc2
+# Integrity Claude Code executor 0.1.0rc3
 
 Optional Windows executor through the genuine Integrity Adapter SDK
-`2.0.0rc2` (Guardian 6.1.0). It is separate from Guardian, Home and the read-only
+`2.0.0rc3` (Guardian 6.1.1). It is separate from Guardian, Home and the read-only
 Space UI. Python 3.11+ is required. No CLI binary or provider authentication is
 bundled; installing the package does not launch a process or create a ledger.
 

@@ -28,7 +28,7 @@ def init():
 
 
 def test_capabilities_are_honest_and_version_aligned(capsys):
-    assert __version__ == "0.1.0rc2"
+    assert __version__ == "0.1.0rc3"
     assert main(["capabilities"]) == 0
     value = json.loads(capsys.readouterr().out)
     assert value == capabilities()

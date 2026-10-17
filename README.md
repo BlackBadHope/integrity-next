@@ -1,6 +1,6 @@
 # Integrity Guardian
 
-This source release is Guardian **6.1.0**, with memory MCP facade API **2.11.0**.
+This source release is Guardian **6.1.1**, with memory MCP facade API **2.11.0**.
 
 Integrity Guardian is a local-first integrity layer for humans, automation and
 AI agents. It keeps four questions separate:
@@ -125,8 +125,8 @@ different interfaces and deliberately do not all match the Guardian version.
 
 | Distribution | Version | Purpose |
 | --- | --- | --- |
-| `integrity-guardian` | 6.1.0 | Canonical protocol, evidence, authorization and memory core |
-| [`integrity-adapter-sdk`](components/integrity-adapter-sdk/README.md) | 2.0.0rc2 | Guardian-bound adapter facade |
+| `integrity-guardian` | 6.1.1 | Canonical protocol, evidence, authorization and memory core |
+| [`integrity-adapter-sdk`](components/integrity-adapter-sdk/README.md) | 2.0.0rc3 | Guardian-bound adapter facade |
 | [`integrity-execution-bridge`](components/integrity-execution-bridge/README.md) | 0.1.0rc5 | Verified execution and observation boundaries |
 | [`integrity-agents-api`](components/integrity-agents-api/README.md) | 0.1.0rc2 | Agent API integration |
 | [`integrity-codex-persistent`](components/integrity-codex-persistent/README.md) | 0.1.0rc3 | Persistent Codex adapter |
@@ -138,7 +138,7 @@ different interfaces and deliberately do not all match the Guardian version.
 | [`integrity-client-memory`](components/integrity-client-memory/README.md) | 1.8.0 | Codex, Claude and Antigravity hook/broker profiles |
 | [`integrity-home`](components/integrity-home/README.md) | 0.2.0a1 | Home archive and Chronicle projections |
 | [`integrity-space`](components/integrity-space/README.md) | 0.2.0 | Read-only MCP Apps lab and workbench UI |
-| [`integrity-claude-code`](components/integrity-claude-code/README.md) | 0.1.0rc2 | Separately guarded Windows CLI executor |
+| [`integrity-claude-code`](components/integrity-claude-code/README.md) | 0.1.0rc3 | Separately guarded Windows CLI executor |
 | [`integrity-llm-bus`](components/integrity-llm-bus/README.md) | 1.0.0 | Local queue, registry, relay and steering transports |
 | [`integrity-bridges`](components/integrity-bridges/README.md) | 0.7.0 | Hub, delegation and native peer transports |
 

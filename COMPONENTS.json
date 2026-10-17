@@ -25,7 +25,7 @@
       },
       "path": ".",
       "python": ">=3.11",
-      "version": "6.1.0"
+      "version": "6.1.1"
     },
     {
       "dependencies": [],
@@ -63,7 +63,7 @@
     },
     {
       "dependencies": [
-        "integrity-guardian==6.1.0"
+        "integrity-guardian==6.1.1"
       ],
       "distribution": "integrity-adapter-sdk",
       "entry_points": {},
@@ -78,7 +78,7 @@
       },
       "path": "components/integrity-adapter-sdk",
       "python": ">=3.11",
-      "version": "2.0.0rc2"
+      "version": "2.0.0rc3"
     },
     {
       "dependencies": [],
@@ -118,7 +118,7 @@
     },
     {
       "dependencies": [
-        "integrity-adapter-sdk==2.0.0rc2"
+        "integrity-adapter-sdk==2.0.0rc3"
       ],
       "distribution": "integrity-claude-code",
       "entry_points": {
@@ -131,7 +131,7 @@
       "optional_dependencies": {},
       "path": "components/integrity-claude-code",
       "python": ">=3.11",
-      "version": "0.1.0rc2"
+      "version": "0.1.0rc3"
     },
     {
       "dependencies": [
@@ -334,7 +334,7 @@
   ],
   "configured": false,
   "memory_facade_api": "2.11.0",
-  "release_version": "6.1.0",
+  "release_version": "6.1.1",
   "runtime_data_included": false,
   "schema": "integrity.public-component-catalog/v1",
   "source_components": [

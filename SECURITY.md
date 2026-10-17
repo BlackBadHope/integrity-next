@@ -2,7 +2,7 @@
 
 ## Supported version
 
-Security fixes currently target the latest stable `6.0.0` public release.
+Security fixes currently target the latest stable `6.1.1` public release.
 Older snapshots are unsupported.
 
 ## Report a vulnerability

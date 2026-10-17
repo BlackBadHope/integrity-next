@@ -4,6 +4,16 @@ All notable public changes are recorded here.
 
 ## Unreleased
 
+## 6.1.1 — 2026-10-17
+
+- Fixed the clean bootstrap example to use an absolute private architecture
+  directory outside the source checkout; added the PowerShell equivalent and
+  an explicit database-path check.
+- Updated the supported stable version in SECURITY.md.
+- Advanced Guardian patch metadata to 6.1.1 and regenerated the exact SDK
+  source binding. Adapter SDK 2.0.0rc3 and Claude executor 0.1.0rc3 carry the
+  matching dependencies; historical receipt/profile pins are unchanged.
+
 ## 6.1.0 — 2026-10-17
 
 - Consolidated the canonical Guardian implementation and independently versioned
