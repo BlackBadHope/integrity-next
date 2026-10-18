@@ -76,14 +76,16 @@
   {
     "path": "src/integrity_client_memory/resources/linux/integrity_client_turn_envelope.py",
     "source": "clients/linux/integrity_client_turn_envelope.py",
-    "source_sha256": "779975f33276e0cfcb513c8a63c197d7fae2ebbaca49298effc9087a7ea2091b",
-    "sha256": "fcc27972b71c05a514f632eb61cf435b10eef50882cb495707bc3dd3678b7a8c"
+    "source_sha256": "97e44e8471d0fc11c16b32d7a1e77874ffb009d2dc4f09a07bccbb8b100834d9",
+    "sha256": "28d379859f606efe18563ff5d19561e25a72907255a1bf4b755d4c9d08b4b08b",
+    "projection": "Portable configuration preserved; verified lifecycle concurrency and typed diagnostics repair."
   },
   {
     "path": "src/integrity_client_memory/resources/linux/linux_runtime_factory.py",
     "source": "clients/linux/linux_runtime_factory.py",
-    "source_sha256": "4a1a2a6f7cc48faf95e264a6696863640044c5a222ddc8deadf5852ab91ad793",
-    "sha256": "040d302f4d23d31e1f06782f5c67e13ef28aa5c1d001ec0f0432dd72efbfc4db"
+    "source_sha256": "04fcd71e0c7de98569ff926bf40921794555f50a032364af6a10c212b7e9d88b",
+    "sha256": "c320779a883df2c95c7eff4f96a85ce6442a872a4e5d27619e7875becc2bdfc6",
+    "projection": "Portable configuration preserved; verified lifecycle concurrency and typed diagnostics repair."
   },
   {
     "path": "src/integrity_client_memory/resources/windows/admission-system.ps1",
@@ -211,5 +213,12 @@
     "source": "guardian/plugins/integrity-memory/hooks/integrity_scope_synapse.py",
     "source_sha256": "baf13ab6bb2f3c94886ab703b54a53efae16b302f890e61c6512d71823436c2f",
     "sha256": "988529e3543c4864f7ff1474f7d3c62e3b3b6f633277c2e96fd0f740fdce850a"
+  },
+  {
+    "path": "src/integrity_client_memory/generation_navigation.py",
+    "source": "managed-source/generation_navigation.py",
+    "source_sha256": "dddfbd10d72aba2b040e78eeeab8aba675fbc9efefbf7f9ce637cf731415a1b0",
+    "sha256": "6e42c14dccc37ef591dfcff53a43636e6cd052daf327df8c2e0696ac89dbd35b",
+    "projection": "Pure owner-parameterized renderer; deployment paths and pins omitted."
   }
 ]

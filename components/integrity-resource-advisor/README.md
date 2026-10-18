@@ -1,6 +1,31 @@
 # Integrity Resource Advisor 0.1.0rc6
 
-> Current continuation: **0.1.0rc6**, source candidate **2026.09.19-resource-advisor.7**. Bounded read-only Codex model/rate-limit discovery and one exact local PM-thread usage reader are implemented; real admitted dispatch and end-to-end acceptance are still
+## Port and service identity contract
+
+This rc6 profile has no HTTP listener, dashboard daemon, `/api/health` endpoint
+or default UI port. Importing its modules and running the synthetic `--demo`
+opens no network connection and starts no process. The separately requested
+`app_server_snapshot` command starts one caller-owned stdio process; it does not
+turn this package into an HTTP service.
+
+For a separate optional dashboard integration, use configurable endpoints and
+reserve distinct ports: dashboard default **18765**, Action Log **8765**. The
+dashboard must reject the reserved Action Log port. These are integration
+requirements for a dashboard profile, not HTTP features implemented by rc6.
+Installing this package does not migrate an existing host configuration.
+
+A successful HTTP response on a port does not identify a service. A host health
+check must validate the expected service identity and compatible protocol/version
+before accepting its health; an Action Log health response cannot certify a
+dashboard, and the reverse is also invalid. A configured nondefault endpoint
+must receive the same identity check. This rc6 profile cannot report a dashboard
+or daemon healthy because it implements neither.
+
+The portable rc6 API and package version remain unchanged. A separate later UI
+profile must retain its own source/version lineage instead of being relabeled as
+this rc6 implementation.
+
+> Current continuation: **0.1.0rc6**, source candidate **2026.10.18-resource-advisor-port-contract.1**. Bounded read-only Codex model/rate-limit discovery and one exact local PM-thread usage reader are implemented; real admitted dispatch and end-to-end acceptance are still
 > required by the owner IN THIS PR. Earlier RC2 validation below is historical.
 > See CODEX-INTEGRATION.md (not included in public source) and the current
 > residual review (not included in public source).
