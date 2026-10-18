@@ -1082,14 +1082,29 @@ def _owning_codex_app_tool_pipes(reader):
     return result[:128]
 
 
-def _native_owning_head(identity, expected_turn_id=None):
+def _load_linux_owning_reader():
     import types
     raw=b'"""Pinned POSIX owner adapter. No fallback host, resume, mutation or native start."""\nimport hashlib,importlib.util,json,os,re,stat,time\nfrom pathlib import Path\nFACTORY_SHA=\'75a542a2d1b0cedc634c491bc4b083d6b093ea12754a7722f45d77acd04b60bb\'\nROOT=Path(\'/etc/codex/integrity-memory-lts/native-readers\')/FACTORY_SHA\nUUID=re.compile(r\'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\\Z\')\ndef need(ok,code):\n    if not ok:raise ValueError(code)\ndef read_current_head(sdk,thread_id,expected_turn_id=None):\n    need(UUID.fullmatch(str(thread_id)) and (expected_turn_id is None or UUID.fullmatch(str(expected_turn_id))),\'linux_native_subject_invalid\')\n    metadata=sdk.request(\'thread/read\',{\'threadId\':thread_id,\'includeTurns\':False},6)\n    need(isinstance(metadata,dict) and not metadata.get(\'truncated\') and not metadata.get(\'itemsTruncated\') and isinstance(metadata.get(\'thread\'),dict),\'linux_native_thread_invalid\')\n    thread=metadata[\'thread\']\n    need(thread.get(\'id\')==thread_id and not thread.get(\'truncated\') and not thread.get(\'itemsTruncated\'),\'linux_native_thread_mismatch\')\n    page=sdk.request(\'thread/turns/list\',{\'threadId\':thread_id,\'limit\':1,\'sortDirection\':\'desc\',\'itemsView\':\'notLoaded\'},10)\n    need(isinstance(page,dict) and not page.get(\'truncated\') and not page.get(\'itemsTruncated\'),\'linux_native_page_invalid\')\n    rows=page.get(\'data\');need(isinstance(rows,list) and len(rows)==1,\'linux_native_head_missing\');turn=rows[0]\n    need(isinstance(turn,dict) and UUID.fullmatch(str(turn.get(\'id\'))) and turn.get(\'status\') in {\'inProgress\',\'completed\',\'failed\',\'interrupted\'} and turn.get(\'itemsView\')==\'notLoaded\' and turn.get(\'items\')==[] and not turn.get(\'truncated\') and not turn.get(\'itemsTruncated\'),\'linux_native_head_invalid\')\n    need(expected_turn_id is None or turn[\'id\']==expected_turn_id,\'linux_native_turn_mismatch\')\n    return {\'id\':turn[\'id\'],\'status\':turn[\'status\']}\ndef verified_current_head(thread_id,expected_turn_id=None):\n    need(os.name==\'posix\' and UUID.fullmatch(thread_id),\'linux_native_subject_invalid\')\n    path=ROOT/\'linux_runtime_factory.py\';details=path.lstat()\n    need(not path.is_symlink() and stat.S_ISREG(details.st_mode) and details.st_uid==0 and not stat.S_IMODE(details.st_mode)&0o022,\'linux_native_factory_custody_invalid\')\n    raw=path.read_bytes();need(hashlib.sha256(raw).hexdigest()==FACTORY_SHA,\'linux_native_factory_pin_changed\')\n    spec=importlib.util.spec_from_file_location(\'owning_linux_verified_factory\',path)\n    factory=importlib.util.module_from_spec(spec);exec(compile(raw,str(path),\'exec\'),factory.__dict__)\n    profile=json.loads(factory.protected_bytes(factory.CONFIG,private=True))\n    sdk=factory.UnixOwnerSDK(thread_id,time.monotonic()+18,profile);sdk.turn_id=expected_turn_id\n    try:return read_current_head(sdk,thread_id,expected_turn_id)\n    finally:sdk.close()\ndef current_owning_turn(thread_id,expected_turn_id=None):\n    need(os.environ.get(\'CODEX_THREAD_ID\')==thread_id,\'linux_native_caller_mismatch\')\n    return verified_current_head(thread_id,expected_turn_id)\n'
     if _sha256_bytes(raw) != _integrity_value('pin_5a4e77c00ca8'):
         raise TurnEnvelopeError('owning Linux adapter pin changed')
     module=types.ModuleType('envelope_owning_linux_reader')
     exec(compile(raw,'immutable-linux-owning-adapter','exec'),module.__dict__)
-    return module.current_owning_turn(identity,expected_turn_id)
+    return module
+
+
+def _native_owning_head(identity, expected_turn_id=None):
+    return _load_linux_owning_reader().current_owning_turn(identity, expected_turn_id)
+
+
+def _original_producer_head(identity, expected_turn_id):
+    """Only the validated private hook producer may supply this identity.
+
+    The shared MCP process has no per-thread environment. The original private
+    claim, custody and identity commitments are checked by the sole caller
+    before this function runs. The pinned reader still verifies the native
+    daemon, socket, exact thread and exact current turn.
+    """
+    return _load_linux_owning_reader().verified_current_head(identity, expected_turn_id)
 
 
 def issue_owning_lifecycle(name, arguments, *, identity, state, root=None, state_root=None):
@@ -1252,34 +1267,35 @@ def consume_owning_lifecycle(ref,name,arguments,*,root=None,state_root=None):
                 or not isinstance(claims.get('expires_epoch'),(int,float)) or time.time()>=claims['expires_epoch']):
             raise TurnEnvelopeError('owning lifecycle handoff mismatch')
         path.unlink()  # One use before any lifecycle side effect.
-        identity=os.environ.get('CODEX_THREAD_ID','')
-        actual,revision=_current_owning_source(identity,state_root=state_root)
-        if (claims.get('mode') not in {'current','historical-own'} or claims.get('source_revision_sha256')!=revision
-                or claims.get('thread_id_sha256')!=_identity_hash(identity,'thread_id')
-                or claims.get('turn_id_sha256')!=_identity_hash(actual['turn_id'],'turn_id')
-                or claims.get('generation')!=actual['turn_memory_generation']
-                or claims.get('intent_id')!=actual.get('turn_memory_intent_id')
-                or claims.get('prompt_sha256')!=actual.get('prompt_sha256')
-                or claims.get('context_admission_id')!=actual.get('model_mcp_context_admission_id')
-                or not _owning_process_ancestor(claims.get('issuer_parent_pid'),claims.get('issuer_parent_birth'))):
-            raise TurnEnvelopeError('owning lifecycle source superseded')
-        head=_native_owning_head(identity,actual['turn_id'])
-        if (not isinstance(head,dict) or head.get('id')!=actual['turn_id']
-                or head.get('status') not in ('inProgress','completed','failed','interrupted')
-                or name=='integrity_turn_memory_open' and head.get('status')!='inProgress'):
-            raise TurnEnvelopeError('owning Native source superseded')
-        if claims['mode']=='historical-own':
-            if state_root is not None:raise TurnEnvelopeError('historical recovery state override denied')
-            if name!='integrity_turn_memory_close' or arguments.get('outcome')!='events':
-                raise TurnEnvelopeError('historical recovery permits only owned events-close')
-            expected,target=_historical_own_target(identity,actual)
-            if (arguments!=expected or claims.get('historical_target_sha256')!=
-                    _sha256_text(json.dumps(target,sort_keys=True,separators=(',',':')))):
-                raise TurnEnvelopeError('historical recovery target changed')
-        elif 'recovery_binding' in arguments:
-            raise TurnEnvelopeError('historical recovery context requires historical mode')
-        revalidate_consumed_own_lifecycle(claims,name,arguments,state_root=state_root)
-        return claims
+    # Native proof can block; never hold the global custody lock across it.
+    identity=os.environ.get('CODEX_THREAD_ID','')
+    actual,revision=_current_owning_source(identity,state_root=state_root)
+    if (claims.get('mode') not in {'current','historical-own'} or claims.get('source_revision_sha256')!=revision
+            or claims.get('thread_id_sha256')!=_identity_hash(identity,'thread_id')
+            or claims.get('turn_id_sha256')!=_identity_hash(actual['turn_id'],'turn_id')
+            or claims.get('generation')!=actual['turn_memory_generation']
+            or claims.get('intent_id')!=actual.get('turn_memory_intent_id')
+            or claims.get('prompt_sha256')!=actual.get('prompt_sha256')
+            or claims.get('context_admission_id')!=actual.get('model_mcp_context_admission_id')
+            or not _owning_process_ancestor(claims.get('issuer_parent_pid'),claims.get('issuer_parent_birth'))):
+        raise TurnEnvelopeError('owning lifecycle source superseded')
+    head=_native_owning_head(identity,actual['turn_id'])
+    if (not isinstance(head,dict) or head.get('id')!=actual['turn_id']
+            or head.get('status') not in ('inProgress','completed','failed','interrupted')
+            or name=='integrity_turn_memory_open' and head.get('status')!='inProgress'):
+        raise TurnEnvelopeError('owning Native source superseded')
+    if claims['mode']=='historical-own':
+        if state_root is not None:raise TurnEnvelopeError('historical recovery state override denied')
+        if name!='integrity_turn_memory_close' or arguments.get('outcome')!='events':
+            raise TurnEnvelopeError('historical recovery permits only owned events-close')
+        expected,target=_historical_own_target(identity,actual)
+        if (arguments!=expected or claims.get('historical_target_sha256')!=
+                _sha256_text(json.dumps(target,sort_keys=True,separators=(',',':')))):
+            raise TurnEnvelopeError('historical recovery target changed')
+    elif 'recovery_binding' in arguments:
+        raise TurnEnvelopeError('historical recovery context requires historical mode')
+    revalidate_consumed_own_lifecycle(claims,name,arguments,state_root=state_root)
+    return claims
 
 
 def revalidate_consumed_own_lifecycle(claims,name,arguments,*,state_root=None):
@@ -1872,14 +1888,29 @@ def bind_resume_identity_from_claim(*, producer_turn_ref, producer_claim_id):
         if environment_identity is not None and environment_identity != identity:
             raise TurnEnvelopeError("original hook Native identity conflicts with caller")
         public = _public(original, producer_turn_ref)
-        state = _resume_read_state(identity)
-        if state.get("turn_id") != native["turn_id"]:
-            raise TurnEnvelopeError("original hook Native turn superseded")
-        before = _resume_successor_join(public, state, identity, _native_owning_head(identity), producer_turn_ref)
-        after = _resume_successor_join(public, _resume_read_state(identity), identity,
-                                       _native_owning_head(identity), producer_turn_ref)
-        if before != after or _read(_path(target, producer_turn_ref)) != original:
-            raise TurnEnvelopeError("original hook Native identity changed during binding")
+    # Native proof must not block unrelated envelope operations.
+    state = _resume_read_state(identity)
+    if state.get("turn_id") != native["turn_id"]:
+        raise TurnEnvelopeError("original hook Native turn superseded")
+    # Identity here comes only from the original validated private claim.
+    # Never inject a model-supplied identity into the process environment.
+    head_reader = _original_producer_head if os.name != "nt" else _native_owning_head
+    before = _resume_successor_join(public, state, identity,
+                                   head_reader(identity, native["turn_id"]), producer_turn_ref)
+    final_state = _resume_read_state(identity)
+    after = _resume_successor_join(public, final_state, identity,
+                                  head_reader(identity, native["turn_id"]), producer_turn_ref)
+    if before != after:
+        raise TurnEnvelopeError("original hook Native identity changed during binding")
+    with _exclusive_root_lock(target):
+        current = _read(_path(target, producer_turn_ref))
+        _validate_common(current, producer_turn_ref)
+        if (current != original or current.get("status") != "claimed"
+                or current["expires_epoch"] <= time.time()):
+            raise TurnEnvelopeError("original hook private claim changed during binding")
+        _require_claim(current, producer_claim_id)
+        if _resume_read_state(identity) != final_state:
+            raise TurnEnvelopeError("original hook Native state changed during binding")
         _RESUME_CLAIM_OWNER = (identity, original["generation"], public["turn_ref_digest"])
 
 

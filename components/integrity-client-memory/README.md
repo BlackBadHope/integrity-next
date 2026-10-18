@@ -1,6 +1,22 @@
 # integrity-client-memory
 
-Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Hook revision is 1.8.0; broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
+Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.8.1; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
+
+## Linux lifecycle repair
+
+Slow Native ownership proofs execute outside the shared custody lock. One-use
+consumption, claim expiry and final state comparisons remain under the lock.
+The shared MCP process verifies the original private producer's exact Native
+thread and turn without manufacturing a per-thread environment identity.
+Runtime failures expose bounded static codes, message digests and safe frame
+names, never arbitrary exception text or prompt content.
+
+`generation_navigation.render_config()` is a pure helper for adding an inert
+generation navigation field to a caller-owned config. Supply your own exact
+preimage digest, generation, Python command and broker script. It preserves
+unrelated bytes and rejects foreign drift. Applying the result and requesting
+the normal MCP refresh remain separate owner actions; importing or calling the
+renderer performs neither action.
 
 ## Installation and configuration
 
