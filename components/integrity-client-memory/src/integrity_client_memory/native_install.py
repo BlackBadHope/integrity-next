@@ -225,7 +225,7 @@ def build(vendor, upstream, bindings, output, tools=None):
         source_pins[source.name] = digest(target.read_bytes())
     template_pins = dict(source_pins)
     derivations = []
-    if vendor == "codex":
+    if vendor in {"codex", "claude"}:
         from .transport_policy import render_windows_transport
         broker_path = runtime / broker_name
         rendered, policy = render_windows_transport(broker_path.read_bytes())

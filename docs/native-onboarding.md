@@ -17,7 +17,7 @@ sibling catalogues. Neither command is a live acceptance certificate.
 Revision 1.9.2 also pins every generated vendor hook/MCP/enable file. Changing
 one makes verification fail before launching a hook or broker. Profiles made
 by 1.9.1 lack those pins: regenerate them into a new private directory with
-1.9.2, review the emitted files, and keep the old profile for rollback. Do not
+1.9.3, review the emitted files, and keep the old profile for rollback. Do not
 add hashes by hand to make a changed profile appear accepted.
 
 ## Supported owner routes and prerequisites
@@ -133,7 +133,7 @@ that disables them has to be addressed by its owner.
 
 The MCP server appears as `integrity_native`. The generated config gives its
 outer tool boundary 210 seconds.
-The compiled Windows transport allows up to 45 seconds for a cold upstream
+Both compiled Windows transports (Codex and Claude Code) allow up to 45 seconds for a cold upstream
 `initialize`, within the existing request deadline. A failed admission never
 instructs the model to invoke its one-use reference again; a pre-send refusal
 still has `request_sent=false`. A sent or unknown operation requires receipt
@@ -346,8 +346,12 @@ The evidence categories for this change are intentionally distinct:
 - **Claude historical:** the canonical record dated 2026-10-09 reports the
   installed Native package and managed policy verified, while full repair
   acceptance remained incomplete. This is not upgraded into an all-green fresh
-  Claude CLI or Desktop run. The exported CLI owner adapter's process/ledger/
-  transcript checks are preserved and replayable.
+  Claude CLI or Desktop run. Later historical Claude Code probes dated October
+  16 do prove opaque-reference admission, event append and signed terminal,
+  including two read-only closes. Their receipts use the legacy store and
+  synthetic `intent:...` turn IDs. They do not certify the separate Native
+  publisher route with an actual turn UUID. The exported CLI owner adapter's
+  process/ledger/transcript checks are preserved and replayable.
 - **Antigravity historical:** the operator record dated 2026-10-16 UTC reports
   admission and signed close for Gemini and Claude, append-before-admission
   refusal, one model writing a record and the other reading its exact UID,

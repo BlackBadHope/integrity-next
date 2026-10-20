@@ -9,8 +9,11 @@ import pytest
 
 from integrity_client_memory.transport_policy import render_windows_transport
 
-SOURCE = (Path(__file__).resolve().parents[1] /
-          "src/integrity_client_memory/resources/windows/integrity-client-turn-broker.py").read_bytes()
+@pytest.fixture(params=["windows", "claude-native"])
+def broker_source(request):
+    return (Path(__file__).resolve().parents[1] /
+            "src/integrity_client_memory/resources" / request.param /
+            "integrity-client-turn-broker.py").read_bytes()
 
 
 def methods(raw):
@@ -36,33 +39,34 @@ def receive(values, budget, delay):
     values["time"] = SimpleNamespace(monotonic=lambda: clock.now)
     class Delayed:
         def get(self, timeout):
-            clock.now += timeout
+            clock.now = min(clock.now + timeout, delay)
             if clock.now < delay:
                 raise queue.Empty
             return b'{"jsonrpc":"2.0","id":1,"result":{"serverInfo":{"name":"integrity-client-memory"}}}'
     subject = SimpleNamespace(_check_public=lambda **kw: None, _responses=Delayed())
-    subject._decode_response = MethodType(values["_decode_response"], subject)
+    if "_decode_response" in values:
+        subject._decode_response = MethodType(values["_decode_response"], subject)
     return values["_receive"](subject, 1, timeout=budget, request_sent=True)
 
 
-def test_delayed_initialize_survives_previous_twenty_second_cutoff():
-    before = methods(SOURCE)
+def test_delayed_initialize_survives_previous_twenty_second_cutoff(broker_source):
+    before = methods(broker_source)
     with pytest.raises(before["BrokerError"], match="timed out"):
         receive(before, 20, 21)
-    rendered, policy = render_windows_transport(SOURCE)
+    rendered, policy = render_windows_transport(broker_source)
     assert receive(methods(rendered), policy["initialize_timeout_seconds"], 21)["serverInfo"]
 
 
-def test_unresponsive_initialize_still_has_a_finite_deadline():
-    rendered, policy = render_windows_transport(SOURCE)
+def test_unresponsive_initialize_still_has_a_finite_deadline(broker_source):
+    rendered, policy = render_windows_transport(broker_source)
     values = methods(rendered)
     with pytest.raises(values["BrokerError"], match="timed out"):
         receive(values, policy["initialize_timeout_seconds"], 46)
 
 
 @pytest.mark.parametrize("sent", [False, True])
-def test_admission_never_advises_second_model_call(sent):
-    rendered, _ = render_windows_transport(SOURCE)
+def test_admission_never_advises_second_model_call(sent, broker_source):
+    rendered, _ = render_windows_transport(broker_source)
     values = methods(rendered)
     error = values["BrokerError"]("upstream response timed out", layer="broker-upstream", request_sent=sent)
     result = values["_denial"](SimpleNamespace(), values["CURRENT_TURN_CONTEXT_TOOL"], error)
@@ -72,13 +76,13 @@ def test_admission_never_advises_second_model_call(sent):
     assert denial["request_sent"] is sent
 
 
-def test_renderer_preserves_every_owning_guard_and_is_deterministic():
-    rendered, _ = render_windows_transport(SOURCE)
+def test_renderer_preserves_every_owning_guard_and_is_deterministic(broker_source):
+    rendered, _ = render_windows_transport(broker_source)
     def guards(raw):
         cls = next(n for n in ast.parse(raw).body if isinstance(n, ast.ClassDef) and n.name == "TurnBroker")
         return {n.name: ast.dump(n) for n in cls.body if isinstance(n, ast.FunctionDef) and n.name != "_denial"}
-    assert guards(rendered) == guards(SOURCE)
+    assert guards(rendered) == guards(broker_source)
     assert render_windows_transport(rendered)[0] == rendered
     with pytest.raises(ValueError, match="structure changed"):
-        render_windows_transport(SOURCE.replace(b"UPSTREAM_INITIALIZE_TIMEOUT_SECONDS = 20",
+        render_windows_transport(broker_source.replace(b"UPSTREAM_INITIALIZE_TIMEOUT_SECONDS = 20",
                                                b"UPSTREAM_INITIALIZE_TIMEOUT_SECONDS = 900"))
