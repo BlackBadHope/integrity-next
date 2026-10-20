@@ -2,7 +2,7 @@
   "schema": "integrity.public-plugin-source/v1",
   "configured": false,
   "distribution": "integrity-client-memory",
-  "version": "1.9.1",
+  "version": "1.9.2",
   "memory_facade_api": "2.11.0",
   "source_root": "components/integrity-client-memory",
   "configuration_environment": "INTEGRITY_CLIENT_MEMORY_CONFIG",
