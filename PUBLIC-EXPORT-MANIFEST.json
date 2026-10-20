@@ -30,11 +30,11 @@
       "sha256": "88b59c3c54f31a341f680779c608835c97d70a2bd4956819a8f9d9ab4bdf4610"
     },
     {
-      "bytes": 5320,
+      "bytes": 5334,
       "mode": "0o644",
       "path": ".github/scripts/verify_wheels.py",
       "sanitization_edits": 0,
-      "sha256": "840ed6f3816a6f38aecfdb94a47e786b42cdb117b8fc588fc967b96e556999d8"
+      "sha256": "e0a6e43179dd855f65dcbf3dbf71e3970d8fe6a0e3573b9c8e4c2391f9e2dcdf"
     },
     {
       "bytes": 9800,
@@ -6267,11 +6267,11 @@
       "sha256": "3752ff1293c18ce8e8810e8e654a16c73b7d6ef898c36fa45ca96e8e23b54731"
     },
     {
-      "bytes": 1986,
+      "bytes": 4079,
       "mode": "0o644",
       "path": "tests/test_public_release_tools.py",
       "sanitization_edits": 0,
-      "sha256": "68b37b39ad34fd66ff1608baa30033880388cd236386f63b601a1549c8f1e516"
+      "sha256": "249f5a54bb8c4f747e67026f32ac234cdc7833156c00ec0c4f7f4bab64f7da29"
     },
     {
       "bytes": 3388,
@@ -6316,7 +6316,7 @@
       "sha256": "178e2f0d53cb7fecb5fd2b422e2aa2db22c268d809b820399f35c7a9bcccc9b9"
     }
   ],
-  "generated_file_count": 29,
+  "generated_file_count": 37,
   "generated_files": [
     {
       "bytes": 1041,
@@ -6347,11 +6347,11 @@
       "sha256": "6b22c93da8a2518152bff798ca4d50ac247072c6b7baa20d353d5d52658f19d9"
     },
     {
-      "bytes": 23605,
+      "bytes": 23691,
       "mode": "0o755",
       "path": ".github/scripts/public_surface_check.py",
       "sanitization_edits": 0,
-      "sha256": "1ceceb2736c4c5600c083717bc33c4e4578dc856e1110a8207b247bbd60d2c6b"
+      "sha256": "5f4310320585ed34f67fcba839867e20714787c02ff6ddc75c667ad78ef2ecac"
     },
     {
       "bytes": 6634,
@@ -6361,11 +6361,18 @@
       "sha256": "c7febfedca7cf8e16f62f00b6af65808b633dc1ba26351c7b1ada8de2946e222"
     },
     {
-      "bytes": 2550,
+      "bytes": 3248,
       "mode": "0o644",
       "path": ".github/workflows/public-surface.yml",
       "sanitization_edits": 0,
-      "sha256": "e31176e443fa13d1a4ad91313e17807c23457460f82feac0fc6f757598decae1"
+      "sha256": "4c10bbf82bcaa6908499441d2f64915486104cd1e6be81b8a48d6c7013495400"
+    },
+    {
+      "bytes": 94,
+      "mode": "0o644",
+      "path": ".gitignore",
+      "sanitization_edits": 0,
+      "sha256": "d3b0724ccd2ccd0d3c5fae494e6b6d4aba2cd5a61e45d2b9c67ba67b9ed9522b"
     },
     {
       "bytes": 13728,
@@ -6431,11 +6438,11 @@
       "sha256": "09090df578c23da70a583367ce3a32481835fde9e627d79504b8a01789313e4b"
     },
     {
-      "bytes": 9682,
+      "bytes": 10033,
       "mode": "0o644",
       "path": "README.md",
       "sanitization_edits": 0,
-      "sha256": "bd4f41fcdc8cad37c223ae5f10f884e6f869f1cbb734b3b5855530145c8508d7"
+      "sha256": "9a7f1aad0671a0e2b1e0c6e939a8bc90b5b88b22cee14d42b6ea870dd36b3351"
     },
     {
       "bytes": 1132,
@@ -6508,6 +6515,55 @@
       "sha256": "357c939ae645c8d9d726760a9cdd732eba1aba6d029b8dbdaf3101df08e1c5dd"
     },
     {
+      "bytes": 9107,
+      "mode": "0o644",
+      "path": "examples/local-memory/README.md",
+      "sanitization_edits": 0,
+      "sha256": "7726834213403c469bba02271a73076e98769fe727d6e8730ba66a966ad72c3a"
+    },
+    {
+      "bytes": 2002,
+      "mode": "0o644",
+      "path": "examples/local-memory/create_case.py",
+      "sanitization_edits": 0,
+      "sha256": "56572705a9d94b6b969493e6f3f3e6d4f8005f084ebd52a5b4f8216b0896170f"
+    },
+    {
+      "bytes": 4428,
+      "mode": "0o644",
+      "path": "examples/local-memory/evaluate_recall.py",
+      "sanitization_edits": 0,
+      "sha256": "fcdb0cf01bccfd0e43f5a0afadfb10a10083c4be53ade226baecdf5cc28688fa"
+    },
+    {
+      "bytes": 5910,
+      "mode": "0o644",
+      "path": "examples/local-memory/memory_server.py",
+      "sanitization_edits": 0,
+      "sha256": "b00262cf478b570569c58c8a970d64fc1bc80d24c5a7d0e341f7958e51562d8d"
+    },
+    {
+      "bytes": 4895,
+      "mode": "0o644",
+      "path": "examples/local-memory/pilot-observations.json",
+      "sanitization_edits": 0,
+      "sha256": "3166af38b2137bcd9d662dac8ca82bc1ffa7368fd67a5e9a84255babd5ee2275"
+    },
+    {
+      "bytes": 2220,
+      "mode": "0o644",
+      "path": "examples/local-memory/setup.py",
+      "sanitization_edits": 0,
+      "sha256": "5694063dd34304321fa7654c39edbb33998e6feaf24f62e70a6c08c3cf70c837"
+    },
+    {
+      "bytes": 4295,
+      "mode": "0o644",
+      "path": "examples/local-memory/verify_connection.py",
+      "sanitization_edits": 0,
+      "sha256": "90c65124e71bba9a456fd8202098dcbf34ba12c23e9a76069b2667fc36372ecf"
+    },
+    {
       "bytes": 1565,
       "mode": "0o644",
       "path": "pyproject.toml",
@@ -6522,7 +6578,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:122d16a8e97dc13eb8e983539ebc7756096afd56aec21eaffffe82efcd282ebd",
+  "projection_digest": "sha256:8ec94a10571ac34378d3b6bfa5fa02f85ee28ca7fa45d5fcfaf264180ed3a062",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",

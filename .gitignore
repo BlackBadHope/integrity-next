@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+.venv/
+.local-memory-case/
+.local-memory-clients/
+.local-memory-pilot/
