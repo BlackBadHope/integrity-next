@@ -1003,8 +1003,7 @@ def _current_owning_source(identity, *, state_root=None):
         raise TurnEnvelopeError('owning native caller mismatch')
     if re.fullmatch(r'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}',identity) is None:
         raise TurnEnvelopeError('owning Native thread missing')
-    base = (Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex')))/'integrity-memory/state'
-            if state_root is None else state_root)
+    base = _owning_state_root() if state_root is None else state_root
     path=base/(_sha256_text(identity)+'.json')
     for member in (path,*path.parents):
         details=member.lstat()
@@ -1537,6 +1536,17 @@ def _resume_shape(payload):
     if len(_canonical(payload)) > _RESUME_LIMIT:raise TurnEnvelopeError("resume descriptor too large")
     return binding,control
 
+def _owning_state_root():
+    """Use the owner's pinned profile root; an environment value cannot redirect it."""
+    base = Path(_integrity_value('path_2dbd800b4e29'))
+    if not base.is_absolute():
+        raise TurnEnvelopeError('owning state root must be absolute')
+    selected = os.environ.get('INTEGRITY_CLIENT_STATE_ROOT')
+    if selected is not None and Path(selected).resolve() != base.resolve():
+        raise TurnEnvelopeError('owning state root disagrees with pinned profile')
+    return base
+
+
 def _resume_identity():
     identity = os.environ.get("CODEX_THREAD_ID")
     anchor = _RESUME_CLAIM_OWNER
@@ -1552,7 +1562,7 @@ def _resume_identity():
 
 def _resume_read_state(identity):
     # Same fixed locator and custody reader as existing own lifecycle. Never a model path.
-    base=Path(os.environ.get("CODEX_HOME",str(Path.home()/".codex")))/"integrity-memory/state"
+    base = _owning_state_root()
     path=base/(_sha256_text(identity)+".json")
     for member in (path,*path.parents):
         details=member.lstat()

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -22,7 +23,9 @@ def verify(path):
             or profile.get("root") != str(root) or profile.get("platform") != sys.platform
             or profile.get("vendor") not in {"codex", "claude", "antigravity"}
             or not isinstance(profile.get("files"), dict)
-            or not isinstance(profile.get("auxiliary_files", {}), dict)):
+            or not isinstance(profile.get("auxiliary_files", {}), dict)
+            or not isinstance(profile.get("support_files", {}), dict)
+            or not isinstance(profile.get("generated_launch_files", {}), dict)):
         raise ValueError("Native profile identity/platform mismatch")
     python = plain(profile["python"], 1024 * 1024 * 1024)
     if python != Path(sys.executable).resolve() or digest(python.read_bytes()) != profile["python_sha256"]:
@@ -32,6 +35,21 @@ def verify(path):
                       ("tools_sha256", "integrity-client-tools.json")):
         if digest(plain(root / name).read_bytes()) != profile[key]:
             raise ValueError("Native configuration pin changed")
+    from .profile_roots import validate_existing
+    preserved = validate_existing(profile)
+    component = read_json(root / "component.json")
+    server_name = profile.get("mcp_server_name", "integrity_native")
+    if (server_name not in {"integrity_native", "integrity_client_memory"}
+            or ("mcp_server_name" in component.get("values", {})
+                and component["values"]["mcp_server_name"] != server_name)):
+        raise ValueError("Native Memory server name binding changed")
+    for field, name, component_key in (("state_root", "state", "path_2dbd800b4e29"),
+                                       ("envelope_root", "envelopes", "path_f51de7de1b1c")):
+        expected = preserved.get(name, {}).get("path", str(root / ("state" if name == "state" else "turn-envelopes")))
+        values = component.get("values", {})
+        if profile.get(field, expected) != expected or (profile["vendor"] == "codex" and
+                (name in preserved or component_key in values) and values.get(component_key) != expected):
+            raise ValueError("Native preserved root binding changed")
     for name, pin in profile["files"].items():
         if Path(name).name != name or not name.endswith(".py") or digest(plain(root / "runtime" / name).read_bytes()) != pin:
             raise ValueError("Native source pin changed")
@@ -40,6 +58,21 @@ def verify(path):
             raise ValueError("Native auxiliary file pin changed")
     if profile["hook"] not in profile["files"] or profile["broker"] not in profile["files"]:
         raise ValueError("Native entrypoint missing")
+    for relative, pin in profile.get("support_files", {}).items():
+        member = Path(relative)
+        if member.is_absolute() or ".." in member.parts or str(member.as_posix()) != relative:
+            raise ValueError("Native support path invalid")
+        if digest(plain(root / "support" / member).read_bytes()) != pin:
+            raise ValueError("Native support source pin changed")
+    if profile.get("support_files"):
+        if digest(plain(root / "run-native-profile.py").read_bytes()) != profile["support_bootstrap_sha256"]:
+            raise ValueError("Native bootstrap pin changed")
+        for relative, pin in profile.get("generated_launch_files", {}).items():
+            member = Path(relative)
+            if member.is_absolute() or ".." in member.parts or str(member.as_posix()) != relative:
+                raise ValueError("Native launch path invalid")
+            if digest(plain(root / member).read_bytes()) != pin:
+                raise ValueError("Native launch configuration pin changed")
     launch_files = profile.get("launch_files")
     if not isinstance(launch_files, dict) or set(launch_files) != set(LAUNCH_FILES[profile["vendor"]]):
         raise ValueError("Native launch configuration pins missing; regenerate this legacy profile")
@@ -52,14 +85,16 @@ def verify(path):
 def environment(profile, root):
     result = dict(os.environ)
     result.update(INTEGRITY_CLIENT_MEMORY_CONFIG=str(root / "component.json"),
-                  INTEGRITY_CLIENT_STATE_ROOT=str(root / "state"),
-                  INTEGRITY_CLIENT_ENVELOPE_ROOT=str(root / "turn-envelopes"),
+                  INTEGRITY_CLIENT_STATE_ROOT=profile.get("state_root", str(root / "state")),
+                  INTEGRITY_CLIENT_ENVELOPE_ROOT=profile.get("envelope_root", str(root / "turn-envelopes")),
                   INTEGRITY_CLIENT_MCP_TRANSPORT=str(root / "transport.json"),
                   INTEGRITY_SCOPE_STATE_ROOT=str(root / "scope-state"))
     if profile["vendor"] == "claude":
         # This is a selector, never evidence. The reader still verifies the
         # actual CLI ancestor, publisher, delivery ledger and full transcript.
         result["CLAUDE_SESSION_ID"] = read_json(root / "component.json")["values"]["claude_session_id"]
+    if profile.get("support_files"):
+        result["PYTHONPATH"] = str(root / "support") + os.pathsep + result.get("PYTHONPATH", "")
     return result
 
 
@@ -69,6 +104,17 @@ def broker_command(profile, root):
     if profile["vendor"] != "antigravity":
         args += ["--upstream-server", "integrity-upstream"]
     return args
+
+
+def validate_tools_contract(profile, root, selected):
+    """Bind a launcher-visible contract hint to the already pinned profile."""
+    if selected is None:
+        return
+    expected = root / "integrity-client-tools.json"
+    if Path(selected).absolute() != expected:
+        raise ValueError("Native tools contract selection changed")
+    if digest(plain(expected).read_bytes()) != profile["tools_sha256"]:
+        raise ValueError("Native tools contract pin changed")
 
 
 def merge_output(left, right):
@@ -104,6 +150,36 @@ def blocked(value):
             or value.get("continue") is False)
 
 
+def execution_receipt(profile, root, event):
+    """Safe execution metadata, not a Native identity or authority assertion."""
+    hook_path = root / "runtime" / profile["hook"]
+    tree = ast.parse(hook_path.read_text(encoding="utf-8"))
+    versions = [ast.literal_eval(n.value) for n in tree.body
+                if isinstance(n, ast.Assign) and len(n.targets) == 1
+                and isinstance(n.targets[0], ast.Name) and n.targets[0].id == "HOOK_VERSION"]
+    if len(versions) != 1 or not isinstance(versions[0], str):
+        raise ValueError("Native execution version anchor changed")
+    return {"protocol": "integrity/native-execution/v1", "event": event,
+            "vendor": profile["vendor"], "hook_version": versions[0],
+            "profile_path": str(root / "profile.json"),
+            "profile_sha256": digest(plain(root / "profile.json").read_bytes()),
+            "hook_path": str(hook_path), "hook_sha256": profile["files"][profile["hook"]],
+            "python_path": profile["python"], "python_sha256": profile["python_sha256"],
+            "runtime_sha256": digest(plain(__file__).read_bytes()),
+            "wrapper_pid": os.getpid(), "wrapper_parent_pid": os.getppid(),
+            "configuration_verified": True, "native_ownership_verified": False,
+            "external_action_authority": False}
+
+
+def receipt_context(payload, event):
+    if event in {"SessionStart", "UserPromptSubmit"}:
+        return True
+    if event != "PostToolUse":
+        return False
+    # Tool arguments may contain private text: inspect only, never export them.
+    return "integrity_context_admission" in json.dumps(payload, ensure_ascii=False)
+
+
 def memory_call(raw):
     """A broken Memory route must not become an unrelated target-action veto."""
     try:
@@ -117,11 +193,11 @@ def memory_call(raw):
             arguments = tool.get("args", {})
             if not isinstance(arguments, dict):
                 return None
-            return arguments.get("ServerName") == "integrity_native"
+            return arguments.get("ServerName") in {"integrity_native", "integrity_client_memory"}
         name = payload.get("tool_name") or payload.get("toolName")
         if not isinstance(name, str) or not name:
             return None
-        if name.startswith("mcp__integrity_native__"):
+        if name.startswith(("mcp__integrity_native__", "mcp__integrity_client_memory__")):
             return True
         # Another Integrity product/server is a separate action boundary.
         if "__" in name or "." in name:
@@ -159,6 +235,7 @@ def hook(profile, root, event, raw):
     if not handlers:
         raise ValueError("unsupported Native event")
     result = {}
+    native_executed = False
     for command in handlers:
         done = subprocess.run(command, input=raw, capture_output=True, env=environment(profile, root),
                               timeout=50, check=False, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
@@ -170,7 +247,16 @@ def hook(profile, root, event, raw):
             raise ValueError("Native hook output invalid") from None
         if not isinstance(value, dict):
             raise ValueError("Native hook output shape invalid")
+        if command is native:
+            native_executed = True
         result = merge_output(result, value)
+        if native_executed and vendor == "codex" and receipt_context(payload, event):
+            proof = execution_receipt(profile, root, event)
+            # This is emitted only after the pinned Native process actually ran.
+            # It proves which source executed; Native ownership is separately verified.
+            result = merge_output(result, {"systemMessage": "INTEGRITY NATIVE EXECUTION " +
+                                          json.dumps(proof, ensure_ascii=False, separators=(",", ":"))})
+            native_executed = False
         if done.returncode or blocked(result):
             return result, done.returncode
     return result, 0
@@ -179,6 +265,7 @@ def hook(profile, root, event, raw):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", type=Path, required=True)
+    parser.add_argument("--tools-contract", type=Path)
     parser.add_argument("mode", choices=("verify", "probe", "mcp", "hook"))
     parser.add_argument("event", nargs="?")
     args = parser.parse_args(argv)
@@ -187,6 +274,7 @@ def main(argv=None):
         if args.mode == "hook":
             raw_input = sys.stdin.buffer.read(MAX_HOOK + 1)
         profile, root = verify(args.profile)
+        validate_tools_contract(profile, root, args.tools_contract)
         if args.mode == "verify":
             print(json.dumps({"status": "source-and-config-verified", "vendor": profile["vendor"],
                               "upstream_started": False, "native_ownership_verified": False, "live_acceptance": "NOT_RUN"}))

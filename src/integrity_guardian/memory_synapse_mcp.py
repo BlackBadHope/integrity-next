@@ -57,6 +57,7 @@ from .action_log_reader import (
 )
 from .authority_scope import memory_authority_contract
 from .event_recovery import validate_recovery
+from .snapshot_capacity import snapshot_allocation
 from .project_scope import ProjectScopeError, validated_metadata
 from .historical_archive import ArchivePolicy
 
@@ -74,6 +75,7 @@ from .context_budget import (
 from .medor_architecture import (
     CUSTODY_LEDGER_ID,
     TENANT_ID,
+    MedorArchitectureError,
     MedorArchitectureKeys,
     PersistentMedorArchitectureService,
     load_medor_architecture_signer,
@@ -205,7 +207,8 @@ CONTEXT_ADMISSION_REPLAY_RESERVATION_PROTOCOL = (
 )
 MAX_CONTEXT_ADMISSION_REPLAY_BYTES = 32 * 1_048_576
 MAX_CONTEXT_ADMISSION_REPLAY_CATALOG_BYTES = 512 * 1_048_576
-MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES = 2 * 1_024 * 1_024 * 1_024
+MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES = 4 * 1_024 * 1_024 * 1_024
+CONTEXT_ADMISSION_REPLAY_DISK_FREE_FLOOR_BYTES = 1_024 * 1_024 * 1_024
 MAX_CONTEXT_ADMISSION_REPLAY_RECORDS = 128
 CONTEXT_ADMISSION_REPLAY_TTL_SECONDS = 24 * 60 * 60
 CONTEXT_ADMISSION_REPLAY_ORPHAN_GRACE_SECONDS = 10 * 60
@@ -556,6 +559,14 @@ class FrozenSeedCatalogSnapshot:
                 ) as source_connection,
                 closing(sqlite3.connect(self.path)) as destination_connection,
             ):
+                # This owner-locked copy is private to a live process and is
+                # never recovered after a crash. Durable replay copies retain
+                # their separate verification/fsync path. Avoid journal/fsync
+                # work for this disposable destination only; the immutable
+                # source, custody checks and final quick_check stay unchanged.
+                destination_connection.execute("PRAGMA journal_mode=OFF")
+                destination_connection.execute("PRAGMA synchronous=OFF")
+
                 def check_deadline(
                     status: int,
                     remaining: int,
@@ -1691,7 +1702,13 @@ class HomeClient:
         return value
 
 
-class MemorySynapseMcp:
+from .same_session_recovery import (SessionRecoveryMixin, RECOVERY_PROTOCOL,
+    RECOVERY_CAPABILITY, RECOVERY_METHOD, SessionRecoveryError)
+
+
+from .operation_status import OperationStatusMixin, METHOD as OPERATION_STATUS_METHOD
+
+class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
     """One stdio-only facade instance with fixed server-side dependencies."""
 
     def __init__(
@@ -1824,6 +1841,11 @@ class MemorySynapseMcp:
         self._context_reattach_enabled = False
         self._context_reattach_control_only = False
         self._context_reattach_read_only = False
+        self._session_recovery_enabled = False
+        self._session_recovery_binding = None
+        self._session_recovery_replay = None
+        self._session_recovery_unretained_admission = None
+        self._session_recovery_unretained_registration = None
         self._broker_tool_surface_authenticated = False
         architecture_root = getattr(architecture, "root", None)
         self._context_admission_replay_root = (
@@ -1840,6 +1862,8 @@ class MemorySynapseMcp:
         self._active_context_replay_deadline: float | None = None
         self._context_admission_replay_reservation_id: str | None = None
         self._context_admission_replay_catalog_budget = 0
+        self._context_admission_replay_unavailable_reason: str | None = None
+        self._context_replay_unallocated_reservation_bytes = 0
         self._closed = False
         self._replay_migrations: dict[str, ReplayMigration] = {}
 
@@ -1921,8 +1945,10 @@ class MemorySynapseMcp:
         )
 
     def _reserve_context_admission_replay(self, replay_id: str) -> int | None:
+        self._context_admission_replay_unavailable_reason = None
         catalog_budget = self._prospective_context_replay_catalog_budget()
         if catalog_budget is None:
+            self._context_admission_replay_unavailable_reason = "replay-catalog-custody-unavailable"
             return None
         reservation_deadline = (
             time.monotonic()
@@ -1960,6 +1986,7 @@ class MemorySynapseMcp:
                     return existing_budget
                 additional = catalog_budget - existing_budget
                 if total_bytes + additional > MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES:
+                    self._context_admission_replay_unavailable_reason = "replay-logical-capacity-exhausted"
                     return None
             elif (
                 record_count + 1 > MAX_CONTEXT_ADMISSION_REPLAY_RECORDS
@@ -1969,6 +1996,21 @@ class MemorySynapseMcp:
                 + MAX_CONTEXT_ADMISSION_REPLAY_RESERVATION_BYTES
                 > MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES
             ):
+                self._context_admission_replay_unavailable_reason = "replay-logical-capacity-exhausted"
+                return None
+            else:
+                additional = (MAX_CONTEXT_ADMISSION_REPLAY_BYTES + catalog_budget
+                              + MAX_CONTEXT_ADMISSION_REPLAY_RESERVATION_BYTES)
+            # Serialize physical headroom with logical reservations. Existing
+            # unallocated promises count too; otherwise parallel admissions can
+            # reserve the same free blocks. The seed-session spool shares this
+            # filesystem and its already allocated bytes reduce f_bavail.
+            space = os.fstatvfs(self._prepare_context_replay_custody())
+            free_bytes = space.f_bavail * space.f_frsize
+            if free_bytes < (CONTEXT_ADMISSION_REPLAY_DISK_FREE_FLOOR_BYTES
+                             + self._context_replay_unallocated_reservation_bytes
+                             + additional):
+                self._context_admission_replay_unavailable_reason = "replay-physical-capacity-exhausted"
                 return None
             encoded = canonical_json(
                 {
@@ -2027,6 +2069,7 @@ class MemorySynapseMcp:
         reservation_id: str | None = None,
     ) -> bool:
         if self._context_admission_replay_root is None or _fcntl is None:
+            self._context_admission_replay_unavailable_reason = "replay-storage-unavailable"
             return False
         if reservation_id is not None:
             try:
@@ -2034,6 +2077,7 @@ class MemorySynapseMcp:
                     reservation_id
                 )
             except (McpFacadeError, OSError):
+                self._context_admission_replay_unavailable_reason = "replay-storage-unavailable"
                 return False
             if catalog_budget is None:
                 return False
@@ -2610,6 +2654,7 @@ class MemorySynapseMcp:
                 replay_hex = temporary_match.group("id")
                 sizes[replay_hex] = sizes.get(replay_hex, 0) + details.st_size
             total_bytes += details.st_size
+        physical_file_bytes = total_bytes
         effective_record_count = record_count
         for replay_hex, reservation in reservations.items():
             record_consumed = record_sizes.get(replay_hex, 0) + temporary_record_sizes.get(
@@ -2667,6 +2712,7 @@ class MemorySynapseMcp:
             total_bytes += max(0, catalog_budget - catalog_consumed)
             if replay_hex not in record_sizes:
                 effective_record_count += 1
+        self._context_replay_unallocated_reservation_bytes = max(0, total_bytes - physical_file_bytes)
         return total_bytes, effective_record_count
 
     @contextmanager
@@ -3326,6 +3372,7 @@ class MemorySynapseMcp:
         self._native_session_lease = state.get("native_session")
         self._context_admission_id = result.get("context_admission_id")
         self._archive_prompt_binding = result.get("prompt_binding")
+        self._remember_recovery_replay(record)
         migration = self._replay_migration(str(record["request_id"]))
         if migration is not None:
             self._deny_migrated_action_authority()
@@ -3351,7 +3398,9 @@ class MemorySynapseMcp:
             required = {"machine_id", "thread_id", "turn_id", "prompt_sha256"}
             if set(arguments) not in (required, required | {'intent_id'}):
                 raise McpFacadeError("turn registration requires one complete identity")
+            self._recovery_pre_open(arguments)
             result = store.open_turn(**arguments)
+            result = self._recovery_bind_open(result)
         elif name == "close":
             _reject_unknown(
                 arguments,
@@ -3835,6 +3884,15 @@ class MemorySynapseMcp:
     def _clear_intent_context(self, *, reason: str = "context-cleared") -> None:
         """Destroy logical owner-intent state while retaining shared services."""
 
+        if reason in {"context-rotation", "owner-intent-superseded"}:
+            self._recovery_revoke(reason)
+            # A successor without a replay reservation must not inherit the
+            # previous admission's retained evidence or registration. Idle
+            # cleanup deliberately preserves these for exact same-turn restore.
+            self._session_recovery_replay = None
+            self._session_recovery_binding = None
+            self._session_recovery_unretained_admission = None
+            self._session_recovery_unretained_registration = None
         self._context_reattach_read_only = False
         frozen_catalog = self._frozen_catalog
         self._frozen_catalog = None
@@ -4033,16 +4091,21 @@ class MemorySynapseMcp:
         assert self._snapshot_root is not None
         frozen_catalog: FrozenSeedCatalogSnapshot | None = None
         try:
-            frozen_catalog = FrozenSeedCatalogSnapshot(
-                self._snapshot_source,
+            with snapshot_allocation(
                 self._snapshot_root,
+                self._snapshot_source,
                 deadline_monotonic=self._active_context_replay_deadline,
-                maximum_bytes=(
-                    self._context_admission_replay_catalog_budget
-                    if self._active_context_replay_id is not None
-                    else None
-                ),
-            )
+            ):
+                frozen_catalog = FrozenSeedCatalogSnapshot(
+                    self._snapshot_source,
+                    self._snapshot_root,
+                    deadline_monotonic=self._active_context_replay_deadline,
+                    maximum_bytes=(
+                        self._context_admission_replay_catalog_budget
+                        if self._active_context_replay_id is not None
+                        else None
+                    ),
+                )
             self.lts = MemorySynapseLtsService(
                 frozen_catalog.path,
                 evidence_root=self.lts.evidence_root,
@@ -4330,23 +4393,35 @@ class MemorySynapseMcp:
                 "witness": after_witness,
             }
         )
-        feedback = self.architecture.record_event_append_outcome(
-            grant_id=authority["grant_id"],
-            request_digest=request_digest,
-            outcome=action_outcome,
-            witness_digest=witness_digest,
-            recorded_at=_utc_now(),
-        )
-        outcome_observed_at = _utc_now()
-        outcome_stage = self.architecture.plan_event_outcome(
-            action_stage=action_stage,
-            outcome=action_outcome,
-            passive_witness_digest=witness_digest,
-            feedback_receipt_id=feedback["receipt_id"],
-            feedback=feedback,
-            observed_at=outcome_observed_at,
-            as_of=outcome_observed_at,
-        )
+        feedback = None
+        outcome_stage = None
+        feedback_error = None
+        feedback_phase = "record-event-append-outcome"
+        try:
+            feedback = self.architecture.record_event_append_outcome(
+                grant_id=authority["grant_id"],
+                request_digest=request_digest,
+                outcome=action_outcome,
+                witness_digest=witness_digest,
+                recorded_at=_utc_now(),
+            )
+            feedback_phase = "plan-event-outcome"
+            outcome_observed_at = _utc_now()
+            outcome_stage = self.architecture.plan_event_outcome(
+                action_stage=action_stage,
+                outcome=action_outcome,
+                passive_witness_digest=witness_digest,
+                feedback_receipt_id=feedback["receipt_id"],
+                feedback=feedback,
+                observed_at=outcome_observed_at,
+                as_of=outcome_observed_at,
+            )
+        except (MedorArchitectureError, OSError, sqlite3.Error) as exc:
+            # Action Log was already invoked once, and the signed passive
+            # witness above establishes its observed result independently.
+            # A custody feedback failure must not erase that proof or invite
+            # another append. Do not invent a feedback/outcome-stage receipt.
+            feedback_error = type(exc).__name__
         receipt = {
             "protocol": BRIDGE_PROTOCOL + "/append-receipt",
             "source_label": SOURCE_LABEL,
@@ -4364,7 +4439,9 @@ class MemorySynapseMcp:
             "route_digest": route_digest,
             "pre_action_route_stage_id": pre_action["route_stage_id"],
             "action_route_stage_id": action_stage["route_stage_id"],
-            "outcome_route_stage_id": outcome_stage["route_stage_id"],
+            "outcome_route_stage_id": (
+                outcome_stage["route_stage_id"] if outcome_stage is not None else None
+            ),
             "architecture_admission_id": architecture_id,
             "security_admission_id": self.security_admission.admission_id,
             "request_sent": True,
@@ -4378,18 +4455,29 @@ class MemorySynapseMcp:
             "production_execution_performed": False,
             "passive_witness": after_witness,
             "witness_observer_available": witness_observer_available,
-            "feedback_receipt_id": feedback["receipt_id"],
+            "feedback_receipt_id": feedback["receipt_id"] if feedback is not None else None,
             "outcome_feedback": feedback,
             "route_stages": {
                 "pre_action": pre_action,
                 "action": action_stage,
-                "outcome": outcome_stage,
+                **({"outcome": outcome_stage} if outcome_stage is not None else {}),
             },
             "home_record_count": 0,
             "production_authority": False,
         }
         if context_binding is not None:
             receipt.update(context_binding)
+        if feedback_error is not None:
+            receipt.update({
+                "completion_status": "incomplete",
+                "feedback_status": "pending" if feedback is None else "recorded-route-pending",
+                "warning": {
+                    "code": "post-append-architecture-incomplete",
+                    "stage": feedback_phase,
+                    "error_type": feedback_error,
+                    "automatic_retry_allowed": False,
+                },
+            })
         _audit(
             {
                 "protocol": receipt["protocol"],
@@ -4622,7 +4710,10 @@ class MemorySynapseMcp:
         self.audit(receipt)
         return {"home": payload, "receipt": receipt}
 
-    def call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    def _call_without_session_recovery(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        return self._operation_call(name, arguments, self._operation_unwrapped_call)
+
+    def _operation_unwrapped_call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if name == 'integrity_turn_memory_reconcile':
             if self._tool_contract_profile != 'turn-curator-v1':
                 raise McpFacadeError('curator requires its authenticated negotiated profile')
@@ -4631,7 +4722,9 @@ class MemorySynapseMcp:
                 return reconcile(self, arguments)
             except CuratorError as error:
                 raise McpFacadeError(str(error)) from None
-        if self._context_reattach_control_only and name in {
+        if (self._context_reattach_control_only
+                and not (name == "integrity_append_event" and self._session_recovery_binding is not None
+                    and self._session_recovery_enabled and not self._context_reattach_read_only)) and name in {
             "integrity_context_admission", "integrity_admit_intent", "integrity_turn_memory_open",
             "integrity_append_event", "integrity_archive_import"
         }:
@@ -5031,8 +5124,22 @@ class MemorySynapseMcp:
                     # PREPARED bytes; this is a new, linked COMMITTED record.
                     record["migration_admission_sha256"] = migration.receipt_sha256
                 stored = self._store_context_replay(record, expected_phase="prepared")
+                self._remember_recovery_replay(stored)
                 if stored != record:
                     return self._restore_context_replay(stored)
+            else:
+                # Transport negotiation is not a per-intent replay reservation.
+                # Only this successful real admission can enable the ordinary
+                # current-context route when no retained admission was created.
+                self._remember_unretained_admission()
+                result["session_recovery"] = {
+                    "protocol": RECOVERY_PROTOCOL, "available": False,
+                    "status": "capacity-degraded" if self._context_admission_replay_unavailable_reason
+                        in {"replay-logical-capacity-exhausted", "replay-physical-capacity-exhausted"}
+                        else "unavailable",
+                    "reason": self._context_admission_replay_unavailable_reason or "admission-not-retained",
+                    "read_plane": "ready", "automatic_retry_allowed": False,
+                }
             return result
         if name == "integrity_seed_recall":
             snapshot = self._require_seed_snapshot()
@@ -6247,7 +6354,15 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
             control_only or (requested_replay_ack is not None
                 and requested_reattach == {"protocol": CONTEXT_REATTACH_PROTOCOL})
         )
+        server._session_recovery_enabled = bool(
+            broker_surface_ack is not None and server._context_reattach_enabled
+            and isinstance(client_experimental, dict)
+            and client_experimental.get(RECOVERY_CAPABILITY) == {"protocol": RECOVERY_PROTOCOL})
         experimental: dict[str, Any] = {}
+        if server._session_recovery_enabled:
+            experimental[RECOVERY_CAPABILITY] = {"protocol": RECOVERY_PROTOCOL,
+                "method": RECOVERY_METHOD, "operation_status_method": OPERATION_STATUS_METHOD, "operation_status_protocol": "integrity-client/operation-status/v1", "same_session": True, "retention_seconds": 86400,
+                "max_records": 128, "max_capsule_bytes": 16384}
         if server._context_reattach_enabled:
             experimental[CONTEXT_REATTACH_CAPABILITY] = {
                 "protocol": CONTEXT_REATTACH_PROTOCOL, "method": CONTEXT_REATTACH_METHOD,
@@ -6330,6 +6445,17 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
                 pass
             return {"jsonrpc": "2.0", "id": request_id,
                     "error": {"code": -32000, "message": "context retirement unavailable"}}
+    elif message["method"] == OPERATION_STATUS_METHOD:
+        try:
+            result = server._operation_status(params)
+        except (ValueError, OSError) as error:
+            return {"jsonrpc": "2.0", "id": request_id, "error": {"code": -32602, "message": "operation status denied"}}
+    elif message["method"] == RECOVERY_METHOD:
+        try:
+            result = server._recover_same_session(params)
+        except (SessionRecoveryError, McpFacadeError, OSError, ValueError, TypeError, KeyError, sqlite3.Error):
+            return {"jsonrpc": "2.0", "id": request_id,
+                "error": {"code": -32000, "message": "same-session recovery unavailable"}}
     elif message["method"] == CONTEXT_REATTACH_METHOD:
         try:
             result = server._reattach_delivered_context(params)

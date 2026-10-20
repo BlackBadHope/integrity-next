@@ -1,6 +1,39 @@
 # integrity-client-memory
 
-Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.9.3; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
+## Canonical Windows recovery cohort (1.9.4)
+
+The reviewed Windows broker resource is the sole implementation source.
+`broker_adapter.py`, `recovery_client.py` and `operation_ledger.py` are its
+shared recovery modules. `broker_bundle.render_windows_broker()` freezes their
+exact source bytes and records their hashes; Native Codex compilation uses the
+same renderer. It no longer chooses the older Native envelope without resume
+methods. Hook version pairing, the complete tools contract, Native head checks,
+protected state custody and signed registration joins remain required.
+
+`python -m integrity_client_memory.broker_bundle --output NEW_DIRECTORY
+--bindings-json OWNER_BINDINGS.json --upstream-json OWNER_UPSTREAM.json
+--tools-json OWNER_TOOLS.json` compiles an isolated profile and its pinned local
+runtime support. All three inputs belong to the installer; no installed broker,
+historical deployment, maintainer identity or private baseline is read. The
+declared Guardian and Action Log distribution dependencies remain prerequisites.
+`run-native-profile.py --profile profile.json probe` checks local entrypoints
+without starting upstream. Compilation changes no active configuration.
+
+Only an authenticated successful current `open` explicitly reporting
+`session_recovery.available=false` with reason `admission-not-retained` may
+continue through the original broker path. Its signed registration, complete
+current Native subject, prompt and admission must still match, on the same
+transport. A corrupt, missing or superseded recovery descriptor is never this
+opt-out. Lost responses preserve uncertainty and never trigger a cross-path
+retry. The state directory comes from pinned owner configuration; an
+environment value may agree with it but cannot redirect it.
+
+Linux, Windows Remote, Claude and Antigravity retain their separate broker
+families and platform guards. Source checks and fake routing fixtures do not
+establish live Native or SSH acceptance. Published 1.9.1 artifacts and historical
+deployment receipts remain unchanged.
+
+Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.9.4; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
 
 ## Linux lifecycle repair
 

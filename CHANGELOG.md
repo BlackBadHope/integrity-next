@@ -4,6 +4,21 @@ All notable public changes are recorded here.
 
 ## Unreleased
 
+### Client Memory 1.9.4 / Guardian recovery source acceptance
+
+- Compile one shared Windows recovery implementation for Native and preserved-root
+  profiles, with the 1.9.3 45-second startup deadline and single-shot model admission
+  policy retained for both Windows broker families. Pin all vendor launch files.
+- Decode compact Native receipts before the existing validators and use a neutral
+  navigation result when no authenticated current task selector is available.
+- Bound private snapshot allocation on disk, retain active owners, and distinguish
+  unavailable replay retention from a valid signed current registration. Preserve
+  append commit proof if subsequent feedback fails; reconcile unknown operations
+  through receipt-backed same-session recovery rather than blind retries.
+- Source tests use synthetic fixtures. Deployment, live Native acceptance and model
+  context delivery require their separate target receipts; package versions do not
+  establish those results.
+
 ### Client Memory 1.9.3
 
 - Apply the same 45-second startup and single-shot admission policy to the
