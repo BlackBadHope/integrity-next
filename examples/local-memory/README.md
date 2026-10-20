@@ -12,7 +12,8 @@ profiles in `components/integrity-client-memory` remain a separate deployment.
 
 ## Install from a clean Windows environment
 
-Prerequisites: Git, Python 3.11+, and the client you intend to use. Windows
+Prerequisites: PowerShell 7.3+ for the Windows commands, Git, Python 3.11+,
+and the client you intend to use. Windows
 Python 3.12 was exercised. No client subscription is needed for the independent
 protocol check; actual model generation uses the client's existing account.
 

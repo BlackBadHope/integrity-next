@@ -6515,11 +6515,11 @@
       "sha256": "357c939ae645c8d9d726760a9cdd732eba1aba6d029b8dbdaf3101df08e1c5dd"
     },
     {
-      "bytes": 9065,
+      "bytes": 9107,
       "mode": "0o644",
       "path": "examples/local-memory/README.md",
       "sanitization_edits": 0,
-      "sha256": "fa89cc16ba643a8a7139b30229d676ddfd7dc75efb6bcaf69267caa2af0e564a"
+      "sha256": "7726834213403c469bba02271a73076e98769fe727d6e8730ba66a966ad72c3a"
     },
     {
       "bytes": 2002,
@@ -6578,7 +6578,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:a815a4a0bb8b6b73a9b566baf9e03f8709d9764a6ae014c162e29a9283116462",
+  "projection_digest": "sha256:8ec94a10571ac34378d3b6bfa5fa02f85ee28ca7fa45d5fcfaf264180ed3a062",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
