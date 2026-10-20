@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "integrity-client-memory"
-version = "1.8.2"
+version = "1.9.0"
 description = "Explicitly configured integrity-client-memory sources for Integrity"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -18,6 +18,7 @@ native = ["websockets>=13,<16"]
 
 [project.scripts]
 integrity-client-memory = "integrity_client_memory.launcher:main"
+integrity-native-profile = "integrity_client_memory.native_install:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/integrity_client_memory"]

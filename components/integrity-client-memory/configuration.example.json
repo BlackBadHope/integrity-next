@@ -66,6 +66,23 @@
     "pin_d9bbb942cec3": null,
     "pin_bf1b77212b80": null,
     "pin_ab575f59568f": null,
-    "pin_bee9def69c72": null
+    "pin_bee9def69c72": null,
+    "claude_session_id": null,
+    "claude_owner_sha256": null,
+    "claude_publisher_sha256": null,
+    "claude_publisher_owner_sha256": null,
+    "claude_publisher_python_sha256": null,
+    "claude_state_home": null,
+    "claude_owner_file": null,
+    "claude_ledger": null,
+    "claude_transcript": null,
+    "claude_publisher_script": null,
+    "claude_publisher_python": null,
+    "claude_project_root": null,
+    "path_5337709e82f6": null,
+    "path_2dbd800b4e29": null,
+    "path_f51de7de1b1c": null,
+    "path_e7a3397d5cef": null,
+    "claude_native_reader_sha256": null
   }
 }

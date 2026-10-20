@@ -140,7 +140,8 @@
       ],
       "distribution": "integrity-client-memory",
       "entry_points": {
-        "integrity-client-memory": "integrity_client_memory.launcher:main"
+        "integrity-client-memory": "integrity_client_memory.launcher:main",
+        "integrity-native-profile": "integrity_client_memory.native_install:main"
       },
       "import_roots": [
         "integrity_client_memory"
@@ -156,7 +157,7 @@
       },
       "path": "components/integrity-client-memory",
       "python": ">=3.11",
-      "version": "1.8.2"
+      "version": "1.9.0"
     },
     {
       "dependencies": [],

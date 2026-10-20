@@ -32,7 +32,8 @@
   "path_b8097dd72ab5": {
     "kind": "path",
     "used_by": [
-      "clients/claude/admission.py:2433"
+      "clients/claude/admission.py:2433",
+      "clients/claude-native/integrity-client-admission.py:1155"
     ]
   },
   "architecture_checkpoint_id": {
@@ -43,7 +44,8 @@
       "clients/windows/admission-system.ps1",
       "clients/windows/admission.ps1",
       "clients/windows/admission.py:398",
-      "clients/windows/native/integrity-client-admission.py:393"
+      "clients/windows/native/integrity-client-admission.py:393",
+      "clients/claude-native/integrity-client-admission.py:158"
     ]
   },
   "path_672ada16776c": {
@@ -102,7 +104,8 @@
     "used_by": [
       "clients/linux/integrity-client-turn-broker.py:2239",
       "clients/windows-remote/integrity-client-turn-broker.py:1167",
-      "clients/windows/integrity-client-turn-broker.py:2231"
+      "clients/windows/integrity-client-turn-broker.py:2231",
+      "clients/claude-native/integrity-client-turn-broker.py:590"
     ]
   },
   "pin_dd9fa64be3f2": {
@@ -114,7 +117,10 @@
       "clients/windows-remote/integrity_client_turn_envelope.py:1032",
       "clients/windows/integrity-client-turn-broker.py:2261",
       "clients/windows/integrity_client_turn_envelope.py:1041",
-      "clients/windows/native/integrity_client_turn_envelope.py:1041"
+      "clients/windows/native/integrity_client_turn_envelope.py:1041",
+      "clients/claude-native/claude_terminal_memory.py:9",
+      "clients/claude-native/integrity-client-turn-broker.py:606",
+      "clients/claude-native/integrity_client_turn_envelope.py:769"
     ]
   },
   "binding_9627b6210e51": {
@@ -438,6 +444,119 @@
     "kind": "pin",
     "used_by": [
       "clients/windows-remote/integrity_client_turn_envelope.py:1050"
+    ]
+  },
+  "claude_session_id": {
+    "kind": "identity",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:12",
+      "clients/claude-native/claude_terminal_memory.py:8",
+      "clients/claude-native/integrity-client-admission.py:1239",
+      "clients/claude-native/integrity-client-admission.py:1254",
+      "clients/claude-native/integrity-client-admission.py:1270",
+      "clients/claude-native/integrity-client-turn-broker.py:531",
+      "clients/claude-native/integrity-client-turn-broker.py:532"
+    ]
+  },
+  "claude_owner_sha256": {
+    "kind": "pin",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:15"
+    ]
+  },
+  "claude_publisher_sha256": {
+    "kind": "pin",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:19"
+    ]
+  },
+  "claude_publisher_owner_sha256": {
+    "kind": "pin",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:20"
+    ]
+  },
+  "claude_publisher_python_sha256": {
+    "kind": "pin",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:22"
+    ]
+  },
+  "claude_state_home": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:13"
+    ]
+  },
+  "claude_owner_file": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:14"
+    ]
+  },
+  "claude_ledger": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:16"
+    ]
+  },
+  "claude_transcript": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:17"
+    ]
+  },
+  "claude_publisher_script": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:18"
+    ]
+  },
+  "claude_publisher_python": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:21"
+    ]
+  },
+  "claude_project_root": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_owning_native.py:136",
+      "clients/claude-native/claude_owning_native.py:119",
+      "clients/claude-native/claude_owning_native.py:141"
+    ]
+  },
+  "path_5337709e82f6": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/claude_terminal_memory.py:13"
+    ]
+  },
+  "path_2dbd800b4e29": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/integrity-client-admission.py:1239",
+      "clients/claude-native/integrity_client_turn_envelope.py:744"
+    ]
+  },
+  "path_f51de7de1b1c": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/integrity-client-admission.py:1239",
+      "clients/claude-native/integrity_client_turn_envelope.py:104",
+      "clients/claude-native/integrity_client_turn_envelope.py:102"
+    ]
+  },
+  "path_e7a3397d5cef": {
+    "kind": "path",
+    "used_by": [
+      "clients/claude-native/integrity-client-admission.py:1270"
+    ]
+  },
+  "claude_native_reader_sha256": {
+    "kind": "pin",
+    "used_by": [
+      "clients/claude-native/integrity_client_turn_envelope.py:777"
     ]
   }
 }
