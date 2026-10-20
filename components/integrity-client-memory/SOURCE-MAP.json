@@ -415,7 +415,8 @@
     "path": "src/integrity_client_memory/transport_policy.py",
     "source": "canonical-package/transport_policy.py",
     "source_sha256": "54cdff9f843057311ffcd3812091ebe8d25300a289d061bcbbd8164d2508f266",
-    "sha256": "54cdff9f843057311ffcd3812091ebe8d25300a289d061bcbbd8164d2508f266"
+    "sha256": "54cdff9f843057311ffcd3812091ebe8d25300a289d061bcbbd8164d2508f266",
+    "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
   },
   {
     "path": "tests/test_canonical_recovery_bundle.py",

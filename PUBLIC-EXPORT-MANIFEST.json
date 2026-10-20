@@ -891,11 +891,11 @@
       "sha256": "27baa3820f59ea448213a58a278c0e5411ddfd6b92bdf8c75a5fd899db86f38b"
     },
     {
-      "bytes": 27594,
+      "bytes": 27227,
       "mode": "0o644",
       "path": "components/integrity-client-memory/SOURCE-MAP.json",
       "sanitization_edits": 0,
-      "sha256": "c25df286ad63741c43faa61bd26321846b3105ebe0b9dec26f2fb1acf98710a9"
+      "sha256": "95d6ae0f9edfea6e5cbc3b4c3c6a278736ad341206902ed495f8f2565caaba92"
     },
     {
       "bytes": 2714,
@@ -6865,7 +6865,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:4e9f274a1a8688b2a51bb58f1035b32e8caf0981c2d49c8257a19e87aa1e28af",
+  "projection_digest": "sha256:8fe4aa9ab09c3543a3f2ec86a8a9585b9889e4481f341973e5fc0fd7bb6b46f9",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
