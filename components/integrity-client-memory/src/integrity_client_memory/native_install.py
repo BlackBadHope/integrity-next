@@ -21,6 +21,11 @@ from .profile import compile_catalog
 
 HERE = Path(__file__).resolve().parent
 RESOURCES = HERE / "resources"
+LAUNCH_FILES = {
+    "codex": ("codex-workspace/.codex/config.toml", "codex-workspace/.codex/hooks.json"),
+    "claude": ("claude-workspace/.mcp.json", "claude-workspace/.claude/settings.json"),
+    "antigravity": ("antigravity-plugin/hooks.json", "antigravity.mcp.json", "antigravity.enable-fragment.json"),
+}
 VENDORS = ("codex", "claude", "antigravity")
 EVENTS = ("SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse",
           "SubagentStart", "Stop", "SubagentStop")
@@ -220,6 +225,13 @@ def build(vendor, upstream, bindings, output, tools=None):
         source_pins[source.name] = digest(target.read_bytes())
     template_pins = dict(source_pins)
     derivations = []
+    if vendor == "codex":
+        from .transport_policy import render_windows_transport
+        broker_path = runtime / broker_name
+        rendered, policy = render_windows_transport(broker_path.read_bytes())
+        broker_path.write_bytes(rendered)
+        source_pins[broker_name] = digest(rendered)
+        derivations.append({"file": broker_name, **policy})
     # The Native ownership hook is a distinct preserved source cohort. Compile
     # its local broker identity against the broker actually selected here,
     # retaining the original exact identity and full tools-contract checks.
@@ -350,6 +362,7 @@ def build(vendor, upstream, bindings, output, tools=None):
                "hook": hook_name, "broker": broker_name, "files": source_pins,
                "template_source_pins": template_pins, "derivations": derivations,
                "auxiliary_files": auxiliary_pins, "broker_version": broker_version,
+               "launch_files": {name: digest((output / name).read_bytes()) for name in LAUNCH_FILES[vendor]},
                "tools_sha256": tools_sha, "component_sha256": digest((output / "component.json").read_bytes()),
                "transport_sha256": digest((output / "transport.json").read_bytes()),
                "upstream_sha256": digest((output / "upstream.toml").read_bytes()),

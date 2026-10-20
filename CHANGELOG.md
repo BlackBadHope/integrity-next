@@ -4,6 +4,17 @@ All notable public changes are recorded here.
 
 ## Unreleased
 
+### Client Memory 1.9.2
+
+- Compile the Windows Native broker with a bounded 45-second cold initialize
+  allowance. A real upstream handshake took 20.666 seconds, exceeding the old
+  20-second cutoff before admission could be sent. The owning admission still
+  occurs once; startup failure no longer advises a second model invocation.
+- Pin the emitted Codex, Claude and Antigravity hook/MCP/plugin configuration
+  files. Refuse configuration drift before launching the Native runtime.
+  Regenerate older profiles into new directories; retain their old runtime and
+  settings for rollback.
+
 ## 6.1.1 — 2026-10-17
 
 - Fixed the clean bootstrap example to use an absolute private architecture

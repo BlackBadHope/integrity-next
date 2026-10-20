@@ -175,6 +175,26 @@ def test_merge_does_not_erase_denial():
     assert merged["hookSpecificOutput"]["additionalContext"] == "first\nsecond"
 
 
+def test_vendor_hook_and_mcp_configuration_drift_is_refused(profile):
+    value, root = runtime.verify(profile)
+    for name in install.LAUNCH_FILES[value["vendor"]]:
+        path = root / name
+        before = path.read_bytes()
+        path.write_bytes(before + b"\n ")
+        with pytest.raises(ValueError, match="vendor launch configuration pin changed"):
+            runtime.verify(profile)
+        path.write_bytes(before)
+    runtime.verify(profile)
+
+
+def test_legacy_profile_cannot_claim_complete_config_verification(profile):
+    value = install.read_json(profile)
+    del value["launch_files"]
+    install.write_json(profile, value)
+    with pytest.raises(ValueError, match="regenerate this legacy profile"):
+        runtime.verify(profile)
+
+
 def test_other_integrity_product_is_a_separate_action_boundary():
     assert runtime.memory_call(b'{"tool_name":"mcp__integrity_guardian__apply"}') is False
     assert runtime.memory_call(b'{"tool_name":"mcp__integrity_native__integrity_append_event"}') is True

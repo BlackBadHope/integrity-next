@@ -1,6 +1,6 @@
 # integrity-client-memory
 
-Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.9.1; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
+Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.9.2; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
 
 ## Linux lifecycle repair
 
