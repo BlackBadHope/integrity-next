@@ -1691,7 +1691,13 @@ class HomeClient:
         return value
 
 
-class MemorySynapseMcp:
+from .same_session_recovery import (SessionRecoveryMixin, RECOVERY_PROTOCOL,
+    RECOVERY_CAPABILITY, RECOVERY_METHOD, SessionRecoveryError)
+
+
+from .operation_status import OperationStatusMixin, METHOD as OPERATION_STATUS_METHOD
+
+class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
     """One stdio-only facade instance with fixed server-side dependencies."""
 
     def __init__(
@@ -1824,6 +1830,11 @@ class MemorySynapseMcp:
         self._context_reattach_enabled = False
         self._context_reattach_control_only = False
         self._context_reattach_read_only = False
+        self._session_recovery_enabled = False
+        self._session_recovery_binding = None
+        self._session_recovery_replay = None
+        self._session_recovery_unretained_admission = None
+        self._session_recovery_unretained_registration = None
         self._broker_tool_surface_authenticated = False
         architecture_root = getattr(architecture, "root", None)
         self._context_admission_replay_root = (
@@ -3326,6 +3337,7 @@ class MemorySynapseMcp:
         self._native_session_lease = state.get("native_session")
         self._context_admission_id = result.get("context_admission_id")
         self._archive_prompt_binding = result.get("prompt_binding")
+        self._remember_recovery_replay(record)
         migration = self._replay_migration(str(record["request_id"]))
         if migration is not None:
             self._deny_migrated_action_authority()
@@ -3351,7 +3363,9 @@ class MemorySynapseMcp:
             required = {"machine_id", "thread_id", "turn_id", "prompt_sha256"}
             if set(arguments) not in (required, required | {'intent_id'}):
                 raise McpFacadeError("turn registration requires one complete identity")
+            self._recovery_pre_open(arguments)
             result = store.open_turn(**arguments)
+            result = self._recovery_bind_open(result)
         elif name == "close":
             _reject_unknown(
                 arguments,
@@ -3835,6 +3849,15 @@ class MemorySynapseMcp:
     def _clear_intent_context(self, *, reason: str = "context-cleared") -> None:
         """Destroy logical owner-intent state while retaining shared services."""
 
+        if reason in {"context-rotation", "owner-intent-superseded"}:
+            self._recovery_revoke(reason)
+            # A successor without a replay reservation must not inherit the
+            # previous admission's retained evidence or registration. Idle
+            # cleanup deliberately preserves these for exact same-turn restore.
+            self._session_recovery_replay = None
+            self._session_recovery_binding = None
+            self._session_recovery_unretained_admission = None
+            self._session_recovery_unretained_registration = None
         self._context_reattach_read_only = False
         frozen_catalog = self._frozen_catalog
         self._frozen_catalog = None
@@ -4622,7 +4645,10 @@ class MemorySynapseMcp:
         self.audit(receipt)
         return {"home": payload, "receipt": receipt}
 
-    def call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+    def _call_without_session_recovery(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+        return self._operation_call(name, arguments, self._operation_unwrapped_call)
+
+    def _operation_unwrapped_call(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if name == 'integrity_turn_memory_reconcile':
             if self._tool_contract_profile != 'turn-curator-v1':
                 raise McpFacadeError('curator requires its authenticated negotiated profile')
@@ -4631,7 +4657,9 @@ class MemorySynapseMcp:
                 return reconcile(self, arguments)
             except CuratorError as error:
                 raise McpFacadeError(str(error)) from None
-        if self._context_reattach_control_only and name in {
+        if (self._context_reattach_control_only
+                and not (name == "integrity_append_event" and self._session_recovery_binding is not None
+                    and self._session_recovery_enabled and not self._context_reattach_read_only)) and name in {
             "integrity_context_admission", "integrity_admit_intent", "integrity_turn_memory_open",
             "integrity_append_event", "integrity_archive_import"
         }:
@@ -5031,8 +5059,14 @@ class MemorySynapseMcp:
                     # PREPARED bytes; this is a new, linked COMMITTED record.
                     record["migration_admission_sha256"] = migration.receipt_sha256
                 stored = self._store_context_replay(record, expected_phase="prepared")
+                self._remember_recovery_replay(stored)
                 if stored != record:
                     return self._restore_context_replay(stored)
+            else:
+                # Transport negotiation is not a per-intent replay reservation.
+                # Only this successful real admission can enable the ordinary
+                # current-context route when no retained admission was created.
+                self._remember_unretained_admission()
             return result
         if name == "integrity_seed_recall":
             snapshot = self._require_seed_snapshot()
@@ -6247,7 +6281,15 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
             control_only or (requested_replay_ack is not None
                 and requested_reattach == {"protocol": CONTEXT_REATTACH_PROTOCOL})
         )
+        server._session_recovery_enabled = bool(
+            broker_surface_ack is not None and server._context_reattach_enabled
+            and isinstance(client_experimental, dict)
+            and client_experimental.get(RECOVERY_CAPABILITY) == {"protocol": RECOVERY_PROTOCOL})
         experimental: dict[str, Any] = {}
+        if server._session_recovery_enabled:
+            experimental[RECOVERY_CAPABILITY] = {"protocol": RECOVERY_PROTOCOL,
+                "method": RECOVERY_METHOD, "operation_status_method": OPERATION_STATUS_METHOD, "operation_status_protocol": "integrity-client/operation-status/v1", "same_session": True, "retention_seconds": 86400,
+                "max_records": 128, "max_capsule_bytes": 16384}
         if server._context_reattach_enabled:
             experimental[CONTEXT_REATTACH_CAPABILITY] = {
                 "protocol": CONTEXT_REATTACH_PROTOCOL, "method": CONTEXT_REATTACH_METHOD,
@@ -6330,6 +6372,17 @@ def dispatch(server: MemorySynapseMcp, message: dict[str, Any]) -> dict[str, Any
                 pass
             return {"jsonrpc": "2.0", "id": request_id,
                     "error": {"code": -32000, "message": "context retirement unavailable"}}
+    elif message["method"] == OPERATION_STATUS_METHOD:
+        try:
+            result = server._operation_status(params)
+        except (ValueError, OSError) as error:
+            return {"jsonrpc": "2.0", "id": request_id, "error": {"code": -32602, "message": "operation status denied"}}
+    elif message["method"] == RECOVERY_METHOD:
+        try:
+            result = server._recover_same_session(params)
+        except (SessionRecoveryError, McpFacadeError, OSError, ValueError, TypeError, KeyError, sqlite3.Error):
+            return {"jsonrpc": "2.0", "id": request_id,
+                "error": {"code": -32000, "message": "same-session recovery unavailable"}}
     elif message["method"] == CONTEXT_REATTACH_METHOD:
         try:
             result = server._reattach_delivered_context(params)

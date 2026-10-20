@@ -685,6 +685,8 @@ class UpstreamFacade:
                 "protocol": CONTEXT_REATTACH_PROTOCOL,
                 **({"control_only":True} if context_control_only else {})}
 
+            experimental["integrity/session-recovery"] = {
+                "protocol": "integrity-client/session-recovery/v1"}
             capabilities["experimental"] = experimental
             params["capabilities"] = capabilities
             params["clientInfo"] = {
@@ -717,6 +719,7 @@ class UpstreamFacade:
             acknowledged_caps = initialized.get("capabilities")
             acknowledged_caps = acknowledged_caps.get("experimental") if isinstance(acknowledged_caps, dict) else None
             acknowledged_caps = acknowledged_caps if isinstance(acknowledged_caps, dict) else {}
+            self._same_session_capabilities = dict(acknowledged_caps)
             resume = acknowledged_caps.get(CONTEXT_REATTACH_CAPABILITY)
             self.context_control_only = bool(
                 context_control_only and isinstance(resume,dict)
@@ -1951,7 +1954,7 @@ class TurnBroker:
         if name == "integrity_turn_memory_close":
             try:
                 _local_routes.guard_close(arguments, self._own_turn_binding,
-                    Path.home()/".codex/integrity-memory/state")
+                    turn_envelope._owning_state_root())
             except (OSError, ValueError, TypeError) as exc:
                 raise BrokerError(str(exc), layer="broker-external-outcome", request_sent=False) from None
         if (name != "integrity_turn_memory_coverage"
@@ -2764,7 +2767,7 @@ class TurnBroker:
                         _automatic_Core.guard_curator(turn_envelope, self._own_turn_binding or {}, arguments)
                     except (OSError, ValueError, KeyError, TypeError) as error:
                         raise BrokerError(str(error), layer='broker-curator-actor', request_sent=False) from None
-                result = self.upstream.call_tool(name, arguments)
+                result = self._same_session_mutation(name, arguments)
                 self._observe_late_append(result)
                 self._observe_late_lifecycle(result)
                 if name in ARCHIVE_TOOLS:
@@ -2892,6 +2895,14 @@ class TurnBroker:
             pass
         finally:
             self.close()
+
+
+# BEGIN CANONICAL SESSION RECOVERY
+from integrity_client_memory import operation_ledger as _operation_ledger
+from integrity_client_memory import recovery_client as _recovery_client
+from integrity_client_memory import broker_adapter as _broker_adapter
+_broker_adapter.install(globals(), _recovery_client, _operation_ledger)
+# END CANONICAL SESSION RECOVERY
 
 
 def serve(broker: TurnBroker) -> int:

@@ -42,6 +42,8 @@ def native_source_pins():
              root / "resources/linux/linux_runtime_factory.py"]
     paths += sorted((root / "resources/linux/native").glob("*.py"))
     paths += sorted((root / "resources/windows/native").glob("*.py"))
+    from .broker_bundle import source_pins
+    paths += [root / name for name in source_pins()]
     return {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in paths}
 

@@ -22,7 +22,9 @@ def verify(path):
             or profile.get("root") != str(root) or profile.get("platform") != sys.platform
             or profile.get("vendor") not in {"codex", "claude", "antigravity"}
             or not isinstance(profile.get("files"), dict)
-            or not isinstance(profile.get("auxiliary_files", {}), dict)):
+            or not isinstance(profile.get("auxiliary_files", {}), dict)
+            or not isinstance(profile.get("support_files", {}), dict)
+            or not isinstance(profile.get("generated_launch_files", {}), dict)):
         raise ValueError("Native profile identity/platform mismatch")
     python = plain(profile["python"], 1024 * 1024 * 1024)
     if python != Path(sys.executable).resolve() or digest(python.read_bytes()) != profile["python_sha256"]:
@@ -40,6 +42,21 @@ def verify(path):
             raise ValueError("Native auxiliary file pin changed")
     if profile["hook"] not in profile["files"] or profile["broker"] not in profile["files"]:
         raise ValueError("Native entrypoint missing")
+    for relative, pin in profile.get("support_files", {}).items():
+        member = Path(relative)
+        if member.is_absolute() or ".." in member.parts or str(member.as_posix()) != relative:
+            raise ValueError("Native support path invalid")
+        if digest(plain(root / "support" / member).read_bytes()) != pin:
+            raise ValueError("Native support source pin changed")
+    if profile.get("support_files"):
+        if digest(plain(root / "run-native-profile.py").read_bytes()) != profile["support_bootstrap_sha256"]:
+            raise ValueError("Native bootstrap pin changed")
+        for relative, pin in profile.get("generated_launch_files", {}).items():
+            member = Path(relative)
+            if member.is_absolute() or ".." in member.parts or str(member.as_posix()) != relative:
+                raise ValueError("Native launch path invalid")
+            if digest(plain(root / member).read_bytes()) != pin:
+                raise ValueError("Native launch configuration pin changed")
     return profile, root
 
 
@@ -54,6 +71,8 @@ def environment(profile, root):
         # This is a selector, never evidence. The reader still verifies the
         # actual CLI ancestor, publisher, delivery ledger and full transcript.
         result["CLAUDE_SESSION_ID"] = read_json(root / "component.json")["values"]["claude_session_id"]
+    if profile.get("support_files"):
+        result["PYTHONPATH"] = str(root / "support") + os.pathsep + result.get("PYTHONPATH", "")
     return result
 
 

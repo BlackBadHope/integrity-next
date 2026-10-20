@@ -117,8 +117,11 @@ def source_files(vendor):
         return sorted((RESOURCES / "antigravity").glob("*.py")), "integrity_antigravity_hook.py", "integrity_antigravity_broker.py"
     if vendor == "claude":
         return sorted((RESOURCES / "claude-native").glob("*.py")), "integrity-client-admission.py", "integrity-client-turn-broker.py"
-    names = {"integrity-client-admission.py", "integrity_client_turn_envelope.py", "delegation-native-reader.py"}
+    names = {"integrity-client-admission.py", "delegation-native-reader.py"}
     paths = [RESOURCES / "windows/native" / n for n in sorted(names)]
+    # The Windows broker's resume API and the Native hook must share one
+    # envelope cohort; the historical native/ envelope predates these methods.
+    paths.append(RESOURCES / "windows/integrity_client_turn_envelope.py")
     paths.append(RESOURCES / "windows/integrity-client-turn-broker.py")
     return paths, "integrity-client-admission.py", "integrity-client-turn-broker.py"
 
@@ -220,6 +223,13 @@ def build(vendor, upstream, bindings, output, tools=None):
         source_pins[source.name] = digest(target.read_bytes())
     template_pins = dict(source_pins)
     derivations = []
+    if vendor == "codex":
+        from .broker_bundle import render_windows_broker
+        rendered, provenance = render_windows_broker()
+        (runtime / broker_name).write_bytes(rendered)
+        source_pins[broker_name] = digest(rendered)
+        derivations.append({"file": broker_name, "reason": "Freeze canonical shared recovery modules",
+                            **provenance})
     # The Native ownership hook is a distinct preserved source cohort. Compile
     # its local broker identity against the broker actually selected here,
     # retaining the original exact identity and full tools-contract checks.
