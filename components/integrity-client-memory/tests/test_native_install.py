@@ -195,6 +195,18 @@ def test_legacy_profile_cannot_claim_complete_config_verification(profile):
         runtime.verify(profile)
 
 
+def test_both_windows_vendors_compile_the_cold_start_policy(profile):
+    value, root = runtime.verify(profile)
+    if value["vendor"] == "antigravity":
+        pytest.skip("separate observed Antigravity transport")
+    import ast
+    tree = ast.parse((root / "runtime" / value["broker"]).read_bytes())
+    limit = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign)
+                 and any(isinstance(t, ast.Name) and t.id == "UPSTREAM_INITIALIZE_TIMEOUT_SECONDS" for t in n.targets))
+    assert limit == 45
+    assert any(x.get("protocol") == "integrity/windows-transport-policy/v1" for x in value["derivations"])
+
+
 def test_other_integrity_product_is_a_separate_action_boundary():
     assert runtime.memory_call(b'{"tool_name":"mcp__integrity_guardian__apply"}') is False
     assert runtime.memory_call(b'{"tool_name":"mcp__integrity_native__integrity_append_event"}') is True
