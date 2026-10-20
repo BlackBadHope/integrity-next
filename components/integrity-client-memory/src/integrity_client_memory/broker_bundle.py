@@ -21,7 +21,7 @@ MODULES = ("operation_ledger", "recovery_client", "broker_adapter")
 NAVIGATION_MODULE = "core_delivery"
 SUPPORT = ("__init__.py", "configuration.py", "catalogue.py", "native_runtime.py",
            "native_install.py", "profile.py", "broker_bundle.py", "project_scope.py", "native_receipts.py",
-           "profile_roots.py",
+           "profile_roots.py", "transport_policy.py",
            "operation_ledger.py", "recovery_client.py", "broker_adapter.py",
            "core_delivery.py",
            "data/tools-current.json")
@@ -34,7 +34,7 @@ def source_pins():
              ROOT / (NAVIGATION_MODULE + ".py"),
              Path(__file__).resolve(),
              ROOT / "resources/windows/integrity_client_turn_envelope.py",
-             ROOT / "native_receipts.py"]
+             ROOT / "native_receipts.py", ROOT / "transport_policy.py"]
     return {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in paths}
 
@@ -90,9 +90,12 @@ def render_windows_broker():
                      f"exec(compile(_{name}_source, '<canonical-{name}>', 'exec'), _{name}.__dict__)\n")
     embedded += "_broker_adapter.install(globals(), _recovery_client, _operation_ledger)\n" + END
     rendered = (text[:start] + embedded + text[finish:]).encode("utf-8")
+    from .transport_policy import render_windows_transport
+    rendered, transport_policy = render_windows_transport(rendered)
     ast.parse(rendered.decode("utf-8"))
     return rendered, {"protocol": "integrity/canonical-broker-render/v1",
                       "profile": "windows", "source_pins": source_pins(),
+                      "transport_policy": transport_policy,
                       "rendered_sha256": hashlib.sha256(rendered).hexdigest(),
                       "source": "resources/windows/integrity-client-turn-broker.py"}
 
@@ -159,6 +162,9 @@ def build_bundle(output, *, bindings, upstream, tools, deployment_root=None,
     write_json(folder / "hooks.json", hooks)
     profile["generated_launch_files"] = {str(p.relative_to(output).as_posix()): digest(p.read_bytes())
         for p in (folder / "config.toml", folder / "hooks.json")}
+    from .native_install import LAUNCH_FILES
+    profile["launch_files"] = {name: digest((output / name).read_bytes())
+                               for name in LAUNCH_FILES[profile["vendor"]]}
     write_json(output / "profile.json", profile)
     return profile
 

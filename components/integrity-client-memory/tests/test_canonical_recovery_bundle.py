@@ -221,3 +221,18 @@ def test_lost_ordinary_response_keeps_original_uncertainty(route):
             {"context_admission_id": route.binding["context_admission_id"]})
     assert captured.value is error
     assert captured.value.request_sent is True
+
+
+def test_canonical_and_preserved_root_brokers_keep_single_shot_startup_policy():
+    # Standalone preserved-root cohorts bypass native_install's policy derivation.
+    # Exercise the canonical renderer itself so that path cannot regress to 20 s.
+    from integrity_client_memory.transport_policy import INITIALIZE_SECONDS
+    raw, proof = broker_bundle.render_windows_broker()
+    tree = ast.parse(raw)
+    limit = next(n for n in tree.body if isinstance(n, ast.Assign)
+                 and any(isinstance(t, ast.Name) and t.id == "UPSTREAM_INITIALIZE_TIMEOUT_SECONDS"
+                         for t in n.targets))
+    assert ast.literal_eval(limit.value) == INITIALIZE_SECONDS == 45
+    assert proof["transport_policy"]["model_admission_retry_allowed"] is False
+    assert b"no-model-retry-single-shot-admission" in raw
+    assert "transport_policy.py" in broker_bundle.SUPPORT

@@ -1,2 +1,2 @@
 """Isolated integrity-client-memory distribution; import starts no service."""
-__version__ = '1.9.1'
+__version__ = '1.9.4'

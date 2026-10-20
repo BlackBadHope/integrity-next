@@ -10,7 +10,7 @@ from pathlib import Path
 import subprocess
 import sys
 
-from .native_install import digest, plain, read_json
+from .native_install import digest, plain, read_json, LAUNCH_FILES
 
 MAX_HOOK = 1024 * 1024
 
@@ -73,6 +73,12 @@ def verify(path):
                 raise ValueError("Native launch path invalid")
             if digest(plain(root / member).read_bytes()) != pin:
                 raise ValueError("Native launch configuration pin changed")
+    launch_files = profile.get("launch_files")
+    if not isinstance(launch_files, dict) or set(launch_files) != set(LAUNCH_FILES[profile["vendor"]]):
+        raise ValueError("Native launch configuration pins missing; regenerate this legacy profile")
+    for name, pin in launch_files.items():
+        if digest(plain(root / name).read_bytes()) != pin:
+            raise ValueError("Native vendor launch configuration pin changed")
     return profile, root
 
 

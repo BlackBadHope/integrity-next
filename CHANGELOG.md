@@ -4,7 +4,41 @@ All notable public changes are recorded here.
 
 ## Unreleased
 
-## 6.1.1 — 2026-10-17
+### Client Memory 1.9.4 / Guardian recovery source acceptance
+
+- Compile one shared Windows recovery implementation for Native and preserved-root
+  profiles, with the 1.9.3 45-second startup deadline and single-shot model admission
+  policy retained for both Windows broker families. Pin all vendor launch files.
+- Decode compact Native receipts before the existing validators and use a neutral
+  navigation result when no authenticated current task selector is available.
+- Bound private snapshot allocation on disk, retain active owners, and distinguish
+  unavailable replay retention from a valid signed current registration. Preserve
+  append commit proof if subsequent feedback fails; reconcile unknown operations
+  through receipt-backed same-session recovery rather than blind retries.
+- Source tests use synthetic fixtures. Deployment, live Native acceptance and model
+  context delivery require their separate target receipts; package versions do not
+  establish those results.
+
+### Client Memory 1.9.3
+
+- Apply the same 45-second startup and single-shot admission policy to the
+  separate Claude Code Windows broker. Add delayed-response and deadline
+  checks for both actual transport implementations and generated profiles.
+- Clarify that later successful historical Claude lifecycle probes used the
+  legacy store and synthetic intent IDs; they are not Native acceptance.
+
+### Client Memory 1.9.2
+
+- Compile the Windows Native broker with a bounded 45-second cold initialize
+  allowance. A real upstream handshake took 20.666 seconds, exceeding the old
+  20-second cutoff before admission could be sent. The owning admission still
+  occurs once; startup failure no longer advises a second model invocation.
+- Pin the emitted Codex, Claude and Antigravity hook/MCP/plugin configuration
+  files. Refuse configuration drift before launching the Native runtime.
+  Regenerate older profiles into new directories; retain their old runtime and
+  settings for rollback.
+
+## 6.1.1 вЂ” 2026-10-17
 
 - Fixed the clean bootstrap example to use an absolute private architecture
   directory outside the source checkout; added the PowerShell equivalent and
@@ -14,7 +48,7 @@ All notable public changes are recorded here.
   source binding. Adapter SDK 2.0.0rc3 and Claude executor 0.1.0rc3 carry the
   matching dependencies; historical receipt/profile pins are unchanged.
 
-## 6.1.0 — 2026-10-17
+## 6.1.0 вЂ” 2026-10-17
 
 - Consolidated the canonical Guardian implementation and independently versioned
   optional distributions. Removed repeated runtime source trees while retaining
@@ -71,7 +105,7 @@ All notable public changes are recorded here.
   `transformations`. In text, `Authorization: <scheme> <credential>` (also
   `=` and `Proxy-Authorization`) keeps the scheme word and masks the whole
   credential: a token, or a comma-separated parameter list with quoted values
-  such as Digest `username="…", response="…"`. A value without a scheme is
+  such as Digest `username="вЂ¦", response="вЂ¦"`. A value without a scheme is
   masked as one token or one parameter list. A value whose end cannot be
   found (an unterminated quote, text glued to it, or an unparsed `name=`
   right after it) is refused with `400 authorization_value_unbounded`; the
@@ -112,7 +146,7 @@ All notable public changes are recorded here.
 - Marked the package as Beta: local primitives are verified, distributed
   operation is not.
 
-## 6.0.0 — 2026-09-25
+## 6.0.0 вЂ” 2026-09-25
 
 - First fresh-history public source release.
 - Added Guardian Core, portable schemas, Seed memory protocol and portable

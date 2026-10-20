@@ -16,7 +16,7 @@
     "path": "src/integrity_client_memory/broker_bundle.py",
     "source": "canonical-package/broker_bundle.py",
     "source_sha256": "2575ce35c8653c634f97cf6a8c969db26a132de0f0f198d700a48d2a75254ded",
-    "sha256": "d7477372252920d54177d2bba49841d7e1369788de1443dad78bac5e7a469573",
+    "sha256": "8e979748c7f40e282a6a3cc479ea04c01e0f2532bc45002971950b3de6c63bcc",
     "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
   },
   {
@@ -44,7 +44,7 @@
     "path": "src/integrity_client_memory/native_install.py",
     "source": "canonical-package/native_install.py",
     "source_sha256": "43ffe843f81271a9cb34ce23e2e2ed0a17d4926f5db47a54ad9e3ec550025aaa",
-    "sha256": "e7e7e8848cc12ce6991b361a92c88881305f4938db23cc0618cd07598cb1bb42",
+    "sha256": "1c99bc43a3560c55e5a06e00918423e42f7b495e65955448f456518247ececcc",
     "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
   },
   {
@@ -58,7 +58,7 @@
     "path": "src/integrity_client_memory/native_runtime.py",
     "source": "canonical-package/native_runtime.py",
     "source_sha256": "83d096f13d08d232c5e47bcb7eca0104fa138e6cb3433e0e447c77827729cb53",
-    "sha256": "f7ae337770ba638da23a90c475eb5cc18ee4096c819730b916af8ecaa5446f6f",
+    "sha256": "a2fde004902cdb64f3f721d414f66a2d8b9a215af628418b94c3ecd0b787269a",
     "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
   },
   {
@@ -412,16 +412,28 @@
     "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
   },
   {
+    "path": "src/integrity_client_memory/transport_policy.py",
+    "source": "canonical-package/transport_policy.py",
+    "source_sha256": "54cdff9f843057311ffcd3812091ebe8d25300a289d061bcbbd8164d2508f266",
+    "sha256": "54cdff9f843057311ffcd3812091ebe8d25300a289d061bcbbd8164d2508f266"
+  },
+  {
     "path": "tests/test_canonical_recovery_bundle.py",
     "source": "canonical-package-tests/test_canonical_recovery_bundle.py",
-    "source_sha256": "8beda905e1b83cd16bd3cbb102802c2dd57f6756d90ab7ae42c09691e2bbf3f9",
-    "sha256": "8beda905e1b83cd16bd3cbb102802c2dd57f6756d90ab7ae42c09691e2bbf3f9"
+    "source_sha256": "227518bf483ef5875d8336252e36c7f975a397883eb0f044ac8e52c2500c7b3c",
+    "sha256": "227518bf483ef5875d8336252e36c7f975a397883eb0f044ac8e52c2500c7b3c"
   },
   {
     "path": "tests/test_core_delivery_navigation.py",
     "source": "canonical-package-tests/test_core_delivery_navigation.py",
     "source_sha256": "5b11e837fb6e6d21ee919901876de9a66fab5d84724ddd3e18ab80b6badcdd92",
     "sha256": "5b11e837fb6e6d21ee919901876de9a66fab5d84724ddd3e18ab80b6badcdd92"
+  },
+  {
+    "path": "tests/test_native_install.py",
+    "source": "canonical-package-tests/test_native_install.py",
+    "source_sha256": "bf03681680983767b9ebd4bfba06d09289d90811d24d51dfff820d5394bbc9f4",
+    "sha256": "bf03681680983767b9ebd4bfba06d09289d90811d24d51dfff820d5394bbc9f4"
   },
   {
     "path": "tests/test_native_receipts.py",
@@ -447,5 +459,11 @@
     "source": "canonical-package-tests/test_server_version_binding.py",
     "source_sha256": "4e1971a9f260357afd8a9b4243c1ebb93d9ffce30811cae808f5f81c32f3130b",
     "sha256": "4e1971a9f260357afd8a9b4243c1ebb93d9ffce30811cae808f5f81c32f3130b"
+  },
+  {
+    "path": "tests/test_transport_policy.py",
+    "source": "canonical-package-tests/test_transport_policy.py",
+    "source_sha256": "1ac834558eaf42a7e9b06da6a131fb5dd9822f37b4d520cccd2ce410b9fe2b90",
+    "sha256": "1ac834558eaf42a7e9b06da6a131fb5dd9822f37b4d520cccd2ce410b9fe2b90"
   }
 ]
