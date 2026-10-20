@@ -38,6 +38,12 @@ agent stacks and external targets are the main purpose of this public project.
 
 ## Try it in five minutes
 
+To connect a first local memory catalog to Codex, Claude Code or Antigravity,
+use the [read-only MCP walkthrough](examples/local-memory/README.md). It includes
+complete configuration generation, an independent protocol check, and a measured
+configuration-recall example with a plain-note control. Native lifecycle hooks
+remain a separate deployment.
+
 Open **Code → Local → HTTPS** on this repository and copy its URL. Install the
 current `main` source by replacing `<copied-url>` below. Record the checked-out
 commit when reporting a result:

@@ -1,0 +1,134 @@
+{
+  "date_utc": "2026-10-20",
+  "claim": "Recovery of three recorded configuration values in fresh sessions, not coding accuracy or general model intelligence.",
+  "client": "Claude Code 2.1.283",
+  "platform": "Windows AMD64, Python 3.12.10",
+  "main_comparison": [
+    "initial/missing",
+    "initial/note",
+    "profile-capabilities/mcp"
+  ],
+  "observations": [
+    {
+      "condition": "missing",
+      "attempt": "initial",
+      "elapsed_seconds": 8.881,
+      "exit_code": 0,
+      "supported_values": {
+        "tool_timeout_sec": null,
+        "request_budget_sec": null,
+        "initialize_timeout_sec": null
+      },
+      "input_including_cache": 2617,
+      "output_tokens": 441,
+      "num_turns": 2,
+      "model_names": [
+        "claude-opus-5-5"
+      ],
+      "mcp_tool_calls": null,
+      "excluded_from_main_comparison": false
+    },
+    {
+      "condition": "note",
+      "attempt": "initial",
+      "elapsed_seconds": 11.772,
+      "exit_code": 0,
+      "supported_values": {
+        "tool_timeout_sec": 210,
+        "request_budget_sec": 180,
+        "initialize_timeout_sec": 45
+      },
+      "input_including_cache": 2684,
+      "output_tokens": 975,
+      "num_turns": 2,
+      "model_names": [
+        "claude-opus-5-5"
+      ],
+      "mcp_tool_calls": null,
+      "excluded_from_main_comparison": false
+    },
+    {
+      "condition": "mcp",
+      "attempt": "initial",
+      "elapsed_seconds": 1.891,
+      "exit_code": 1,
+      "supported_values": null,
+      "input_including_cache": 0,
+      "output_tokens": null,
+      "num_turns": null,
+      "model_names": [],
+      "mcp_tool_calls": null,
+      "excluded_from_main_comparison": true
+    },
+    {
+      "condition": "mcp",
+      "attempt": "fixed-cli",
+      "elapsed_seconds": 19.23,
+      "exit_code": 0,
+      "supported_values": {
+        "tool_timeout_sec": 210,
+        "request_budget_sec": 180,
+        "initialize_timeout_sec": 45
+      },
+      "input_including_cache": 24700,
+      "output_tokens": 1057,
+      "num_turns": 5,
+      "model_names": [
+        "claude-opus-5-5"
+      ],
+      "mcp_tool_calls": [
+        "mcp__integrity_local_example__integrity_memory_capabilities",
+        "mcp__integrity_local_example__integrity_seed_snapshot",
+        "mcp__integrity_local_example__integrity_seed_event_uid"
+      ],
+      "excluded_from_main_comparison": true
+    },
+    {
+      "condition": "mcp",
+      "attempt": "profile-capabilities",
+      "elapsed_seconds": 15.95,
+      "exit_code": 0,
+      "supported_values": {
+        "tool_timeout_sec": 210,
+        "request_budget_sec": 180,
+        "initialize_timeout_sec": 45
+      },
+      "input_including_cache": 17829,
+      "output_tokens": 945,
+      "num_turns": 5,
+      "model_names": [
+        "claude-opus-5-5"
+      ],
+      "mcp_tool_calls": [
+        "mcp__integrity_local_example__integrity_memory_capabilities",
+        "mcp__integrity_local_example__integrity_seed_snapshot",
+        "mcp__integrity_local_example__integrity_seed_event_uid"
+      ],
+      "excluded_from_main_comparison": false
+    }
+  ],
+  "methodology": {
+    "trials_per_final_condition": 1,
+    "repeated_trials": false,
+    "cache_flushed": false,
+    "models_selected": "Client default, reported by CLI; no model override.",
+    "wall_time_includes": "CLI startup, authentication/session setup, tool round trips, provider latency and output generation.",
+    "input_tokens": "input_tokens + cache_creation_input_tokens + cache_read_input_tokens, summed across requests. Repeated prefixes count again. This is not unique context size or an invoice.",
+    "control": "The note contains the same three source facts. Built-in tools, hooks and auto-memory were disabled in these disposable test sessions.",
+    "missing_context": "No source repository, historical chat, note or search/shell tool was supplied. Null is correct abstention, not an incorrect answer.",
+    "mcp_prototype": "The first successful MCP run exposed full-facade capability guidance inconsistent with this limited example. The profile capabilities were corrected, then only the affected MCP condition was rerun.",
+    "invocation_failure": "One MCP CLI launch consumed the positional prompt as an allowedTools argument and exited before a model result. It is retained as a technical failure, excluded from value-recovery comparison.",
+    "not_claimed": [
+      "Token savings",
+      "Billing savings",
+      "Lower latency",
+      "Coding accuracy gain",
+      "Automatic context injection",
+      "Compaction recovery",
+      "Population-level success rates"
+    ]
+  },
+  "prototype_server_sha256": "8294899fe148f93b8b40b9996930df1cef959da668ec061ade97546dda2fa09d",
+  "current_server_sha256": "b00262cf478b570569c58c8a970d64fc1bc80d24c5a7d0e341f7958e51562d8d",
+  "quota_boundary": "Further non-Codex vendor calls stopped at owner instruction; use historical results only."
+}

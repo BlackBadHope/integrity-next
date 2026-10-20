@@ -55,6 +55,14 @@ jobs:
           PYTHONDONTWRITEBYTECODE: "1"
           PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
         run: python -B -m pytest -q -p no:cacheprovider
+      - name: Verify the local read-only MCP walkthrough
+        # No vendor/model call; generated state stays in runner-owned temporary paths.
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: |
+          python -B examples/local-memory/create_case.py --output "$RUNNER_TEMP/local-memory-case"
+          python -B examples/local-memory/setup.py --catalog "$RUNNER_TEMP/local-memory-case/private/catalog.sqlite" --output "$RUNNER_TEMP/local-memory-clients"
+          python -B examples/local-memory/verify_connection.py "$RUNNER_TEMP/local-memory-clients/codex.config.toml" "$RUNNER_TEMP/local-memory-clients/claude.mcp.json" "$RUNNER_TEMP/local-memory-clients/antigravity.mcp.json"
       - name: Run component boundary and interoperability tests
         env:
           PYTHONDONTWRITEBYTECODE: "1"
