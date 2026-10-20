@@ -187,6 +187,10 @@ def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=Non
                 raise ValueError("observed Antigravity cmd hook launcher requires space-free Python and profile paths")
     bindings = dict(bindings)
     required_bindings(vendor, bindings)
+    server_version = bindings.get("server_version")
+    if server_version is not None and (vendor != "codex" or not isinstance(server_version, str)
+            or re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)", server_version) is None):
+        raise ValueError("server_version requires an exact semantic version for Windows Codex")
     if (not isinstance(upstream, dict) or not isinstance(upstream.get("command"), str)
             or not Path(upstream["command"]).is_absolute() or not Path(upstream["command"]).is_file()
             or not isinstance(upstream.get("args", []), list)
@@ -281,6 +285,22 @@ def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=Non
             source_pins[hook_name] = digest(hook_path.read_bytes())
             derivations.append({"file": hook_name, "constant": "BROKER_SERVER_VERSION", "value": broker_version,
                                 "reason": "Exact pairing with selected local broker; contract verification retained"})
+        if server_version is not None:
+            text = hook_path.read_text(encoding="utf-8")
+            assignments = [n for n in ast.parse(text).body if isinstance(n, ast.Assign)
+                           and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name)
+                           and n.targets[0].id == "SERVER_VERSION"]
+            if len(assignments) != 1:
+                raise ValueError("Native server identity derivation anchor changed")
+            assignment = assignments[0]
+            original = ast.literal_eval(assignment.value)
+            lines = text.splitlines(keepends=True)
+            lines[assignment.lineno - 1:assignment.end_lineno] = ["SERVER_VERSION = " + repr(server_version) + "\n"]
+            hook_path.write_text("".join(lines), encoding="utf-8", newline="\n")
+            source_pins[hook_name] = digest(hook_path.read_bytes())
+            derivations.append({"file": hook_name, "constant": "SERVER_VERSION", "original": original,
+                                "value": server_version, "binding": "server_version",
+                                "reason": "Exact owner-selected upstream metadata identity; all contract checks retained"})
     values = dict(bindings)
     values.update({"mcp_server_name": server_name, "upstream_toml": str(logical / "upstream.toml"),
                    "tools_catalogue": str(logical / "integrity-client-tools.json"),

@@ -38,6 +38,16 @@ default) and `integrity_client_memory` (the canonical existing owner route).
 Both receive the same Memory-hook classification. Other names are rejected;
 another Integrity product is not automatically a Memory route.
 
+An optional Windows Codex owner binding `server_version` derives only the hook's
+`SERVER_VERSION` metadata constant from an exact observed upstream version.
+It accepts numeric semantic versions and records the original/selected values
+in profile derivations. An absent or null binding retains the default source.
+Contract versions, capability shapes, protocol negotiation, authority,
+checkpoint, source and Native ownership checks are unchanged. The selected
+hook must pass the complete pure validators against the actual admitted
+upstream response before activation; a matching version string alone is not
+compatibility evidence.
+
 These APIs compile a package. They do not change active settings, switch a
 producer, start a provider, migrate encrypted state or authorize deployment.
 An installer must pin the full payload and exact launch-file preimages, retain
