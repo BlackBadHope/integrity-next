@@ -220,5 +220,96 @@
     "source_sha256": "dddfbd10d72aba2b040e78eeeab8aba675fbc9efefbf7f9ce637cf731415a1b0",
     "sha256": "6e42c14dccc37ef591dfcff53a43636e6cd052daf327df8c2e0696ac89dbd35b",
     "projection": "Pure owner-parameterized renderer; deployment paths and pins omitted."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/delegation-native-reader.py",
+    "source": "weekly-live-source/clients/windows/native/delegation-native-reader.py",
+    "source_sha256": "0ca4a51368ad96fb5e1b4488dd42ce5b2c4648b187e99790ae6c39daa6c20c0c",
+    "sha256": "b5277ef1db377eb9fb9307cb9b19804eeab1b05019463bf4bd3451a6bfd42e23",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_broker_contract.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_broker_contract.py",
+    "source_sha256": "8faea695e81493ec666faa9861adb6d6f9977faed347c2efd945f623899b169e",
+    "sha256": "ceb291b553bff822776756f358d0cd1896604c49fb3e6cb9f869d9f4cab4c0d6",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_client_turn_envelope.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_client_turn_envelope.py",
+    "source_sha256": "1cb334ab77eb0d59150e01e51dbde59a19d4c96b34f14efb8c4229c05c8e7d1e",
+    "sha256": "1965af1ca9b1476fe7396f577c6d198776c53f2c8a1b43102e66dce19afbc5c4",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_delegation_codex.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_delegation_codex.py",
+    "source_sha256": "3688eae9ca34eca2c4b0e5e4796d48ffc12a9e66f6c7c266f1e5390f14851825",
+    "sha256": "728fa481aac5712b09a1cd0b2e17dba3eba9f493d78d5a119e0fc12ed07ba7b0",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_delegation_core.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_delegation_core.py",
+    "source_sha256": "2154f6710e6c9b249a6d1dac2399a3c6b77b0bcc6b64eb8fd1aaac33ced67682",
+    "sha256": "294f99862b5d08cef1430366c7ac7979f3ca557c4de8d7eca4a735c65094d52f",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_delegation_scope.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_delegation_scope.py",
+    "source_sha256": "4eba6afcba748721fd72f06a0b8b581bb585117b28860e6327a1f82fde6aba07",
+    "sha256": "50304198db7f799a2464f61edaf8be929c8ffe789600211fdb9b3063cc695f4f",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_delegation_terminal.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_delegation_terminal.py",
+    "source_sha256": "8e7eac560a9e805c04062ecbe7ae937f1f08adc2d9ea70fdcecddaca865a4ba1",
+    "sha256": "0cc30be0b67deb44247402f541ba36aa3e40f9e813b7ea3ed9a7035a072dc9d6",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_memory_lts_hook.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_memory_lts_hook.py",
+    "source_sha256": "30b0382f9620e8e4086d99d5789afe04c83b7fc05f595eb8e6643c31b51b7d44",
+    "sha256": "6faf45d846e738ccf2ba559007c8c368754f2bc76f270296b41b459b87e0eb4e",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_project_scope.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_project_scope.py",
+    "source_sha256": "4a0cad6c24eb44b272950078086c8ff05e3e7b7ddb73da5a823fb98543d16ba5",
+    "sha256": "0a217a302913c3451255bd4e9017611ddafffd676d3f13ede0b0caa0af7756ad",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity_scope_synapse.py",
+    "source": "weekly-live-source/clients/windows/native/integrity_scope_synapse.py",
+    "source_sha256": "cf3138f240e0a40822da077a60a76d33c8c0b871f67ba61e15c0ce9bc0d7e13b",
+    "sha256": "f32a9e202a0ac603ed6f49f22da131d2a2e00be89adbff0705717f2a766a1bf0",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows/native/integrity-client-admission.py",
+    "source": "weekly-live-source/clients/windows/native/integrity-client-admission.py",
+    "source_sha256": "d2bf15d2bb5898c479dc8a81abbfaaa2fe723f171f3273252d91507e91517e65",
+    "sha256": "43c7995640eae94016c9378c05b1bf7855db1c99badbe88cfd69a47fcbbcfa31",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows-remote/integrity-client-turn-broker.py",
+    "source": "weekly-live-source/clients/windows-remote/integrity-client-turn-broker.py",
+    "source_sha256": "f52fdf529d64dae2853b57e87573e6745765fdfa78ce94a177a2dd2a182a3538",
+    "sha256": "c5a15c2f91e5034dac17325ef77335678f2f27620b1fd1a12c26259a3dc578c5",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
+  },
+  {
+    "path": "src/integrity_client_memory/resources/windows-remote/integrity_client_turn_envelope.py",
+    "source": "weekly-live-source/clients/windows-remote/integrity_client_turn_envelope.py",
+    "source_sha256": "a0e9ef34ac434c18f1a5a8a76a3ce0e36723559f420496df8f43c197c931d708",
+    "sha256": "46b61657207aed4ce6099161cfb88f22129a6b68fe8f65c9753c560951e9a44c",
+    "projection": "Existing privacy/configuration projection; no publisher enrollment or activation."
   }
 ]

@@ -52,5 +52,11 @@
   },
   "common/scope": {
     "path": "resources/common/scope.ps1"
+  },
+  "windows/native_scope": {
+    "path": "resources/windows/native/integrity_scope_synapse.py"
+  },
+  "windows-remote/integrity-client-turn-broker": {
+    "path": "resources/windows-remote/integrity-client-turn-broker.py"
   }
 }

@@ -41,6 +41,7 @@ def native_source_pins():
     paths = [root / "owning_native.py", root / "project_scope.py",
              root / "resources/linux/linux_runtime_factory.py"]
     paths += sorted((root / "resources/linux/native").glob("*.py"))
+    paths += sorted((root / "resources/windows/native").glob("*.py"))
     return {path.relative_to(root).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest()
             for path in paths}
 
