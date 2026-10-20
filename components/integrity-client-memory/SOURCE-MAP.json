@@ -1,5 +1,11 @@
 [
   {
+    "path": "docs/COHORT_ROOTS.md",
+    "source": "canonical-package-docs/COHORT_ROOTS.md",
+    "source_sha256": "f802820199e695d34515383107e4cf1a8c8ac907679b31e09aee051ba97e3b61",
+    "sha256": "f802820199e695d34515383107e4cf1a8c8ac907679b31e09aee051ba97e3b61"
+  },
+  {
     "path": "src/integrity_client_memory/broker_adapter.py",
     "source": "canonical-package/broker_adapter.py",
     "source_sha256": "7178dd94ec1314c88e42bc65d4232867643fb756900530c8ed2599909624922a",
@@ -10,7 +16,7 @@
     "path": "src/integrity_client_memory/broker_bundle.py",
     "source": "canonical-package/broker_bundle.py",
     "source_sha256": "2575ce35c8653c634f97cf6a8c969db26a132de0f0f198d700a48d2a75254ded",
-    "sha256": "2575ce35c8653c634f97cf6a8c969db26a132de0f0f198d700a48d2a75254ded",
+    "sha256": "01d7a7dd195c9ee4f25909b024b057567f80e1a20e925d950a611b92a49a081d",
     "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
   },
   {
@@ -31,14 +37,14 @@
     "path": "src/integrity_client_memory/native_install.py",
     "source": "canonical-package/native_install.py",
     "source_sha256": "43ffe843f81271a9cb34ce23e2e2ed0a17d4926f5db47a54ad9e3ec550025aaa",
-    "sha256": "43ffe843f81271a9cb34ce23e2e2ed0a17d4926f5db47a54ad9e3ec550025aaa",
+    "sha256": "e4170a06c918e429ec22bba81a53b65d5aca698d211dce68e4b3de3b357f4ee4",
     "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
   },
   {
     "path": "src/integrity_client_memory/native_runtime.py",
     "source": "canonical-package/native_runtime.py",
     "source_sha256": "83d096f13d08d232c5e47bcb7eca0104fa138e6cb3433e0e447c77827729cb53",
-    "sha256": "83d096f13d08d232c5e47bcb7eca0104fa138e6cb3433e0e447c77827729cb53",
+    "sha256": "ef1621385f5c24f560f8943e2dccadbac7559a10e72c114900fde7a7b1c69b43",
     "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
   },
   {
@@ -60,6 +66,12 @@
     "source_sha256": "a0c0fbc079dcb0fc7171970f37168490f1d781bbdec4a6368ae04c116afe4132",
     "sha256": "a0c0fbc079dcb0fc7171970f37168490f1d781bbdec4a6368ae04c116afe4132",
     "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
+  },
+  {
+    "path": "src/integrity_client_memory/profile_roots.py",
+    "source": "canonical-package/profile_roots.py",
+    "source_sha256": "92ae9ca48a8b9e1fdd07d7e60527481534e554626b37c8799911b1b4ec99f4fb",
+    "sha256": "92ae9ca48a8b9e1fdd07d7e60527481534e554626b37c8799911b1b4ec99f4fb"
   },
   {
     "path": "src/integrity_client_memory/recovery_client.py",
@@ -396,5 +408,11 @@
     "source_sha256": "202cc28f3accfd20062d296f7397f7dffb2c9be07551a0c0192767a30eae8ece",
     "sha256": "a5510a8ee96b1522a851172352629dff8af4e574ce6716bd3055e5a145927da0",
     "derivation_note": "Original ledger tests; only package import adapted"
+  },
+  {
+    "path": "tests/test_profile_roots.py",
+    "source": "canonical-package-tests/test_profile_roots.py",
+    "source_sha256": "d1d225cb66492fee02f60c8dc811450cbeb2d93a883834466676efbca37edeec",
+    "sha256": "d1d225cb66492fee02f60c8dc811450cbeb2d93a883834466676efbca37edeec"
   }
 ]
