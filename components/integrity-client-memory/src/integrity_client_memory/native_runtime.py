@@ -21,7 +21,8 @@ def verify(path):
     if (not isinstance(profile, dict) or profile.get("protocol") != "integrity/native-client-profile/v1"
             or profile.get("root") != str(root) or profile.get("platform") != sys.platform
             or profile.get("vendor") not in {"codex", "claude", "antigravity"}
-            or not isinstance(profile.get("files"), dict)):
+            or not isinstance(profile.get("files"), dict)
+            or not isinstance(profile.get("auxiliary_files", {}), dict)):
         raise ValueError("Native profile identity/platform mismatch")
     python = plain(profile["python"], 1024 * 1024 * 1024)
     if python != Path(sys.executable).resolve() or digest(python.read_bytes()) != profile["python_sha256"]:
@@ -34,6 +35,9 @@ def verify(path):
     for name, pin in profile["files"].items():
         if Path(name).name != name or not name.endswith(".py") or digest(plain(root / "runtime" / name).read_bytes()) != pin:
             raise ValueError("Native source pin changed")
+    for name, pin in profile.get("auxiliary_files", {}).items():
+        if Path(name).name != name or digest(plain(root / "runtime" / name).read_bytes()) != pin:
+            raise ValueError("Native auxiliary file pin changed")
     if profile["hook"] not in profile["files"] or profile["broker"] not in profile["files"]:
         raise ValueError("Native entrypoint missing")
     return profile, root
@@ -192,7 +196,40 @@ def main(argv=None):
                 if value.returncode:
                     # Import errors can contain local paths. Retain only safe type/code here.
                     raise ValueError("Native entrypoint import/parser probe failed")
+            if profile["vendor"] != "antigravity":
+                # Exercise the REAL hook's control client, not a parallel schema
+                # checker. This starts only the lazy local broker, not upstream.
+                code = ('import runpy,sys;sys.path.insert(0,sys.argv[1]);'
+                        'm=runpy.run_path(sys.argv[2],run_name="native_wire_probe");'
+                        'c=m["McpClient"]();c.close()')
+                wire = subprocess.run([profile["python"], "-B", "-c", code, str(root / "runtime"),
+                                       str(root / "runtime" / profile["hook"])],
+                                      env=environment(profile, root), capture_output=True, timeout=25,
+                                      creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+                if wire.returncode:
+                    raise ValueError("Native hook/broker initialize-tools-list handshake failed")
+            else:
+                messages = [
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+                        "protocolVersion": "2025-06-18", "capabilities": {},
+                        "clientInfo": {"name": "native-wire-probe", "version": "1"}}},
+                    {"jsonrpc": "2.0", "method": "notifications/initialized", "params": {}},
+                    {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+                ]
+                wire = subprocess.run(broker_command(profile, root),
+                    input="".join(json.dumps(m) + "\n" for m in messages).encode(),
+                    env=environment(profile, root), capture_output=True, timeout=25,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+                if wire.returncode or len(wire.stdout) > 4 * 1024 * 1024:
+                    raise ValueError("Native broker control handshake failed")
+                replies = {m.get("id"): m for m in (json.loads(line) for line in wire.stdout.splitlines())}
+                info = replies.get(1, {}).get("result", {}).get("serverInfo", {})
+                names = [t["name"] for t in replies.get(2, {}).get("result", {}).get("tools", [])]
+                expected = [t["name"] for t in read_json(root / "integrity-client-tools.json")]
+                if info != {"name": "integrity-client-memory", "version": profile["broker_version"]} or names != expected:
+                    raise ValueError("Native broker identity/tools mismatch")
             print(json.dumps({"status": "entrypoints-load", "vendor": profile["vendor"],
+                              "hook_broker_wire": "initialize-tools-list-PASS",
                               "upstream_started": False, "model_calls": 0, "live_acceptance": "NOT_RUN"}))
             return 0
         result, code = hook(profile, root, args.event, raw_input)

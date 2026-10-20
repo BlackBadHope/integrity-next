@@ -218,6 +218,29 @@ def build(vendor, upstream, bindings, output, tools=None):
             raise ValueError("duplicate runtime module")
         target.write_bytes(source.read_bytes())
         source_pins[source.name] = digest(target.read_bytes())
+    template_pins = dict(source_pins)
+    derivations = []
+    # The Native ownership hook is a distinct preserved source cohort. Compile
+    # its local broker identity against the broker actually selected here,
+    # retaining the original exact identity and full tools-contract checks.
+    version_source = runtime / ("turn_broker_core.py" if vendor == "antigravity" else broker_name)
+    broker_tree = ast.parse(version_source.read_text(encoding="utf-8"))
+    broker_version = next(ast.literal_eval(n.value) for n in broker_tree.body
+                          if isinstance(n, ast.Assign) and len(n.targets) == 1
+                          and isinstance(n.targets[0], ast.Name) and n.targets[0].id == "BROKER_VERSION")
+    if vendor != "antigravity":
+        hook_path = runtime / hook_name
+        text = hook_path.read_text(encoding="utf-8")
+        assignment = next(n for n in ast.parse(text).body if isinstance(n, ast.Assign)
+                          and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name)
+                          and n.targets[0].id == "BROKER_SERVER_VERSION")
+        if ast.literal_eval(assignment.value) != broker_version:
+            lines = text.splitlines(keepends=True)
+            lines[assignment.lineno - 1:assignment.end_lineno] = ["BROKER_SERVER_VERSION = " + repr(broker_version) + "\n"]
+            hook_path.write_text("".join(lines), encoding="utf-8", newline="\n")
+            source_pins[hook_name] = digest(hook_path.read_bytes())
+            derivations.append({"file": hook_name, "constant": "BROKER_SERVER_VERSION", "value": broker_version,
+                                "reason": "Exact pairing with selected local broker; contract verification retained"})
     values = dict(bindings)
     values.update({"mcp_server_name": "integrity_native", "upstream_toml": str(output / "upstream.toml"),
                    "tools_catalogue": str(output / "integrity-client-tools.json"),
@@ -264,6 +287,12 @@ def build(vendor, upstream, bindings, output, tools=None):
                  "values": {k: values[k] for k in sorted(required_keys)}, "owner_local_catalogue": None}
     write_json(output / "component.json", component)
     (output / "integrity-client-tools.json").write_bytes(encoded)
+    auxiliary_pins = {}
+    if vendor == "claude":
+        # The owning Claude hook resolves its contract next to its exact broker.
+        # Both catalogues are the same reviewed bytes, and both are pinned.
+        (runtime / "integrity-client-tools.json").write_bytes(encoded)
+        auxiliary_pins["integrity-client-tools.json"] = tools_sha
     toml = "[mcp_servers.integrity-upstream]\nenabled = false\n"
     for key in ("command", "args", "cwd"):
         if key in upstream:
@@ -319,6 +348,8 @@ def build(vendor, upstream, bindings, output, tools=None):
     profile = {"protocol": "integrity/native-client-profile/v1", "vendor": vendor, "platform": sys.platform,
                "root": str(output), "python": python, "python_sha256": digest(Path(python).read_bytes()),
                "hook": hook_name, "broker": broker_name, "files": source_pins,
+               "template_source_pins": template_pins, "derivations": derivations,
+               "auxiliary_files": auxiliary_pins, "broker_version": broker_version,
                "tools_sha256": tools_sha, "component_sha256": digest((output / "component.json").read_bytes()),
                "transport_sha256": digest((output / "transport.json").read_bytes()),
                "upstream_sha256": digest((output / "upstream.toml").read_bytes()),

@@ -44,7 +44,7 @@ complete configuration generation, an independent protocol check, and a measured
 configuration-recall example with a plain-note control. Native lifecycle hooks
 remain a separate deployment.
 
-Open **Code в†’ Local в†’ HTTPS** on this repository and copy its URL. Install the
+Open **Code РІвЂ вЂ™ Local РІвЂ вЂ™ HTTPS** on this repository and copy its URL. Install the
 current `main` source by replacing `<copied-url>` below. Record the checked-out
 commit when reporting a result:
 
@@ -96,7 +96,7 @@ local instance.
 Linux, macOS and Windows users need Python 3.11 or newer:
 
 ```bash
-git clone <URL copied from Code в†’ Local в†’ HTTPS>
+git clone <URL copied from Code РІвЂ вЂ™ Local РІвЂ вЂ™ HTTPS>
 cd integrity-next
 python -m venv .venv
 ```
@@ -209,7 +209,7 @@ that host binding, credentials or production actions are configured.
 - [Changelog](CHANGELOG.md)
 - [Public export boundary](PUBLIC-EXPORT-NOTICE.md)
 
-Security-sensitive reports should use **Security в†’ Advisories в†’ Report a
+Security-sensitive reports should use **Security РІвЂ вЂ™ Advisories РІвЂ вЂ™ Report a
 vulnerability** in this repository, not a public issue.
 
 Questions, use-case proposals and first-user feedback are welcome in
