@@ -44,7 +44,7 @@ complete configuration generation, an independent protocol check, and a measured
 configuration-recall example with a plain-note control. Native lifecycle hooks
 remain a separate deployment.
 
-Open **Code → Local → HTTPS** on this repository and copy its URL. Install the
+Open **Code в†’ Local в†’ HTTPS** on this repository and copy its URL. Install the
 current `main` source by replacing `<copied-url>` below. Record the checked-out
 commit when reporting a result:
 
@@ -96,7 +96,7 @@ local instance.
 Linux, macOS and Windows users need Python 3.11 or newer:
 
 ```bash
-git clone <URL copied from Code → Local → HTTPS>
+git clone <URL copied from Code в†’ Local в†’ HTTPS>
 cd integrity-next
 python -m venv .venv
 ```
@@ -209,7 +209,7 @@ that host binding, credentials or production actions are configured.
 - [Changelog](CHANGELOG.md)
 - [Public export boundary](PUBLIC-EXPORT-NOTICE.md)
 
-Security-sensitive reports should use **Security → Advisories → Report a
+Security-sensitive reports should use **Security в†’ Advisories в†’ Report a
 vulnerability** in this repository, not a public issue.
 
 Questions, use-case proposals and first-user feedback are welcome in
@@ -232,3 +232,8 @@ package versions or evidence of a deployment.
 ## Installation acceptance evidence
 
 See the [6.1.0 / 6.1.1 isolated installation report](docs/audits/installation-6.1.1-20261017/REPORT_RU.md) for Linux and Windows results, single-run command timings, preserved failures, limitations and evidence SHA256. These timings are not product-performance or cross-platform speed claims.
+
+For complete Native admission, append, closure and vendor lifecycle hook wiring,
+use the [Native onboarding guide](docs/native-onboarding.md). It includes generated
+private profiles, exact Native ownership prerequisites, paused-vendor historical
+evidence boundaries and rollback.

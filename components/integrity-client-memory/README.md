@@ -1,6 +1,6 @@
 # integrity-client-memory
 
-Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.8.2; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
+Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.9.0; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
 
 ## Linux lifecycle repair
 
@@ -107,3 +107,14 @@ Native sources; those hashes describe source bytes and grant no activation.
 Live credentials, transport enrollment, machine settings and historical memory
 records are deliberately absent. Local fake-IPC tests establish source behavior;
 a new installation still needs its own lifecycle acceptance.
+
+## Complete Native client profiles
+
+`integrity-native-profile` generates private, source-pinned Codex, Claude CLI
+and Antigravity MCP/hook registrations from an owner-selected server and real
+Native bindings. See the [complete Native onboarding guide](../../docs/native-onboarding.md)
+for installation, lifecycle behavior, paused-provider verification and rollback.
+`native_runtime verify` checks exact source/configuration bytes; `probe` imports
+the real entrypoints without calling a model. Both remain distinct from live
+acceptance. The original header-only launcher preflight retains its original
+meaning.
