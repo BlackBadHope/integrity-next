@@ -63,6 +63,37 @@ def test_real_entrypoint_imports_and_parsers_load_without_upstream(profile):
     assert runtime.main(["--profile", str(profile), "probe"]) == 0
 
 
+def test_wire_probe_refuses_a_pinned_but_incompatible_hook_broker_pair(profile):
+    import ast
+    value, root = runtime.verify(profile)
+    if value["vendor"] == "antigravity":
+        pytest.skip("Antigravity hook uses its conversation broker rather than McpClient")
+    hook = root / "runtime" / value["hook"]
+    text = hook.read_text(encoding="utf-8")
+    assignment = next(n for n in ast.parse(text).body if isinstance(n, ast.Assign)
+                      and len(n.targets) == 1 and isinstance(n.targets[0], ast.Name)
+                      and n.targets[0].id == "BROKER_SERVER_VERSION")
+    lines = text.splitlines(keepends=True)
+    lines[assignment.lineno - 1:assignment.end_lineno] = ["BROKER_SERVER_VERSION = '0.0.0'\n"]
+    hook.write_text("".join(lines), encoding="utf-8", newline="\n")
+    value["files"][value["hook"]] = install.digest(hook.read_bytes())
+    install.write_json(profile, value)
+    runtime.verify(profile)
+    assert runtime.main(["--profile", str(profile), "probe"]) == 2
+
+
+def test_wire_probe_refuses_missing_claude_sibling_catalog(profile):
+    value, root = runtime.verify(profile)
+    if value["vendor"] != "claude":
+        pytest.skip("Claude owning hook resolves the sibling catalogue")
+    catalog = root / "runtime/integrity-client-tools.json"
+    catalog.rename(catalog.with_suffix(".fixture-disabled"))
+    value["auxiliary_files"] = {}
+    install.write_json(profile, value)
+    runtime.verify(profile)
+    assert runtime.main(["--profile", str(profile), "probe"]) == 2
+
+
 def test_session_start_runs_real_hook_without_model_or_upstream(profile):
     value, root = runtime.verify(profile)
     if value["vendor"] == "antigravity":

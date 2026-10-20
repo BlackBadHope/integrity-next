@@ -9,8 +9,10 @@ The latter cannot perform this lifecycle by adding more allowed tool names.
 The profile compiler produces actual commands, source pins, private state paths,
 MCP registration and vendor hook configuration. It refuses missing runtime
 bindings. `native_runtime verify` checks source and configuration bytes;
-`native_runtime probe` imports the real hook and broker entrypoints without a
-model or upstream call. Neither command is a live acceptance certificate.
+`native_runtime probe` imports the real entrypoints and executes the actual
+hook/client `initialize` and `tools/list` exchange with the local broker, without
+a model or upstream call. It catches incompatible broker versions and missing
+sibling catalogues. Neither command is a live acceptance certificate.
 
 ## Supported owner routes and prerequisites
 
@@ -125,7 +127,10 @@ that disables them has to be addressed by its owner.
 
 The MCP server appears as `integrity_native`. The generated config gives its
 outer tool boundary 210 seconds. The local hook/broker runtime checks its own
-source, Python and config pins before launch.
+source, Python and config pins before launch. The compiler binds the hook's exact
+local broker-version constant to the selected broker and records that derivation
+alongside template and emitted source pins. Strict identity and exact
+tools-contract validation remain in place.
 
 Expected first turn:
 
