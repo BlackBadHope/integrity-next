@@ -75,6 +75,7 @@ from .context_budget import (
 from .medor_architecture import (
     CUSTODY_LEDGER_ID,
     TENANT_ID,
+    MedorArchitectureError,
     MedorArchitectureKeys,
     PersistentMedorArchitectureService,
     load_medor_architecture_signer,
@@ -206,7 +207,8 @@ CONTEXT_ADMISSION_REPLAY_RESERVATION_PROTOCOL = (
 )
 MAX_CONTEXT_ADMISSION_REPLAY_BYTES = 32 * 1_048_576
 MAX_CONTEXT_ADMISSION_REPLAY_CATALOG_BYTES = 512 * 1_048_576
-MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES = 2 * 1_024 * 1_024 * 1_024
+MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES = 4 * 1_024 * 1_024 * 1_024
+CONTEXT_ADMISSION_REPLAY_DISK_FREE_FLOOR_BYTES = 1_024 * 1_024 * 1_024
 MAX_CONTEXT_ADMISSION_REPLAY_RECORDS = 128
 CONTEXT_ADMISSION_REPLAY_TTL_SECONDS = 24 * 60 * 60
 CONTEXT_ADMISSION_REPLAY_ORPHAN_GRACE_SECONDS = 10 * 60
@@ -1860,6 +1862,8 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
         self._active_context_replay_deadline: float | None = None
         self._context_admission_replay_reservation_id: str | None = None
         self._context_admission_replay_catalog_budget = 0
+        self._context_admission_replay_unavailable_reason: str | None = None
+        self._context_replay_unallocated_reservation_bytes = 0
         self._closed = False
         self._replay_migrations: dict[str, ReplayMigration] = {}
 
@@ -1941,8 +1945,10 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
         )
 
     def _reserve_context_admission_replay(self, replay_id: str) -> int | None:
+        self._context_admission_replay_unavailable_reason = None
         catalog_budget = self._prospective_context_replay_catalog_budget()
         if catalog_budget is None:
+            self._context_admission_replay_unavailable_reason = "replay-catalog-custody-unavailable"
             return None
         reservation_deadline = (
             time.monotonic()
@@ -1980,6 +1986,7 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
                     return existing_budget
                 additional = catalog_budget - existing_budget
                 if total_bytes + additional > MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES:
+                    self._context_admission_replay_unavailable_reason = "replay-logical-capacity-exhausted"
                     return None
             elif (
                 record_count + 1 > MAX_CONTEXT_ADMISSION_REPLAY_RECORDS
@@ -1989,6 +1996,21 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
                 + MAX_CONTEXT_ADMISSION_REPLAY_RESERVATION_BYTES
                 > MAX_CONTEXT_ADMISSION_REPLAY_TOTAL_BYTES
             ):
+                self._context_admission_replay_unavailable_reason = "replay-logical-capacity-exhausted"
+                return None
+            else:
+                additional = (MAX_CONTEXT_ADMISSION_REPLAY_BYTES + catalog_budget
+                              + MAX_CONTEXT_ADMISSION_REPLAY_RESERVATION_BYTES)
+            # Serialize physical headroom with logical reservations. Existing
+            # unallocated promises count too; otherwise parallel admissions can
+            # reserve the same free blocks. The seed-session spool shares this
+            # filesystem and its already allocated bytes reduce f_bavail.
+            space = os.fstatvfs(self._prepare_context_replay_custody())
+            free_bytes = space.f_bavail * space.f_frsize
+            if free_bytes < (CONTEXT_ADMISSION_REPLAY_DISK_FREE_FLOOR_BYTES
+                             + self._context_replay_unallocated_reservation_bytes
+                             + additional):
+                self._context_admission_replay_unavailable_reason = "replay-physical-capacity-exhausted"
                 return None
             encoded = canonical_json(
                 {
@@ -2047,6 +2069,7 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
         reservation_id: str | None = None,
     ) -> bool:
         if self._context_admission_replay_root is None or _fcntl is None:
+            self._context_admission_replay_unavailable_reason = "replay-storage-unavailable"
             return False
         if reservation_id is not None:
             try:
@@ -2054,6 +2077,7 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
                     reservation_id
                 )
             except (McpFacadeError, OSError):
+                self._context_admission_replay_unavailable_reason = "replay-storage-unavailable"
                 return False
             if catalog_budget is None:
                 return False
@@ -2630,6 +2654,7 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
                 replay_hex = temporary_match.group("id")
                 sizes[replay_hex] = sizes.get(replay_hex, 0) + details.st_size
             total_bytes += details.st_size
+        physical_file_bytes = total_bytes
         effective_record_count = record_count
         for replay_hex, reservation in reservations.items():
             record_consumed = record_sizes.get(replay_hex, 0) + temporary_record_sizes.get(
@@ -2687,6 +2712,7 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
             total_bytes += max(0, catalog_budget - catalog_consumed)
             if replay_hex not in record_sizes:
                 effective_record_count += 1
+        self._context_replay_unallocated_reservation_bytes = max(0, total_bytes - physical_file_bytes)
         return total_bytes, effective_record_count
 
     @contextmanager
@@ -4367,23 +4393,35 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
                 "witness": after_witness,
             }
         )
-        feedback = self.architecture.record_event_append_outcome(
-            grant_id=authority["grant_id"],
-            request_digest=request_digest,
-            outcome=action_outcome,
-            witness_digest=witness_digest,
-            recorded_at=_utc_now(),
-        )
-        outcome_observed_at = _utc_now()
-        outcome_stage = self.architecture.plan_event_outcome(
-            action_stage=action_stage,
-            outcome=action_outcome,
-            passive_witness_digest=witness_digest,
-            feedback_receipt_id=feedback["receipt_id"],
-            feedback=feedback,
-            observed_at=outcome_observed_at,
-            as_of=outcome_observed_at,
-        )
+        feedback = None
+        outcome_stage = None
+        feedback_error = None
+        feedback_phase = "record-event-append-outcome"
+        try:
+            feedback = self.architecture.record_event_append_outcome(
+                grant_id=authority["grant_id"],
+                request_digest=request_digest,
+                outcome=action_outcome,
+                witness_digest=witness_digest,
+                recorded_at=_utc_now(),
+            )
+            feedback_phase = "plan-event-outcome"
+            outcome_observed_at = _utc_now()
+            outcome_stage = self.architecture.plan_event_outcome(
+                action_stage=action_stage,
+                outcome=action_outcome,
+                passive_witness_digest=witness_digest,
+                feedback_receipt_id=feedback["receipt_id"],
+                feedback=feedback,
+                observed_at=outcome_observed_at,
+                as_of=outcome_observed_at,
+            )
+        except (MedorArchitectureError, OSError, sqlite3.Error) as exc:
+            # Action Log was already invoked once, and the signed passive
+            # witness above establishes its observed result independently.
+            # A custody feedback failure must not erase that proof or invite
+            # another append. Do not invent a feedback/outcome-stage receipt.
+            feedback_error = type(exc).__name__
         receipt = {
             "protocol": BRIDGE_PROTOCOL + "/append-receipt",
             "source_label": SOURCE_LABEL,
@@ -4401,7 +4439,9 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
             "route_digest": route_digest,
             "pre_action_route_stage_id": pre_action["route_stage_id"],
             "action_route_stage_id": action_stage["route_stage_id"],
-            "outcome_route_stage_id": outcome_stage["route_stage_id"],
+            "outcome_route_stage_id": (
+                outcome_stage["route_stage_id"] if outcome_stage is not None else None
+            ),
             "architecture_admission_id": architecture_id,
             "security_admission_id": self.security_admission.admission_id,
             "request_sent": True,
@@ -4415,18 +4455,29 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
             "production_execution_performed": False,
             "passive_witness": after_witness,
             "witness_observer_available": witness_observer_available,
-            "feedback_receipt_id": feedback["receipt_id"],
+            "feedback_receipt_id": feedback["receipt_id"] if feedback is not None else None,
             "outcome_feedback": feedback,
             "route_stages": {
                 "pre_action": pre_action,
                 "action": action_stage,
-                "outcome": outcome_stage,
+                **({"outcome": outcome_stage} if outcome_stage is not None else {}),
             },
             "home_record_count": 0,
             "production_authority": False,
         }
         if context_binding is not None:
             receipt.update(context_binding)
+        if feedback_error is not None:
+            receipt.update({
+                "completion_status": "incomplete",
+                "feedback_status": "pending" if feedback is None else "recorded-route-pending",
+                "warning": {
+                    "code": "post-append-architecture-incomplete",
+                    "stage": feedback_phase,
+                    "error_type": feedback_error,
+                    "automatic_retry_allowed": False,
+                },
+            })
         _audit(
             {
                 "protocol": receipt["protocol"],
@@ -5081,6 +5132,14 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
                 # Only this successful real admission can enable the ordinary
                 # current-context route when no retained admission was created.
                 self._remember_unretained_admission()
+                result["session_recovery"] = {
+                    "protocol": RECOVERY_PROTOCOL, "available": False,
+                    "status": "capacity-degraded" if self._context_admission_replay_unavailable_reason
+                        in {"replay-logical-capacity-exhausted", "replay-physical-capacity-exhausted"}
+                        else "unavailable",
+                    "reason": self._context_admission_replay_unavailable_reason or "admission-not-retained",
+                    "read_plane": "ready", "automatic_retry_allowed": False,
+                }
             return result
         if name == "integrity_seed_recall":
             snapshot = self._require_seed_snapshot()

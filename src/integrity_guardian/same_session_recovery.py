@@ -334,7 +334,11 @@ class SessionRecoveryMixin:
         self._session_recovery_unretained_registration = binding
         return {**result, "session_recovery": {"available": False,
             "protocol": RECOVERY_PROTOCOL, "reason": "admission-not-retained",
-            "registration_id": registration_id, "canonical_registration_unchanged": True}}
+            "registration_id": registration_id, "canonical_registration_unchanged": True,
+            **({"status": "capacity-degraded", "capacity_reason": self._context_admission_replay_unavailable_reason,
+                "read_plane": "ready", "automatic_retry_allowed": False}
+               if self._context_admission_replay_unavailable_reason in {
+                   "replay-logical-capacity-exhausted", "replay-physical-capacity-exhausted"} else {})}}
 
     def _recovery_before_unretained_write(self, name, arguments):
         self._recovery_check_unretained_context()
