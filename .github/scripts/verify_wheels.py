@@ -75,7 +75,7 @@ def verify(root: Path, directory: Path) -> dict:
         relative = [m.name.removeprefix(prefix) for m in members if m.isfile()]
         expected_source = {p.relative_to(root).as_posix()
                            for p in (root / "src/integrity_guardian").rglob("*") if p.is_file()}
-        expected_source.update({"README.md", "LICENSE", "NOTICE", "AUTHORS.md", "pyproject.toml", "PKG-INFO"})
+        expected_source.update({"README.md", "LICENSE", "NOTICE", "AUTHORS.md", "pyproject.toml", "PKG-INFO", ".gitignore"})
         if any(not m.name.startswith(prefix) or not m.isfile() for m in members):
             raise ValueError("nonregular Guardian source archive member")
         if len(relative) != len(set(relative)) or set(relative) != expected_source:
