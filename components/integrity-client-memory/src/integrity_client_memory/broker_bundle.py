@@ -18,10 +18,12 @@ import sys
 ROOT = Path(__file__).resolve().parent
 BROKER = ROOT / "resources/windows/integrity-client-turn-broker.py"
 MODULES = ("operation_ledger", "recovery_client", "broker_adapter")
+NAVIGATION_MODULE = "core_delivery"
 SUPPORT = ("__init__.py", "configuration.py", "catalogue.py", "native_runtime.py",
-           "native_install.py", "profile.py", "broker_bundle.py", "project_scope.py",
+           "native_install.py", "profile.py", "broker_bundle.py", "project_scope.py", "native_receipts.py",
            "profile_roots.py",
            "operation_ledger.py", "recovery_client.py", "broker_adapter.py",
+           "core_delivery.py",
            "data/tools-current.json")
 BEGIN = "# BEGIN CANONICAL SESSION RECOVERY\n"
 END = "# END CANONICAL SESSION RECOVERY\n"
@@ -29,15 +31,50 @@ END = "# END CANONICAL SESSION RECOVERY\n"
 
 def source_pins():
     paths = [BROKER, *(ROOT / (name + ".py") for name in MODULES),
+             ROOT / (NAVIGATION_MODULE + ".py"),
              Path(__file__).resolve(),
-             ROOT / "resources/windows/integrity_client_turn_envelope.py"]
+             ROOT / "resources/windows/integrity_client_turn_envelope.py",
+             ROOT / "native_receipts.py"]
     return {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest()
             for p in paths}
 
 
+def _render_navigation(text):
+    """Replace only the exact legacy frozen module with the canonical source.
+
+    This is a bounded source migration: the baseline broker remains a template,
+    while the selected navigation module has one maintained source and pin.
+    Ambiguous or changed template anchors fail compilation before any install.
+    """
+    matches = []
+    for node in ast.parse(text).body:
+        if not (isinstance(node, ast.Expr) and isinstance(node.value, ast.Call)
+                and isinstance(node.value.func, ast.Name) and node.value.func.id == "exec"):
+            continue
+        call = node.value.args[0] if node.value.args else None
+        if (isinstance(call, ast.Call) and isinstance(call.func, ast.Name)
+                and call.func.id == "compile" and len(call.args) == 3
+                and isinstance(call.args[1], ast.Constant)
+                and call.args[1].value == "<managed-core_delivery.py>"
+                and isinstance(call.args[0], ast.Constant)
+                and isinstance(call.args[0].value, str)):
+            matches.append(node)
+    if len(matches) != 1:
+        raise ValueError("canonical navigation renderer anchors changed")
+    source = (ROOT / (NAVIGATION_MODULE + ".py")).read_text(encoding="utf-8-sig")
+    ast.parse(source)
+    pin = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    frozen = (f"_automatic_Core_source = {source!r}\n"
+              f"assert hashlib.sha256(_automatic_Core_source.encode('utf-8')).hexdigest() == {pin!r}\n"
+              "exec(compile(_automatic_Core_source, '<canonical-core_delivery>', 'exec'), _automatic_Core.__dict__)\n")
+    lines = text.splitlines(keepends=True)
+    node = matches[0]
+    return "".join(lines[:node.lineno - 1]) + frozen + "".join(lines[node.end_lineno:])
+
+
 def render_windows_broker():
     """Return frozen bytes and source provenance without writing or importing."""
-    text = BROKER.read_text(encoding="utf-8")
+    text = _render_navigation(BROKER.read_text(encoding="utf-8"))
     if text.count(BEGIN) != 1 or text.count(END) != 1:
         raise ValueError("canonical recovery renderer anchors changed")
     start = text.index(BEGIN)
@@ -109,7 +146,7 @@ def build_bundle(output, *, bindings, upstream, tools, deployment_root=None,
     profile["transport_sha256"] = digest((output / "transport.json").read_bytes())
     folder = output / "codex-workspace/.codex"
     config = ("[mcp_servers." + profile.get("mcp_server_name", "integrity_native") + "]\ncommand = " + json.dumps(profile["python"]) +
-              "\nargs = " + json.dumps([*args, "mcp"]) +
+              "\nargs = " + json.dumps([*args, "--tools-contract", str(logical / "integrity-client-tools.json"), "mcp"]) +
               "\nstartup_timeout_sec = 60\ntool_timeout_sec = 210\n")
     (folder / "config.toml").write_text(config, encoding="utf-8")
     hooks = read_json(folder / "hooks.json")

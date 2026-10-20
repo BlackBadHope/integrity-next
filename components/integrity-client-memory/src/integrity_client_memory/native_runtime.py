@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -99,6 +100,17 @@ def broker_command(profile, root):
     return args
 
 
+def validate_tools_contract(profile, root, selected):
+    """Bind a launcher-visible contract hint to the already pinned profile."""
+    if selected is None:
+        return
+    expected = root / "integrity-client-tools.json"
+    if Path(selected).absolute() != expected:
+        raise ValueError("Native tools contract selection changed")
+    if digest(plain(expected).read_bytes()) != profile["tools_sha256"]:
+        raise ValueError("Native tools contract pin changed")
+
+
 def merge_output(left, right):
     """Compose context sequentially. A later handler cannot erase a denial."""
     result = dict(left)
@@ -130,6 +142,36 @@ def blocked(value):
     return (value.get("decision") in {"block", "deny"}
             or value.get("hookSpecificOutput", {}).get("permissionDecision") == "deny"
             or value.get("continue") is False)
+
+
+def execution_receipt(profile, root, event):
+    """Safe execution metadata, not a Native identity or authority assertion."""
+    hook_path = root / "runtime" / profile["hook"]
+    tree = ast.parse(hook_path.read_text(encoding="utf-8"))
+    versions = [ast.literal_eval(n.value) for n in tree.body
+                if isinstance(n, ast.Assign) and len(n.targets) == 1
+                and isinstance(n.targets[0], ast.Name) and n.targets[0].id == "HOOK_VERSION"]
+    if len(versions) != 1 or not isinstance(versions[0], str):
+        raise ValueError("Native execution version anchor changed")
+    return {"protocol": "integrity/native-execution/v1", "event": event,
+            "vendor": profile["vendor"], "hook_version": versions[0],
+            "profile_path": str(root / "profile.json"),
+            "profile_sha256": digest(plain(root / "profile.json").read_bytes()),
+            "hook_path": str(hook_path), "hook_sha256": profile["files"][profile["hook"]],
+            "python_path": profile["python"], "python_sha256": profile["python_sha256"],
+            "runtime_sha256": digest(plain(__file__).read_bytes()),
+            "wrapper_pid": os.getpid(), "wrapper_parent_pid": os.getppid(),
+            "configuration_verified": True, "native_ownership_verified": False,
+            "external_action_authority": False}
+
+
+def receipt_context(payload, event):
+    if event in {"SessionStart", "UserPromptSubmit"}:
+        return True
+    if event != "PostToolUse":
+        return False
+    # Tool arguments may contain private text: inspect only, never export them.
+    return "integrity_context_admission" in json.dumps(payload, ensure_ascii=False)
 
 
 def memory_call(raw):
@@ -187,6 +229,7 @@ def hook(profile, root, event, raw):
     if not handlers:
         raise ValueError("unsupported Native event")
     result = {}
+    native_executed = False
     for command in handlers:
         done = subprocess.run(command, input=raw, capture_output=True, env=environment(profile, root),
                               timeout=50, check=False, creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
@@ -198,7 +241,16 @@ def hook(profile, root, event, raw):
             raise ValueError("Native hook output invalid") from None
         if not isinstance(value, dict):
             raise ValueError("Native hook output shape invalid")
+        if command is native:
+            native_executed = True
         result = merge_output(result, value)
+        if native_executed and vendor == "codex" and receipt_context(payload, event):
+            proof = execution_receipt(profile, root, event)
+            # This is emitted only after the pinned Native process actually ran.
+            # It proves which source executed; Native ownership is separately verified.
+            result = merge_output(result, {"systemMessage": "INTEGRITY NATIVE EXECUTION " +
+                                          json.dumps(proof, ensure_ascii=False, separators=(",", ":"))})
+            native_executed = False
         if done.returncode or blocked(result):
             return result, done.returncode
     return result, 0
@@ -207,6 +259,7 @@ def hook(profile, root, event, raw):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", type=Path, required=True)
+    parser.add_argument("--tools-contract", type=Path)
     parser.add_argument("mode", choices=("verify", "probe", "mcp", "hook"))
     parser.add_argument("event", nargs="?")
     args = parser.parse_args(argv)
@@ -215,6 +268,7 @@ def main(argv=None):
         if args.mode == "hook":
             raw_input = sys.stdin.buffer.read(MAX_HOOK + 1)
         profile, root = verify(args.profile)
+        validate_tools_contract(profile, root, args.tools_contract)
         if args.mode == "verify":
             print(json.dumps({"status": "source-and-config-verified", "vendor": profile["vendor"],
                               "upstream_started": False, "native_ownership_verified": False, "live_acceptance": "NOT_RUN"}))

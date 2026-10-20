@@ -258,6 +258,14 @@ def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=Non
     template_pins = dict(source_pins)
     derivations = []
     if vendor == "codex":
+        from .native_receipts import render_hook
+        hook_path = runtime / hook_name
+        rendered_hook, receipt_provenance = render_hook(hook_path.read_text(encoding="utf-8"))
+        hook_path.write_text(rendered_hook, encoding="utf-8", newline="\n")
+        source_pins[hook_name] = digest(hook_path.read_bytes())
+        derivations.append({"file": hook_name,
+                            "reason": "Decode canonical compact receipts before unchanged admission validators",
+                            **receipt_provenance})
         from .broker_bundle import render_windows_broker
         rendered, provenance = render_windows_broker()
         (runtime / broker_name).write_bytes(rendered)
@@ -365,7 +373,8 @@ def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=Non
     (output / "upstream.toml").write_text(toml, encoding="utf-8")
     python = str(Path(sys.executable).resolve())
     entry_args = ["-m", "integrity_client_memory.native_runtime", "--profile", str(logical / "profile.json")]
-    transport = {"command": python, "args": [*entry_args, "mcp"]}
+    contract_args = ["--tools-contract", str(logical / "integrity-client-tools.json")] if vendor == "codex" else []
+    transport = {"command": python, "args": [*entry_args, *contract_args, "mcp"]}
     lifecycle_args = ["-B", str(live_runtime / broker_name), "--config", str(logical / "upstream.toml"),
                       "--tools-contract", str(logical / "integrity-client-tools.json")]
     if vendor != "antigravity":

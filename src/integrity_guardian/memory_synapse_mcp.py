@@ -57,6 +57,7 @@ from .action_log_reader import (
 )
 from .authority_scope import memory_authority_contract
 from .event_recovery import validate_recovery
+from .snapshot_capacity import snapshot_allocation
 from .project_scope import ProjectScopeError, validated_metadata
 from .historical_archive import ArchivePolicy
 
@@ -556,6 +557,14 @@ class FrozenSeedCatalogSnapshot:
                 ) as source_connection,
                 closing(sqlite3.connect(self.path)) as destination_connection,
             ):
+                # This owner-locked copy is private to a live process and is
+                # never recovered after a crash. Durable replay copies retain
+                # their separate verification/fsync path. Avoid journal/fsync
+                # work for this disposable destination only; the immutable
+                # source, custody checks and final quick_check stay unchanged.
+                destination_connection.execute("PRAGMA journal_mode=OFF")
+                destination_connection.execute("PRAGMA synchronous=OFF")
+
                 def check_deadline(
                     status: int,
                     remaining: int,
@@ -4056,16 +4065,21 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
         assert self._snapshot_root is not None
         frozen_catalog: FrozenSeedCatalogSnapshot | None = None
         try:
-            frozen_catalog = FrozenSeedCatalogSnapshot(
-                self._snapshot_source,
+            with snapshot_allocation(
                 self._snapshot_root,
+                self._snapshot_source,
                 deadline_monotonic=self._active_context_replay_deadline,
-                maximum_bytes=(
-                    self._context_admission_replay_catalog_budget
-                    if self._active_context_replay_id is not None
-                    else None
-                ),
-            )
+            ):
+                frozen_catalog = FrozenSeedCatalogSnapshot(
+                    self._snapshot_source,
+                    self._snapshot_root,
+                    deadline_monotonic=self._active_context_replay_deadline,
+                    maximum_bytes=(
+                        self._context_admission_replay_catalog_budget
+                        if self._active_context_replay_id is not None
+                        else None
+                    ),
+                )
             self.lts = MemorySynapseLtsService(
                 frozen_catalog.path,
                 evidence_root=self.lts.evidence_root,
