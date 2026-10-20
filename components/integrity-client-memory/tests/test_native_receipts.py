@@ -3,6 +3,7 @@ import ast
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import sys
 import tomllib
@@ -142,6 +143,8 @@ def test_complete_compiled_profile_runs_pinned_native_without_upstream(tmp_path)
 
 @pytest.fixture
 def contract_profile(tmp_path):
+    if os.name != "nt":
+        pytest.skip("Generated Codex Native contract profiles require Windows")
     root = tmp_path / "contract-native"
     profile = broker_bundle.build_bundle(root,
         bindings={"seed_namespace": "fixture-seed", "namespace_fingerprint": "sha256:" + "a" * 64,

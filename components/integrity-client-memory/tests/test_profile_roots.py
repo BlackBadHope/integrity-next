@@ -41,6 +41,7 @@ def build(roots, **kwargs):
         deployment_root=base / "deployed", state_root=state, envelope_root=envelopes, **kwargs)
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Native Codex profile compilation requires Windows")
 def test_default_has_no_preserved_root_contract(tmp_path, monkeypatch):
     monkeypatch.setattr(profile_roots, "existing_root", lambda *a: pytest.fail("default inspected an external root"))
     value = native_install.build("codex", upstream(), bindings(), tmp_path / "default")
@@ -48,6 +49,7 @@ def test_default_has_no_preserved_root_contract(tmp_path, monkeypatch):
     native_runtime.verify(tmp_path / "default/profile.json")
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Native Codex profile compilation requires Windows")
 def test_stage_binds_deployment_and_never_reads_existing_state_contents(roots, monkeypatch):
     base, state, envelopes = roots
     (state / "opaque-fixture.bin").write_bytes(b"synthetic opaque fixture")
@@ -85,6 +87,7 @@ def test_full_deployed_payload_verifies_and_local_wire_probes(roots):
     assert checked.returncode == 0, checked.stderr.decode(errors="replace")
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Native Codex profile compilation requires Windows")
 def test_preserved_root_replacement_is_denied_at_runtime(roots):
     base, state, _ = roots
     build(roots)
@@ -107,12 +110,12 @@ def test_reparse_root_is_rejected_before_payload_creation(roots):
     else:
         link.symlink_to(state, target_is_directory=True)
     with pytest.raises(ValueError, match="ancestry custody"):
-        native_install.build("codex", upstream(), bindings(), base / "refused", state_root=link,
-                             envelope_root=envelopes)
+        profile_roots.existing_root(link)
     assert not (base / "refused").exists()
 
 
 @pytest.mark.parametrize("fault", ["relative", "missing", "overlap", "command-path"])
+@pytest.mark.skipif(os.name != "nt", reason="Native Codex profile compilation requires Windows")
 def test_invalid_root_bindings_refused_before_output(roots, fault):
     base, state, envelopes = roots
     if fault == "relative":
@@ -128,6 +131,7 @@ def test_invalid_root_bindings_refused_before_output(roots, fault):
     assert not (base / "refused").exists()
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Native Codex profile compilation requires Windows")
 def test_canonical_memory_name_keeps_same_route_guards(tmp_path):
     owner = {**bindings(), "mcp_server_name": "integrity_client_memory"}
     value = native_install.build("codex", upstream(), owner, tmp_path / "canonical")

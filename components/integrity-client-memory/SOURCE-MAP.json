@@ -421,8 +421,8 @@
   {
     "path": "tests/test_canonical_recovery_bundle.py",
     "source": "canonical-package-tests/test_canonical_recovery_bundle.py",
-    "source_sha256": "227518bf483ef5875d8336252e36c7f975a397883eb0f044ac8e52c2500c7b3c",
-    "sha256": "227518bf483ef5875d8336252e36c7f975a397883eb0f044ac8e52c2500c7b3c"
+    "source_sha256": "736249ab44a0e2543aeb9c94a09357145464579eb33b0036b268a2d737d329d2",
+    "sha256": "736249ab44a0e2543aeb9c94a09357145464579eb33b0036b268a2d737d329d2"
   },
   {
     "path": "tests/test_core_delivery_navigation.py",
@@ -439,8 +439,8 @@
   {
     "path": "tests/test_native_receipts.py",
     "source": "canonical-package-tests/test_native_receipts.py",
-    "source_sha256": "80b2fa4252de2cddab4683b6bdfb740fdc69a9ea1a76cefb32360afce548f1ba",
-    "sha256": "80b2fa4252de2cddab4683b6bdfb740fdc69a9ea1a76cefb32360afce548f1ba"
+    "source_sha256": "a9978dc9aa960ca9ef1a344cb6a260d09099de423df7b56be8bb83ef345b9868",
+    "sha256": "a9978dc9aa960ca9ef1a344cb6a260d09099de423df7b56be8bb83ef345b9868"
   },
   {
     "path": "tests/test_operation_ledger.py",
@@ -452,14 +452,14 @@
   {
     "path": "tests/test_profile_roots.py",
     "source": "canonical-package-tests/test_profile_roots.py",
-    "source_sha256": "d1d225cb66492fee02f60c8dc811450cbeb2d93a883834466676efbca37edeec",
-    "sha256": "d1d225cb66492fee02f60c8dc811450cbeb2d93a883834466676efbca37edeec"
+    "source_sha256": "524785d00dc2b7c42fafa6656656f51471935fff3defc60e53803d16c45a676d",
+    "sha256": "524785d00dc2b7c42fafa6656656f51471935fff3defc60e53803d16c45a676d"
   },
   {
     "path": "tests/test_server_version_binding.py",
     "source": "canonical-package-tests/test_server_version_binding.py",
-    "source_sha256": "4e1971a9f260357afd8a9b4243c1ebb93d9ffce30811cae808f5f81c32f3130b",
-    "sha256": "4e1971a9f260357afd8a9b4243c1ebb93d9ffce30811cae808f5f81c32f3130b"
+    "source_sha256": "a201e244a82200f923d68823cd727480481f8a425a0f1b87f437731fca3be848",
+    "sha256": "a201e244a82200f923d68823cd727480481f8a425a0f1b87f437731fca3be848"
   },
   {
     "path": "tests/test_transport_policy.py",

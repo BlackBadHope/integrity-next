@@ -1,10 +1,13 @@
 """Metadata identity derivation cannot weaken a Native protocol contract."""
 import ast
+import os
 import sys
 
 import pytest
 
 from integrity_client_memory import native_install
+
+pytestmark = pytest.mark.skipif(os.name != "nt", reason="Native Codex profile compilation requires Windows")
 
 
 def owner(**extra):
@@ -28,8 +31,8 @@ def test_derivation_changes_exactly_one_assignment_and_records_provenance(tmp_pa
     default, selected = tmp_path / "default", tmp_path / "selected"
     original = build(default)
     profile = build(selected, server_version="2.10.0")
-    before = ast.parse((default / "runtime/integrity-client-admission.py").read_text())
-    after = ast.parse((selected / "runtime/integrity-client-admission.py").read_text())
+    before = ast.parse((default / "runtime/integrity-client-admission.py").read_text(encoding="utf-8"))
+    after = ast.parse((selected / "runtime/integrity-client-admission.py").read_text(encoding="utf-8"))
     for tree in (before, after):
         assignment = next(node for node in tree.body if isinstance(node, ast.Assign)
                           and any(isinstance(target, ast.Name) and target.id == "SERVER_VERSION" for target in node.targets))

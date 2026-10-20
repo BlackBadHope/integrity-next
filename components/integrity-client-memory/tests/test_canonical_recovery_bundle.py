@@ -32,7 +32,7 @@ def test_renderer_is_deterministic_and_records_entire_shared_cohort():
 
 def test_renderer_refuses_anchor_drift(tmp_path, monkeypatch):
     source = tmp_path / "broker.py"
-    source.write_text(broker_bundle.BROKER.read_text().replace(broker_bundle.BEGIN, ""))
+    source.write_text(broker_bundle.BROKER.read_text(encoding="utf-8").replace(broker_bundle.BEGIN, ""), encoding="utf-8", newline="\n")
     monkeypatch.setattr(broker_bundle, "BROKER", source)
     with pytest.raises(ValueError, match="anchors"):
         broker_bundle.render_windows_broker()
