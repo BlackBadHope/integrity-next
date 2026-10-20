@@ -170,7 +170,11 @@ def required_bindings(vendor, bindings):
     bindings["claude_publisher_owner_sha256"] = digest(publisher_owner.read_bytes())
 
 
-def build(vendor, upstream, bindings, output, tools=None):
+def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=None,
+          state_root=None, envelope_root=None):
+    server_name = bindings.get("mcp_server_name", "integrity_native")
+    if server_name not in {"integrity_native", "integrity_client_memory"}:
+        raise ValueError("Native Memory server name must be an explicit supported Memory route")
     if vendor not in VENDORS:
         raise ValueError("unknown vendor")
     if os.name != "nt" and vendor in {"codex", "claude"}:
@@ -203,6 +207,29 @@ def build(vendor, upstream, bindings, output, tools=None):
     if not required <= {x["name"] for x in tools}:
         raise ValueError("full Native lifecycle catalogue required; read-only example is insufficient")
     output = Path(output).absolute()
+    logical = output
+    preserved = {}
+    selected_state = selected_envelopes = None
+    if any(value is not None for value in (deployment_root, state_root, envelope_root)):
+        if vendor != "codex":
+            raise ValueError("explicit preserved roots require the Windows Codex cohort")
+        from . import profile_roots
+        if deployment_root is not None:
+            logical = profile_roots.deployment_root(deployment_root)
+            if any(c in str(logical) for c in '&|<>^()%!\r\n\x00'):
+                raise ValueError("Windows hook paths must not contain cmd metacharacters")
+        if state_root is not None:
+            selected_state, preserved["state"] = profile_roots.existing_root(state_root)
+        if envelope_root is not None:
+            selected_envelopes, preserved["envelopes"] = profile_roots.existing_root(envelope_root)
+        roots = [Path(value["path"]) for value in preserved.values()]
+        for index, first in enumerate(roots):
+            if (first == logical or first.is_relative_to(logical) or logical.is_relative_to(first)
+                    or any(first == second or first.is_relative_to(second) or second.is_relative_to(first)
+                           for second in roots[index + 1:])):
+                raise ValueError("preserved roots and deployment must not overlap")
+    selected_state = selected_state or logical / "state"
+    selected_envelopes = selected_envelopes or logical / "turn-envelopes"
     paths, hook_name, broker_name = source_files(vendor)
     if not paths or any(not x.is_file() for x in paths):
         raise ValueError("Native source profile missing")
@@ -211,8 +238,11 @@ def build(vendor, upstream, bindings, output, tools=None):
         selected.append(RESOURCES / "common/integrity_scope_synapse.py")
         selected.append(RESOURCES / "windows/native/integrity_project_scope.py")
     required_keys = configuration_keys(selected)
+    if preserved:
+        required_keys |= {"path_2dbd800b4e29", "path_f51de7de1b1c"}
     private_root(output)
     runtime = output / "runtime"
+    live_runtime = logical / "runtime"
     runtime.mkdir()
     source_pins = {}
     for source in selected:
@@ -252,26 +282,26 @@ def build(vendor, upstream, bindings, output, tools=None):
             derivations.append({"file": hook_name, "constant": "BROKER_SERVER_VERSION", "value": broker_version,
                                 "reason": "Exact pairing with selected local broker; contract verification retained"})
     values = dict(bindings)
-    values.update({"mcp_server_name": "integrity_native", "upstream_toml": str(output / "upstream.toml"),
-                   "tools_catalogue": str(output / "integrity-client-tools.json"),
-                   "private_state_root": str(output / "state"),
-                   "path_b90aa9f0d1c5": str(output / "optional-bus"),
+    values.update({"mcp_server_name": server_name, "upstream_toml": str(logical / "upstream.toml"),
+                   "tools_catalogue": str(logical / "integrity-client-tools.json"),
+                   "private_state_root": str(selected_state),
+                   "path_b90aa9f0d1c5": str(logical / "optional-bus"),
                    "pin_dd9fa64be3f2": bindings["namespace_fingerprint"],
-                   "path_5164c4d20152": str(runtime / "delegation-native-reader.py"),
+                   "path_5164c4d20152": str(live_runtime / "delegation-native-reader.py"),
                    "pin_8355e401d593": source_pins.get("delegation-native-reader.py", "disabled"),
                    "command_b734f1f83ce5": subprocess.list2cmdline([upstream["command"], *upstream.get("args", [])]),
-                   "path_6417ae8b427b": str(output / "startup-gates"),
-                   "path_0b4608844dcc": str(output / "optional-bus/agents-registry.json"),
-                   "path_a136563213bf": str(output / "attachments"),
-                   "path_dd2435d503a6": str(output / "workspace"),
+                   "path_6417ae8b427b": str(logical / "startup-gates"),
+                   "path_0b4608844dcc": str(logical / "optional-bus/agents-registry.json"),
+                   "path_a136563213bf": str(logical / "attachments"),
+                   "path_dd2435d503a6": str(logical / "workspace"),
                    "pin_fd1c0d5a8471": digest(b"optional-core-catalogue-disabled"),
-                   "claude_state_home": str(output), "path_b8097dd72ab5": str(output),
-                   "path_2dbd800b4e29": str(output / "state"),
-                   "path_f51de7de1b1c": str(output / "turn-envelopes"),
-                   "path_e7a3397d5cef": str(output / "delegation-config.json"),
-                   "path_5337709e82f6": str(output),
+                   "claude_state_home": str(logical), "path_b8097dd72ab5": str(logical),
+                   "path_2dbd800b4e29": str(selected_state),
+                   "path_f51de7de1b1c": str(selected_envelopes),
+                   "path_e7a3397d5cef": str(logical / "delegation-config.json"),
+                   "path_5337709e82f6": str(logical),
                    "claude_native_reader_sha256": source_pins.get("claude_owning_native.py", "disabled")})
-    values["path_a7a775fb78e8"] = str(output / "disabled-historical-recovery")
+    values["path_a7a775fb78e8"] = str(logical / "disabled-historical-recovery")
     values["pin_0266e73cb5e7"] = "disabled-no-historical-owner-enrollment"
     values["pin_37c8b12ade41"] = "disabled-no-historical-owner-enrollment"
     # The former publisher's one-off archive recovery allowlist is inert here.
@@ -314,15 +344,15 @@ def build(vendor, upstream, bindings, output, tools=None):
     tomllib.loads(toml)
     (output / "upstream.toml").write_text(toml, encoding="utf-8")
     python = str(Path(sys.executable).resolve())
-    entry_args = ["-m", "integrity_client_memory.native_runtime", "--profile", str(output / "profile.json")]
+    entry_args = ["-m", "integrity_client_memory.native_runtime", "--profile", str(logical / "profile.json")]
     transport = {"command": python, "args": [*entry_args, "mcp"]}
-    lifecycle_args = ["-B", str(runtime / broker_name), "--config", str(output / "upstream.toml"),
-                      "--tools-contract", str(output / "integrity-client-tools.json")]
+    lifecycle_args = ["-B", str(live_runtime / broker_name), "--config", str(logical / "upstream.toml"),
+                      "--tools-contract", str(logical / "integrity-client-tools.json")]
     if vendor != "antigravity":
         lifecycle_args += ["--upstream-server", "integrity-upstream"]
-    lifecycle_env = {"INTEGRITY_CLIENT_MEMORY_CONFIG": str(output / "component.json"),
-                     "INTEGRITY_CLIENT_STATE_ROOT": str(output / "state"),
-                     "INTEGRITY_CLIENT_ENVELOPE_ROOT": str(output / "turn-envelopes")}
+    lifecycle_env = {"INTEGRITY_CLIENT_MEMORY_CONFIG": str(logical / "component.json"),
+                     "INTEGRITY_CLIENT_STATE_ROOT": str(selected_state),
+                     "INTEGRITY_CLIENT_ENVELOPE_ROOT": str(selected_envelopes)}
     if vendor == "claude":
         lifecycle_env["CLAUDE_SESSION_ID"] = bindings["claude_session_id"]
     write_json(output / "transport.json", {"transport": {"type": "stdio", "command": python,
@@ -337,7 +367,7 @@ def build(vendor, upstream, bindings, output, tools=None):
     if vendor == "codex":
         folder = output / "codex-workspace/.codex"
         folder.mkdir(parents=True)
-        t = "[mcp_servers.integrity_native]\ncommand = " + json.dumps(python) + "\nargs = " + json.dumps(transport["args"]) + "\nstartup_timeout_sec = 60\ntool_timeout_sec = 210\n"
+        t = "[mcp_servers." + server_name + "]\ncommand = " + json.dumps(python) + "\nargs = " + json.dumps(transport["args"]) + "\nstartup_timeout_sec = 60\ntool_timeout_sec = 210\n"
         (folder / "config.toml").write_text(t, encoding="utf-8")
         write_json(folder / "hooks.json", {"hooks": hooks})
     elif vendor == "claude":
@@ -356,7 +386,7 @@ def build(vendor, upstream, bindings, output, tools=None):
         write_json(output / "antigravity.mcp.json", {"mcpServers": {"integrity_native": transport}})
         write_json(output / "antigravity.enable-fragment.json", {"plugins": {"integrity-native": {"enabled": True}}})
     profile = {"protocol": "integrity/native-client-profile/v1", "vendor": vendor, "platform": sys.platform,
-               "root": str(output), "python": python, "python_sha256": digest(Path(python).read_bytes()),
+               "root": str(logical), "python": python, "python_sha256": digest(Path(python).read_bytes()),
                "hook": hook_name, "broker": broker_name, "files": source_pins,
                "template_source_pins": template_pins, "derivations": derivations,
                "auxiliary_files": auxiliary_pins, "broker_version": broker_version,
@@ -364,6 +394,11 @@ def build(vendor, upstream, bindings, output, tools=None):
                "transport_sha256": digest((output / "transport.json").read_bytes()),
                "upstream_sha256": digest((output / "upstream.toml").read_bytes()),
                "active_configs_changed": False, "live_acceptance": "NOT_RUN"}
+    if preserved:
+        profile.update(state_root=str(selected_state), envelope_root=str(selected_envelopes),
+                       preserved_roots=preserved)
+    if "mcp_server_name" in bindings:
+        profile["mcp_server_name"] = server_name
     write_json(output / "profile.json", profile)
     write_json(output / "receipt.json", {"protocol": profile["protocol"], "vendor": vendor,
                "configured": True, "required_bindings_resolved": True, "tools": len(tools),
@@ -378,10 +413,14 @@ def main(argv=None):
     p.add_argument("--bindings-json", type=Path, required=True)
     p.add_argument("--tools-json", type=Path)
     p.add_argument("--output", type=Path, required=True)
+    p.add_argument("--deployment-root", type=Path)
+    p.add_argument("--state-root", type=Path)
+    p.add_argument("--envelope-root", type=Path)
     a = p.parse_args(argv)
     try:
         result = build(a.vendor, read_json(a.upstream_json), read_json(a.bindings_json), a.output,
-                       read_json(a.tools_json) if a.tools_json else None)
+                       read_json(a.tools_json) if a.tools_json else None,
+                       deployment_root=a.deployment_root, state_root=a.state_root, envelope_root=a.envelope_root)
         print(json.dumps({"vendor": result["vendor"], "profile": str(Path(a.output).absolute() / "profile.json"),
                           "configured": True, "active_configs_changed": False, "live_acceptance": "NOT_RUN"}))
         return 0

@@ -34,6 +34,21 @@ def verify(path):
                       ("tools_sha256", "integrity-client-tools.json")):
         if digest(plain(root / name).read_bytes()) != profile[key]:
             raise ValueError("Native configuration pin changed")
+    from .profile_roots import validate_existing
+    preserved = validate_existing(profile)
+    component = read_json(root / "component.json")
+    server_name = profile.get("mcp_server_name", "integrity_native")
+    if (server_name not in {"integrity_native", "integrity_client_memory"}
+            or ("mcp_server_name" in component.get("values", {})
+                and component["values"]["mcp_server_name"] != server_name)):
+        raise ValueError("Native Memory server name binding changed")
+    for field, name, component_key in (("state_root", "state", "path_2dbd800b4e29"),
+                                       ("envelope_root", "envelopes", "path_f51de7de1b1c")):
+        expected = preserved.get(name, {}).get("path", str(root / ("state" if name == "state" else "turn-envelopes")))
+        values = component.get("values", {})
+        if profile.get(field, expected) != expected or (profile["vendor"] == "codex" and
+                (name in preserved or component_key in values) and values.get(component_key) != expected):
+            raise ValueError("Native preserved root binding changed")
     for name, pin in profile["files"].items():
         if Path(name).name != name or not name.endswith(".py") or digest(plain(root / "runtime" / name).read_bytes()) != pin:
             raise ValueError("Native source pin changed")
@@ -63,8 +78,8 @@ def verify(path):
 def environment(profile, root):
     result = dict(os.environ)
     result.update(INTEGRITY_CLIENT_MEMORY_CONFIG=str(root / "component.json"),
-                  INTEGRITY_CLIENT_STATE_ROOT=str(root / "state"),
-                  INTEGRITY_CLIENT_ENVELOPE_ROOT=str(root / "turn-envelopes"),
+                  INTEGRITY_CLIENT_STATE_ROOT=profile.get("state_root", str(root / "state")),
+                  INTEGRITY_CLIENT_ENVELOPE_ROOT=profile.get("envelope_root", str(root / "turn-envelopes")),
                   INTEGRITY_CLIENT_MCP_TRANSPORT=str(root / "transport.json"),
                   INTEGRITY_SCOPE_STATE_ROOT=str(root / "scope-state"))
     if profile["vendor"] == "claude":
@@ -130,11 +145,11 @@ def memory_call(raw):
             arguments = tool.get("args", {})
             if not isinstance(arguments, dict):
                 return None
-            return arguments.get("ServerName") == "integrity_native"
+            return arguments.get("ServerName") in {"integrity_native", "integrity_client_memory"}
         name = payload.get("tool_name") or payload.get("toolName")
         if not isinstance(name, str) or not name:
             return None
-        if name.startswith("mcp__integrity_native__"):
+        if name.startswith(("mcp__integrity_native__", "mcp__integrity_client_memory__")):
             return True
         # Another Integrity product/server is a separate action boundary.
         if "__" in name or "." in name:

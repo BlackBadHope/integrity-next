@@ -20,6 +20,7 @@ BROKER = ROOT / "resources/windows/integrity-client-turn-broker.py"
 MODULES = ("operation_ledger", "recovery_client", "broker_adapter")
 SUPPORT = ("__init__.py", "configuration.py", "catalogue.py", "native_runtime.py",
            "native_install.py", "profile.py", "broker_bundle.py", "project_scope.py",
+           "profile_roots.py",
            "operation_ledger.py", "recovery_client.py", "broker_adapter.py",
            "data/tools-current.json")
 BEGIN = "# BEGIN CANONICAL SESSION RECOVERY\n"
@@ -59,7 +60,8 @@ def render_windows_broker():
                       "source": "resources/windows/integrity-client-turn-broker.py"}
 
 
-def build_bundle(output, *, bindings, upstream, tools):
+def build_bundle(output, *, bindings, upstream, tools, deployment_root=None,
+                 state_root=None, envelope_root=None):
     """Compile a complete source-pinned client package and Native profile.
 
     Guardian's declared distribution dependencies remain prerequisites. The
@@ -70,7 +72,9 @@ def build_bundle(output, *, bindings, upstream, tools):
     output = Path(output).absolute()
     if output.is_relative_to(ROOT):
         raise ValueError("bundle output must be outside canonical package sources")
-    profile = build("codex", upstream, bindings, output, tools)
+    profile = build("codex", upstream, bindings, output, tools,
+                    deployment_root=deployment_root, state_root=state_root, envelope_root=envelope_root)
+    logical = Path(profile["root"])
     support = output / "support"
     pins = {}
     # Explicit runtime closure: no scan can accidentally copy private local
@@ -90,6 +94,7 @@ def build_bundle(output, *, bindings, upstream, tools):
         if digest(source.read_bytes()) != expected:
             raise ValueError("canonical support sources changed during compilation")
     bootstrap = ("from pathlib import Path\nimport sys\n"
+                 "sys.dont_write_bytecode=True\n"
                  "sys.path.insert(0,str(Path(__file__).resolve().parent/'support'))\n"
                  "from integrity_client_memory.native_runtime import main\n"
                  "raise SystemExit(main())\n")
@@ -97,13 +102,13 @@ def build_bundle(output, *, bindings, upstream, tools):
     profile["support_files"] = pins
     profile["support_bootstrap_sha256"] = digest((output / "run-native-profile.py").read_bytes())
     profile["support_prerequisites"] = ["integrity-guardian>=6.1.0,<7", "integrity-action-log>=2.10.0,<3"]
-    args = [str(output / "run-native-profile.py"), "--profile", str(output / "profile.json")]
+    args = [str(logical / "run-native-profile.py"), "--profile", str(logical / "profile.json")]
     transport = read_json(output / "transport.json")
-    transport["transport"]["env"]["PYTHONPATH"] = str(support)
+    transport["transport"]["env"]["PYTHONPATH"] = str(logical / "support")
     write_json(output / "transport.json", transport)
     profile["transport_sha256"] = digest((output / "transport.json").read_bytes())
     folder = output / "codex-workspace/.codex"
-    config = ("[mcp_servers.integrity_native]\ncommand = " + json.dumps(profile["python"]) +
+    config = ("[mcp_servers." + profile.get("mcp_server_name", "integrity_native") + "]\ncommand = " + json.dumps(profile["python"]) +
               "\nargs = " + json.dumps([*args, "mcp"]) +
               "\nstartup_timeout_sec = 60\ntool_timeout_sec = 210\n")
     (folder / "config.toml").write_text(config, encoding="utf-8")
@@ -127,10 +132,15 @@ def main(argv=None):
     parser.add_argument("--bindings-json", type=Path, required=True)
     parser.add_argument("--upstream-json", type=Path, required=True)
     parser.add_argument("--tools-json", type=Path, required=True)
+    parser.add_argument("--deployment-root", type=Path)
+    parser.add_argument("--state-root", type=Path)
+    parser.add_argument("--envelope-root", type=Path)
     args = parser.parse_args(argv)
     from .native_install import read_json
     value = build_bundle(args.output, bindings=read_json(args.bindings_json),
-                         upstream=read_json(args.upstream_json), tools=read_json(args.tools_json))
+                         upstream=read_json(args.upstream_json), tools=read_json(args.tools_json),
+                         deployment_root=args.deployment_root, state_root=args.state_root,
+                         envelope_root=args.envelope_root)
     print(json.dumps({"protocol": value["protocol"], "vendor": value["vendor"],
                       "active_configs_changed": False, "live_acceptance": "NOT_RUN"}))
     return 0
