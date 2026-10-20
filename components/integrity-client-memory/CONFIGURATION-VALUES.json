@@ -42,7 +42,8 @@
       "clients/linux/admission.py:395",
       "clients/windows/admission-system.ps1",
       "clients/windows/admission.ps1",
-      "clients/windows/admission.py:398"
+      "clients/windows/admission.py:398",
+      "clients/windows/native/integrity-client-admission.py:393"
     ]
   },
   "path_672ada16776c": {
@@ -92,13 +93,15 @@
     "kind": "path",
     "used_by": [
       "clients/linux/integrity-client-turn-broker.py:1802",
-      "clients/windows/integrity-client-turn-broker.py:1798"
+      "clients/windows/integrity-client-turn-broker.py:1798",
+      "clients/windows/native/integrity_memory_lts_hook.py:35"
     ]
   },
   "seed_namespace": {
     "kind": "namespace",
     "used_by": [
       "clients/linux/integrity-client-turn-broker.py:2239",
+      "clients/windows-remote/integrity-client-turn-broker.py:1167",
       "clients/windows/integrity-client-turn-broker.py:2231"
     ]
   },
@@ -107,8 +110,11 @@
     "used_by": [
       "clients/linux/integrity-client-turn-broker.py:2269",
       "clients/linux/integrity_client_turn_envelope.py:1041",
+      "clients/windows-remote/integrity-client-turn-broker.py:1197",
+      "clients/windows-remote/integrity_client_turn_envelope.py:1032",
       "clients/windows/integrity-client-turn-broker.py:2261",
-      "clients/windows/integrity_client_turn_envelope.py:1041"
+      "clients/windows/integrity_client_turn_envelope.py:1041",
+      "clients/windows/native/integrity_client_turn_envelope.py:1041"
     ]
   },
   "binding_9627b6210e51": {
@@ -176,10 +182,15 @@
       "clients/linux/integrity_client_turn_envelope.py.base64.py:6",
       "clients/linux/integrity_client_turn_envelope.py.base64.py:8",
       "clients/linux/integrity_client_turn_envelope.py:1055",
+      "clients/windows-remote/integrity_client_turn_envelope.py:1057",
       "clients/windows/integrity_client_turn_envelope.py.base64.py:11",
       "clients/windows/integrity_client_turn_envelope.py.base64.py:6",
       "clients/windows/integrity_client_turn_envelope.py.base64.py:8",
-      "clients/windows/integrity_client_turn_envelope.py:1055"
+      "clients/windows/integrity_client_turn_envelope.py:1055",
+      "clients/windows/native/integrity_client_turn_envelope.py.base64.py:11",
+      "clients/windows/native/integrity_client_turn_envelope.py.base64.py:6",
+      "clients/windows/native/integrity_client_turn_envelope.py.base64.py:8",
+      "clients/windows/native/integrity_client_turn_envelope.py:1055"
     ]
   },
   "path_5164c4d20152": {
@@ -190,11 +201,19 @@
       "clients/linux/integrity_client_turn_envelope.py.base64.py:7",
       "clients/linux/integrity_client_turn_envelope.py:1053",
       "clients/linux/integrity_client_turn_envelope.py:1172",
+      "clients/windows-remote/integrity_client_turn_envelope.py:1056",
       "clients/windows/integrity_client_turn_envelope.py.base64.py:10",
       "clients/windows/integrity_client_turn_envelope.py.base64.py:5",
       "clients/windows/integrity_client_turn_envelope.py.base64.py:7",
       "clients/windows/integrity_client_turn_envelope.py:1053",
-      "clients/windows/integrity_client_turn_envelope.py:1177"
+      "clients/windows/integrity_client_turn_envelope.py:1177",
+      "clients/windows/native/integrity_client_turn_envelope.py.base64.py:10",
+      "clients/windows/native/integrity_client_turn_envelope.py.base64.py:5",
+      "clients/windows/native/integrity_client_turn_envelope.py.base64.py:7",
+      "clients/windows/native/integrity_client_turn_envelope.py:1053",
+      "clients/windows/native/integrity_client_turn_envelope.py:1175",
+      "clients/windows/native/integrity_scope_synapse.py.base64.py:17",
+      "clients/windows/native/integrity_scope_synapse.py.base64.py:88"
     ]
   },
   "pin_5a4e77c00ca8": {
@@ -207,21 +226,24 @@
     "kind": "pin",
     "used_by": [
       "clients/linux/integrity_client_turn_envelope.py:1183",
-      "clients/windows/integrity_client_turn_envelope.py:1188"
+      "clients/windows/integrity_client_turn_envelope.py:1188",
+      "clients/windows/native/integrity_client_turn_envelope.py:1186"
     ]
   },
   "pin_37c8b12ade41": {
     "kind": "pin",
     "used_by": [
       "clients/linux/integrity_client_turn_envelope.py:1184",
-      "clients/windows/integrity_client_turn_envelope.py:1189"
+      "clients/windows/integrity_client_turn_envelope.py:1189",
+      "clients/windows/native/integrity_client_turn_envelope.py:1187"
     ]
   },
   "path_a7a775fb78e8": {
     "kind": "path",
     "used_by": [
       "clients/linux/integrity_client_turn_envelope.py:1173",
-      "clients/windows/integrity_client_turn_envelope.py:1178"
+      "clients/windows/integrity_client_turn_envelope.py:1178",
+      "clients/windows/native/integrity_client_turn_envelope.py:1176"
     ]
   },
   "native_owner_uid": {
@@ -300,25 +322,29 @@
   "binding_diagnostic_actor": {
     "kind": "identity",
     "used_by": [
-      "clients/linux/native/integrity_delegation_codex.py:50"
+      "clients/linux/native/integrity_delegation_codex.py:50",
+      "clients/windows/native/integrity_delegation_codex.py:50"
     ]
   },
   "binding_diagnostic_nodeny_actor": {
     "kind": "identity",
     "used_by": [
-      "clients/linux/native/integrity_delegation_codex.py:51"
+      "clients/linux/native/integrity_delegation_codex.py:51",
+      "clients/windows/native/integrity_delegation_codex.py:51"
     ]
   },
   "path_d5fd52cfb7f6": {
     "kind": "path",
     "used_by": [
-      "clients/linux/native/integrity_delegation_codex.py:53"
+      "clients/linux/native/integrity_delegation_codex.py:53",
+      "clients/windows/native/integrity_delegation_codex.py:53"
     ]
   },
   "binding_medor_thread": {
     "kind": "identity",
     "used_by": [
-      "clients/linux/native/integrity_delegation_core.py:23"
+      "clients/linux/native/integrity_delegation_core.py:23",
+      "clients/windows/native/integrity_delegation_core.py:23"
     ]
   },
   "pin_b474a24dcbd7": {
@@ -381,6 +407,37 @@
     "kind": "pin",
     "used_by": [
       "clients/linux/native/integrity_owning_native.py:5"
+    ]
+  },
+  "command_b734f1f83ce5": {
+    "kind": "command",
+    "used_by": [
+      "clients/windows/native/delegation-native-reader.py:57"
+    ]
+  },
+  "pin_d9bbb942cec3": {
+    "kind": "pin",
+    "used_by": [
+      "clients/windows/native/integrity_broker_contract.py:5"
+    ]
+  },
+  "pin_bf1b77212b80": {
+    "kind": "pin",
+    "used_by": [
+      "clients/windows/native/integrity_delegation_scope.py:24"
+    ]
+  },
+  "pin_ab575f59568f": {
+    "kind": "pin",
+    "used_by": [
+      "clients/windows/native/integrity_delegation_scope.py:25",
+      "clients/windows/native/integrity_scope_synapse.py.base64.py:494"
+    ]
+  },
+  "pin_bee9def69c72": {
+    "kind": "pin",
+    "used_by": [
+      "clients/windows-remote/integrity_client_turn_envelope.py:1050"
     ]
   }
 }

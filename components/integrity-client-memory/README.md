@@ -1,6 +1,6 @@
 # integrity-client-memory
 
-Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.8.1; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
+Windows and Linux Codex hooks/brokers, Claude admission, Antigravity conversation-bound broker, and common opaque turn envelopes. Distribution revision is 1.8.2; admission hook revisions remain 1.8.0 / 1.8.0-linux.1 and broker wire families remain Windows 1.6.0, Linux 1.6.1-linux.1, Antigravity 1.4.1. They are distinct implementations, not version aliases. Native ownership adapters require fresh install-time bindings; absent adapters must fail closed, never fabricate session identity.
 
 ## Linux lifecycle repair
 
@@ -83,3 +83,27 @@ frozen modules. These are distinct profile implementations, not a live registrat
 Preflight validates configuration header/version only; it reports runtime_bindings_verified:false. Complete owner bindings and an explicit entrypoint are still required before runtime use.
 
 Scope wrapper setup must select its harness explicitly: `scope.sh EVENT codex` or `scope.sh EVENT claude`; PowerShell uses `scope.ps1 -Event EVENT -Harness codex` (or `claude`). Both forward --harness to the shared scope parser.
+
+## Weekly Windows source profiles (2026-10-20)
+
+Revision 1.8.2 adds two explicit source entrypoints. Existing Linux and default
+Windows broker profiles retain their implementations. No hook or service is
+installed, no host is enrolled and no saved state is migrated by this package.
+
+- `windows/native_scope` ships the managed Windows Native/SCOPE selector and its
+  protected adapter sources. Compaction reads one turn per page, at most 30 pages,
+  retaining the 15-second observation deadline and rejecting truncated, duplicate
+  or foreign evidence. Safe diagnostics preserve the last 8 failures and observed
+  callbacks without raw errors or prompts. The publisher diagnostic session is
+  disabled. The entrypoint rejects non-Windows execution.
+- `windows-remote/integrity-client-turn-broker` preserves the separate remote
+  Windows broker family 1.4.1. Nested upstream work shares one 180-second public
+  request budget; cold initialization can use 45 seconds. An owner choosing this
+  profile should allow at least 210 seconds at the outer MCP client boundary.
+
+All source paths, pins and runtime bindings must be supplied in the owner
+configuration. The generated profile includes hashes of the packaged Windows
+Native sources; those hashes describe source bytes and grant no activation.
+Live credentials, transport enrollment, machine settings and historical memory
+records are deliberately absent. Local fake-IPC tests establish source behavior;
+a new installation still needs its own lifecycle acceptance.
