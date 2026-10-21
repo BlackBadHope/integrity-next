@@ -1,5 +1,5 @@
 {
-  "file_count": 946,
+  "file_count": 947,
   "files": [
     {
       "bytes": 19,
@@ -888,14 +888,14 @@
       "mode": "0o644",
       "path": "components/integrity-client-memory/README.md",
       "sanitization_edits": 0,
-      "sha256": "27baa3820f59ea448213a58a278c0e5411ddfd6b92bdf8c75a5fd899db86f38b"
+      "sha256": "17cd84502d64921c11972aa7a21ad17490420d1e722afd8e34b98b069c986dea"
     },
     {
-      "bytes": 28345,
+      "bytes": 29422,
       "mode": "0o644",
       "path": "components/integrity-client-memory/SOURCE-MAP.json",
       "sanitization_edits": 0,
-      "sha256": "10e445ed3ab5ae8b96ac75236a99f84dc64e9c8cd700f02c6f25da86a89fa2c5"
+      "sha256": "f121f6ea3e16941e701849a89d3027f6541fbbec6cacaa90fb7a5a5b8c9f9899"
     },
     {
       "bytes": 2714,
@@ -1192,25 +1192,25 @@
       "sha256": "c2c7edac7e0eeaab9b4d71413969def6fd7d4eff3027e24ead731bb0e8f5ea59"
     },
     {
-      "bytes": 100249,
+      "bytes": 103803,
       "mode": "0o644",
       "path": "components/integrity-client-memory/src/integrity_client_memory/resources/linux/admission.py",
       "sanitization_edits": 0,
-      "sha256": "4d0f379c5d74c9c4cb340de6d52fb6a6efb4da6ad57171362d03448778819987"
+      "sha256": "b79fcc71075b187222d428a402dc149bca44bf631d932c90f631e7b1eca82ad8"
     },
     {
-      "bytes": 221128,
+      "bytes": 227462,
       "mode": "0o644",
       "path": "components/integrity-client-memory/src/integrity_client_memory/resources/linux/integrity-client-turn-broker.py",
       "sanitization_edits": 0,
-      "sha256": "d5d0fdc504eb39af01f704ac00f532206f2f37303f7cedd8be08209719d31a9b"
+      "sha256": "fcc79bb33d20c0ee62c9ff732bb4b01ebc5b56908bbed6a872f9423d460277fb"
     },
     {
-      "bytes": 136822,
+      "bytes": 138603,
       "mode": "0o644",
       "path": "components/integrity-client-memory/src/integrity_client_memory/resources/linux/integrity_client_turn_envelope.py",
       "sanitization_edits": 0,
-      "sha256": "28d379859f606efe18563ff5d19561e25a72907255a1bf4b755d4c9d08b4b08b"
+      "sha256": "38a028de91d6b690b3038eac6a199272cf8e5c4f984bc58b3caf173b38de9857"
     },
     {
       "bytes": 47626,
@@ -1241,11 +1241,11 @@
       "sha256": "30a7f924e3cd7e8d7a03366f1048be19b99d6b846d6a092d4a02a80177bf5f87"
     },
     {
-      "bytes": 2339,
+      "bytes": 2428,
       "mode": "0o644",
       "path": "components/integrity-client-memory/src/integrity_client_memory/resources/linux/native/linux_admission_dispatcher.py",
       "sanitization_edits": 0,
-      "sha256": "26b0d2e67091274aed41df0bfcf9eada0362dd617fe1d56b13dc7c240e2588ac"
+      "sha256": "a7309618b4643f73bc8a848f918d2eeeee6e37c28cc3c3e44d56c397ccf96e3e"
     },
     {
       "bytes": 5687,
@@ -1441,7 +1441,7 @@
       "mode": "0o644",
       "path": "components/integrity-client-memory/tests/test_canonical_recovery_bundle.py",
       "sanitization_edits": 0,
-      "sha256": "e79257320024c3b0966d63d8312ce2b80e55eacf8104541cd5bf1164c612749b"
+      "sha256": "829531b2e72096b05132c34dfa783cedbc8304c041ca260ef742d54e87c320e3"
     },
     {
       "bytes": 890,
@@ -1486,11 +1486,18 @@
       "sha256": "f5916054826761920b8beb1542684e222b85a01047bfba58d84f36bc4a8a95c6"
     },
     {
-      "bytes": 12268,
+      "bytes": 24066,
+      "mode": "0o644",
+      "path": "components/integrity-client-memory/tests/test_linux_hotfix_chain.py",
+      "sanitization_edits": 0,
+      "sha256": "0b34cc159fb8602847e586e5edf73c117b2927b7f2cf63cfa2370d5d04918aca"
+    },
+    {
+      "bytes": 13409,
       "mode": "0o644",
       "path": "components/integrity-client-memory/tests/test_linux_lifecycle_regression.py",
       "sanitization_edits": 0,
-      "sha256": "bbf6741c309272e70301a5028e7115ec6ee7b83a756a7ca2bce619ba38f053f4"
+      "sha256": "716af7705fdfb147d08edd0903be6503a4717b03ea6167ebedef3ad3f820835d"
     },
     {
       "bytes": 3895,
@@ -3964,11 +3971,11 @@
       "sha256": "6b519adff898d7a10eae7b4a034342c63024f70981a065daba6fb08ddccdba44"
     },
     {
-      "bytes": 1477,
+      "bytes": 2576,
       "mode": "0o644",
       "path": "docs/runtime-source-sync.md",
       "sanitization_edits": 0,
-      "sha256": "7577a4b385f58f98ac8d8f4588305fd9c2d370e65498aa1cffb03a1496939774"
+      "sha256": "83ce2d026bcdb03b3b79a86fcd6f473baf45a8305e0ce2e3f6568b2e4ad369f3"
     },
     {
       "bytes": 1592,
@@ -6893,7 +6900,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:fa0e1497c85b28d2900f2fedee8d61adf058a95e45420a13c7ab5f1550b38c19",
+  "projection_digest": "sha256:55d6352c3c6592fa1fc266884028553f00f812651995bdb70c6aaff77e94ac23",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",

@@ -195,20 +195,23 @@
     "path": "src/integrity_client_memory/resources/linux/admission.py",
     "source": "clients/linux/admission.py",
     "source_sha256": "a2f2e68665fb9a433cca8c99a6b3eb5069c62b0e283ccb785109bd948d9c805d",
-    "sha256": "4d0f379c5d74c9c4cb340de6d52fb6a6efb4da6ad57171362d03448778819987"
+    "sha256": "b79fcc71075b187222d428a402dc149bca44bf631d932c90f631e7b1eca82ad8",
+    "derivation_note": "linux-hotfix-port-20261021: installed Linux hotfix chain broker 1.6.1-linux.2..7 / hook 1.7.4-linux.5 (public 1.8.0-linux.5); renders the installed linux.7 generation da20ffbf with owner values; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/resources/linux/integrity-client-turn-broker.py",
     "source": "clients/linux/integrity-client-turn-broker.py",
     "source_sha256": "34e1951905ce56a72257e42e23ad26cfc832a040f404ba90bf35e1207e8bd974",
-    "sha256": "d5d0fdc504eb39af01f704ac00f532206f2f37303f7cedd8be08209719d31a9b"
+    "sha256": "fcc79bb33d20c0ee62c9ff732bb4b01ebc5b56908bbed6a872f9423d460277fb",
+    "derivation_note": "linux-hotfix-port-20261021: installed Linux hotfix chain broker 1.6.1-linux.2..7 / hook 1.7.4-linux.5 (public 1.8.0-linux.5); renders the installed linux.7 generation da20ffbf with owner values; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/resources/linux/integrity_client_turn_envelope.py",
     "source": "clients/linux/integrity_client_turn_envelope.py",
     "source_sha256": "97e44e8471d0fc11c16b32d7a1e77874ffb009d2dc4f09a07bccbb8b100834d9",
-    "sha256": "28d379859f606efe18563ff5d19561e25a72907255a1bf4b755d4c9d08b4b08b",
-    "projection": "Portable configuration preserved; verified lifecycle concurrency and typed diagnostics repair."
+    "sha256": "38a028de91d6b690b3038eac6a199272cf8e5c4f984bc58b3caf173b38de9857",
+    "projection": "Portable configuration preserved; verified lifecycle concurrency and typed diagnostics repair.",
+    "derivation_note": "linux-hotfix-port-20261021: installed Linux hotfix chain broker 1.6.1-linux.2..7 / hook 1.7.4-linux.5 (public 1.8.0-linux.5); renders the installed linux.7 generation da20ffbf with owner values; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/resources/linux/linux_runtime_factory.py",
@@ -239,7 +242,8 @@
     "path": "src/integrity_client_memory/resources/linux/native/linux_admission_dispatcher.py",
     "source": "native-source/linux_admission_dispatcher.py",
     "source_sha256": "cfaa84cce1e940b2dcc6fdd935ec3e995bb8f2166c162daa7f9f37a252d2ef1a",
-    "sha256": "26b0d2e67091274aed41df0bfcf9eada0362dd617fe1d56b13dc7c240e2588ac"
+    "sha256": "a7309618b4643f73bc8a848f918d2eeeee6e37c28cc3c3e44d56c397ccf96e3e",
+    "derivation_note": "linux-hotfix-port-20261021: installed Linux hotfix chain broker 1.6.1-linux.2..7 / hook 1.7.4-linux.5 (public 1.8.0-linux.5); renders the installed linux.7 generation da20ffbf with owner values; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/resources/linux/native/linux_admission_seam.py",
@@ -423,8 +427,8 @@
     "path": "tests/test_canonical_recovery_bundle.py",
     "source": "canonical-package-tests/test_canonical_recovery_bundle.py",
     "source_sha256": "736249ab44a0e2543aeb9c94a09357145464579eb33b0036b268a2d737d329d2",
-    "sha256": "e79257320024c3b0966d63d8312ce2b80e55eacf8104541cd5bf1164c612749b",
-    "derivation_note": "live-sync-20261021: root-close managed source merged with CLOSE54 8a6b792 and CLOSE55 pending own close; original source_sha256 preserved"
+    "sha256": "829531b2e72096b05132c34dfa783cedbc8304c041ca260ef742d54e87c320e3",
+    "derivation_note": "linux-hotfix-port-20261021: Linux broker linux.7 digest pin; live-sync-20261021: root-close managed source merged with CLOSE54 8a6b792 and CLOSE55 pending own close; original source_sha256 preserved"
   },
   {
     "path": "tests/test_core_delivery_navigation.py",

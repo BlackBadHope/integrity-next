@@ -89,9 +89,11 @@ PREVIOUS_SERVER_VERSION = "2.9.0"
 OLDER_SERVER_VERSION = "2.8.0"
 LEGACY_SERVER_VERSION = "2.7.0"
 ROLLOUT_LEGACY_SERVER_VERSION = "2.6.0"
-HOOK_VERSION = '1.8.0-linux.1'
-LINUX_BROKER_SERVER_VERSION = "1.6.1-linux.1"
-LIFECYCLE_BUDGET_SECONDS = 45
+HOOK_VERSION = '1.8.0-linux.5'
+LINUX_BROKER_SERVER_VERSION = "1.6.1-linux.7"
+LINUX_PREVIOUS_BROKER_SERVER_VERSION = "1.6.1-linux.6"
+# Two bounded pre-dispatch starts plus queue and lifecycle receipt.
+LIFECYCLE_BUDGET_SECONDS = 180
 LIFECYCLE_DEADLINE: float | None = None
 SEMANTIC_CADENCE_MAX_AGE_SECONDS = 3600
 SEMANTIC_CADENCE_MAX_ACTIONS = 24
@@ -736,6 +738,62 @@ def degraded_health_notice() -> str | None:
     )
 
 
+"""Read the active Linux stdio registration without starting a second Codex CLI.
+
+This is transport discovery only. MCP ownership, receipt validation, canonical
+readback, one-shot admission and append guards still run in their original paths.
+"""
+def linux_registered_transport(config_path):
+    import os
+    import stat
+    import tomllib
+    path = config_path
+    try:
+        if not path.is_absolute() or path.resolve(strict=True) != path:
+            raise HookError("mcp_registration_unavailable")
+        before = path.lstat()
+        if (not stat.S_ISREG(before.st_mode) or before.st_uid != os.geteuid()
+                or stat.S_IMODE(before.st_mode) & 0o077 or before.st_size > 1024 * 1024):
+            raise HookError("mcp_registration_unavailable")
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        try:
+            with os.fdopen(fd, "rb", closefd=False) as stream:
+                opened = os.fstat(fd)
+                raw = stream.read(1024 * 1024 + 1)
+                after = os.fstat(fd)
+            fingerprint = lambda value: (value.st_dev, value.st_ino, value.st_mode,
+                                         value.st_uid, value.st_size, value.st_mtime_ns,
+                                         value.st_ctime_ns)
+            if (fingerprint(before) != fingerprint(opened)
+                    or fingerprint(before) != fingerprint(after)
+                    or fingerprint(before) != fingerprint(path.lstat())
+                    or len(raw) != before.st_size):
+                raise HookError("mcp_registration_unavailable")
+        finally:
+            os.close(fd)
+        registry = tomllib.loads(raw.decode("utf-8"))
+        entry = registry["mcp_servers"]["integrity_client_memory"]
+        if (entry.get("enabled", True) is not True or "url" in entry
+                or not isinstance(entry.get("command"), str)
+                or not Path(entry["command"]).is_absolute()):
+            raise HookError("mcp_registration_unavailable")
+        args, env, env_vars = entry.get("args", []), entry.get("env", {}), entry.get("env_vars", [])
+        if (not isinstance(args, list) or not all(isinstance(v, str) for v in args)
+                or not isinstance(env, dict)
+                or not all(isinstance(k, str) and isinstance(v, str) for k, v in env.items())
+                or not isinstance(env_vars, list) or not all(isinstance(v, str) for v in env_vars)
+                or entry.get("cwd") is not None and not isinstance(entry["cwd"], str)):
+            raise HookError("invalid_mcp_transport")
+        # Match the registry's explicit variable forwarding without printing or
+        # persisting any values. Explicit env values take precedence.
+        forwarded = {name: os.environ[name] for name in env_vars if name in os.environ}
+        return {"transport": {"type": "stdio", "command": entry["command"],
+                              "args": args, "env": {**forwarded, **env},
+                              "cwd": entry.get("cwd")}}
+    except (OSError, ValueError, KeyError, TypeError, UnicodeError) as exc:
+        raise HookError("mcp_registration_unavailable") from exc
+
+
 def registered_transport() -> dict[str, Any]:
     """The client MCP registration: an installer-written file for Claude Code, Codex's own registry otherwise."""
     explicit = os.environ.get("INTEGRITY_CLIENT_MCP_TRANSPORT")
@@ -744,6 +802,8 @@ def registered_transport() -> dict[str, Any]:
             return json.loads(Path(explicit).read_text(encoding="utf-8"))
         except (OSError, ValueError) as exc:
             raise HookError("mcp_registration_unavailable") from exc
+    if sys.platform == "linux":
+        return linux_registered_transport(Path(os.environ.get("CODEX_HOME", str(Path.home()/".codex"))) / "config.toml")
     completed = subprocess.run(
         ["codex", "mcp", "get", "integrity_client_memory", "--json"],
         check=False,
@@ -819,6 +879,7 @@ class McpClient:
             not in {
                 BROKER_SERVER_VERSION,
                 LINUX_BROKER_SERVER_VERSION,
+                LINUX_PREVIOUS_BROKER_SERVER_VERSION,
                 "1.4.0",
                 ROLLOUT_LEGACY_SERVER_VERSION,
                 LEGACY_SERVER_VERSION,
@@ -830,14 +891,14 @@ class McpClient:
         ):
             raise HookError("server_identity_mismatch")
         self.notify("notifications/initialized", {})
-        if server.get("version") in {BROKER_SERVER_VERSION, "1.4.0", LINUX_BROKER_SERVER_VERSION}:
+        if server.get("version") in {BROKER_SERVER_VERSION, "1.4.0", LINUX_BROKER_SERVER_VERSION, LINUX_PREVIOUS_BROKER_SERVER_VERSION}:
             self.broker_contract_arguments=owning_broker_arguments(self.process,self.configured_transport_command)
         listed = self.request("tools/list", {})
         tools = listed.get("tools")
         server_version = server.get("version")
         expected_tools = (
             broker_contract_tools(self.broker_contract_arguments)
-            if server_version in {BROKER_SERVER_VERSION, "1.4.0", LINUX_BROKER_SERVER_VERSION}
+            if server_version in {BROKER_SERVER_VERSION, "1.4.0", LINUX_BROKER_SERVER_VERSION, LINUX_PREVIOUS_BROKER_SERVER_VERSION}
             else LEGACY_EXPECTED_TOOLS
             if server_version in {ROLLOUT_LEGACY_SERVER_VERSION, LEGACY_SERVER_VERSION}
             else PREVIOUS_EXPECTED_TOOLS
@@ -882,7 +943,7 @@ class McpClient:
         self._send({"jsonrpc": "2.0", "id": request_id, "method": method, "params": params})
         if self.process.stdout is None:
             raise HookError("connector_output_closed")
-        line = self._readline(remaining_lifecycle_seconds(35))
+        line = self._readline(remaining_lifecycle_seconds(165))
         if not line:
             raise HookTransportError("response_stream_closed")
         response = json.loads(line)
