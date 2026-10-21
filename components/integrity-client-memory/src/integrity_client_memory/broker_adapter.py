@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 
 
@@ -92,6 +93,78 @@ def install(namespace, recovery, ledger_module):
         except (KeyError, ValueError, TypeError, AttributeError):
             return
 
+    def normalized_close_request(arguments):
+        """Typed equivalent of the owning hook's terminal-request normalizer."""
+        if not isinstance(arguments, dict):
+            return None
+        registration = arguments.get("registration_id")
+        if not isinstance(registration, str) or re.fullmatch(r"sha256:[a-f0-9]{64}", registration) is None:
+            return None
+        outcome = arguments.get("outcome")
+        normalized = {"registration_id": registration, "outcome": outcome}
+        if outcome == "no-event":
+            if (set(arguments) != {"registration_id", "outcome", "no_event_reason"}
+                    or arguments.get("no_event_reason") not in
+                        {"read-only", "repetition", "social-response", "no-durable-state-change", "user-cancelled"}):
+                return None
+            normalized["no_event_reason"] = arguments["no_event_reason"]
+        elif outcome == "events":
+            events = arguments.get("events")
+            if (set(arguments) != {"registration_id", "outcome", "events"}
+                    or not isinstance(events, list) or not events):
+                return None
+            unique = {}
+            for index, event in enumerate(events):
+                if not isinstance(event, dict) or set(event) != {"event_id", "event_uid", "request_sha256"}:
+                    return None
+                event_id, uid, digest = event["event_id"], event["event_uid"], event["request_sha256"]
+                if (type(event_id) is not int or not 1 <= event_id <= 2**63-1
+                        or not isinstance(uid, str) or re.fullmatch(r"client:[A-Za-z0-9][A-Za-z0-9._:-]{7,154}", uid) is None
+                        or not isinstance(digest, str) or re.fullmatch(r"[a-f0-9]{64}", digest) is None):
+                    return None
+                unique.setdefault((uid, event_id, digest), (event_id, uid, index, digest))
+            if not 1 <= len(unique) <= 32:
+                return None
+            normalized["events"] = [{"event_id": event_id, "event_uid": uid, "request_sha256": digest}
+                for event_id, uid, _index, digest in sorted(unique.values())]
+        else:
+            return None
+        return normalized
+
+    def pending_own_close(current, binding, tool, arguments):
+        """Accept only this hook-staged, still-pending first own CLOSE attempt.
+
+        The hook marks uncertainty before dispatch; that marker is not a
+        failed historical terminal, recovery permission or retry authority.
+        All signed owner, descriptor, transport and Native checks still run.
+        """
+        try:
+            generation = binding.get("generation")
+            if (tool != "integrity_turn_memory_close"
+                    or current.get("turn_memory_status") != "coverage-debt"
+                    or current.get("turn_memory_lease") != "expired"
+                    or current.get("turn_memory_queue") != "recovery"
+                    or current.get("turn_memory_close_attempted") is not True
+                    or type(generation) is not int
+                    or type(current.get("turn_memory_close_attempted_generation")) is not int
+                    or current["turn_memory_close_attempted_generation"] != generation
+                    or current.get("turn_memory_failure") != {
+                        "code": "own_terminal_result_pending", "tool": "integrity_turn_memory_close",
+                        "outcome": "pending", "request_sent": None, "failure_layer": "hook-dispatch-boundary"}):
+                return False
+            normalized = normalized_close_request(arguments)
+            stored = current.get("turn_memory_close_request")
+            if (normalized is None or normalized_close_request(stored) != stored
+                    or stored != normalized
+                    or normalized["registration_id"] != current.get("turn_memory_registration_id")):
+                return False
+            encoded = json.dumps(normalized, ensure_ascii=False, sort_keys=True,
+                separators=(",", ":"), allow_nan=False).encode("utf-8")
+            digest = "sha256:" + hashlib.sha256(b"turn-memory-terminal-request-v1\0" + encoded).hexdigest()
+            return current.get("turn_memory_close_request_digest") == digest
+        except (KeyError, TypeError, ValueError, AttributeError):
+            return False
+
     def ordinary_current(broker, tool, arguments):
         """Only a proven current open may opt out before sending anything.
 
@@ -115,8 +188,7 @@ def install(namespace, recovery, ledger_module):
 
         # This call still validates any existing protected descriptor; a broken
         # descriptor raises and cannot be silently downgraded to ordinary mode.
-        if protected_read("resume-descriptor", envelope.load_context_resume) is not None:
-            raise recovery.RecoveryDenied("non-retained admission conflicts with recovery proof")
+        protected_read("resume-descriptor", lambda: envelope.assert_nonretained_context_resume(binding))
         identity = protected_read("owner-identity", envelope._resume_identity)
         state = protected_read("owner-state", lambda: envelope._resume_read_state(identity))
         hashes = binding.get("hashes", {})
@@ -128,7 +200,8 @@ def install(namespace, recovery, ledger_module):
                     or hashes.get("machine_id") != hashlib.sha256(envelope._machine_id().encode()).hexdigest()
                     or current.get("turn_memory_registration_receipt") != proof["receipt"]
                     or current.get("turn_memory_terminal_receipt_id") is not None
-                    or current.get("turn_memory_status") != "open"
+                    or (current.get("turn_memory_status") != "open"
+                        and not pending_own_close(current, binding, tool, arguments))
                     or current.get("turn_memory_generation") != binding.get("generation")
                     or current.get("turn_memory_intent_id") != binding.get("intent_id")
                     or current.get("model_mcp_admission_status") != "ready"
@@ -143,7 +216,10 @@ def install(namespace, recovery, ledger_module):
                 "turn_memory_namespace_fingerprint", "turn_memory_terminal_receipt_id",
                 "turn_memory_status", "turn_memory_generation", "turn_memory_intent_id",
                 "model_mcp_admission_status", "model_mcp_context_admission_id",
-                "prompt_sha256", "turn_ref")}, sort_keys=True, allow_nan=False)
+                "prompt_sha256", "turn_ref", "turn_memory_lease", "turn_memory_queue",
+                "turn_memory_close_attempted", "turn_memory_close_attempted_generation",
+                "turn_memory_close_request", "turn_memory_close_request_digest",
+                "turn_memory_failure")}, sort_keys=True, allow_nan=False)
 
         before = owner_join(state)
         head = protected_read("native-head", lambda: envelope._native_owning_head(identity))
@@ -152,7 +228,7 @@ def install(namespace, recovery, ledger_module):
         if (identity != after_identity or before != owner_join(after)
                 or not broker.bound or proof["transport"] is not broker.upstream
                 or proof["binding"] != broker._own_turn_binding
-                or protected_read("resume-descriptor-recheck", envelope.load_context_resume) is not None
+                or protected_read("resume-descriptor-recheck", lambda: envelope.assert_nonretained_context_resume(binding)) is not None
                 or not isinstance(head, dict) or head.get("id") != after.get("turn_id")
                 or head.get("status") != "inProgress"):
             raise recovery.RecoveryDenied("non-retained current owner proof changed")

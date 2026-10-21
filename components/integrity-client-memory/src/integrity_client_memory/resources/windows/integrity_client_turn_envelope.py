@@ -1090,7 +1090,6 @@ def _owning_native_rpc_retryable(error):
          or re.fullmatch(r'codex_app_host_timeout:tools/(?:list|call)', message) is not None
          or re.fullmatch(r'codex_app_host_unavailable:[A-Za-z][A-Za-z0-9_]{0,63}', message) is not None))
 
-
 def _native_owning_head(identity):
     if os.name != 'nt':
         from integrity_client_memory.owning_native import current_owning_turn
@@ -1111,6 +1110,7 @@ def _native_owning_head(identity):
             raise failure from None
         finally:
             module.BACKENDS.close()
+
 
 
 def issue_owning_lifecycle(name, arguments, *, identity, state, root=None, state_root=None):
@@ -1700,6 +1700,37 @@ def load_context_resume():
     after=_resume_current_join(payload,_resume_read_state(identity),identity,_native_owning_head(identity),loading=True)
     if before != after:raise TurnEnvelopeError("resume consumer changed during load")
     return payload
+
+def assert_nonretained_context_resume(binding):
+    """Classify only an authenticated predecessor cache, never restore it.
+
+    The caller separately proves a current signed OPEN with the explicit
+    admission-not-retained response on the same live transport. This function
+    grants no authority and neither removes cache nor edits canonical history.
+    """
+    identity = _resume_identity()
+    paths = _resume_directory(create=False)
+    if paths is None:
+        return
+    target, directory = paths
+    path = directory / (_sha256_text(identity) + '.json')
+    if not path.exists():
+        return
+    with _exclusive_root_lock(target):
+        predecessor, _control = _resume_shape(_resume_unpack(path, identity))
+        current = binding
+        if (not isinstance(current, dict)
+                or current.get('admitted') is not True
+                or type(current.get('generation')) is not int
+                or predecessor['generation'] >= current['generation']
+                or any(predecessor['hashes'][key] != current.get('hashes', {}).get(key)
+                       for key in ('machine_id', 'thread_id'))
+                or predecessor['hashes']['thread_id'] != _sha256_text(identity)
+                or predecessor['hashes']['machine_id'] != _sha256_text(_machine_id())
+                or predecessor['hashes']['turn_id'] == current.get('hashes', {}).get('turn_id')
+                or predecessor['turn_ref_digest'] == current.get('turn_ref_digest')
+                or predecessor['context_admission_id'] == current.get('context_admission_id')):
+            raise TurnEnvelopeError('non-retained admission conflicts with resume descriptor')
 # END ISOLATED OWN-CURRENT READ RESUME.
 
 

@@ -116,6 +116,9 @@ def route():
             return {"ok": True}
 
     class Broker:
+        def _check_own_lifecycle(self, name, arguments):
+            return None
+
         def _ensure_delivered_context_resume(self):
             return None
 
@@ -150,6 +153,7 @@ def route():
     class EnvelopeError(ValueError):
         pass
     envelope = SimpleNamespace(TurnEnvelopeError=EnvelopeError, load_context_resume=lambda: None,
+        assert_nonretained_context_resume=lambda binding: None,
         _resume_identity=lambda: "fixture-thread", _resume_read_state=lambda identity: state,
         _native_owning_head=lambda identity: {"id": "fixture-turn", "status": "inProgress"},
         _ref_digest=lambda value: "digest:fixture", _machine_id=lambda: "machine:fixture")
@@ -174,7 +178,8 @@ def test_explicit_current_no_retention_uses_original_path(route):
 
 @pytest.mark.parametrize("fault", ["missing-open", "foreign-head", "foreign-context", "reconnected",
                                    "existing-descriptor", "corrupt-descriptor", "foreign-machine", "terminal"])
-def test_invalid_proof_never_falls_back(route, fault):
+@pytest.mark.parametrize("tool", ["integrity_append_event", "integrity_turn_memory_close"])
+def test_invalid_proof_never_falls_back(route, fault, tool):
     if fault == "missing-open":
         route.broker._session_recovery_open = None
     elif fault == "foreign-head":
@@ -184,18 +189,24 @@ def test_invalid_proof_never_falls_back(route, fault):
     elif fault == "reconnected":
         route.broker.upstream = type(route.broker.upstream)()
     elif fault == "existing-descriptor":
-        route.envelope.load_context_resume = lambda: {"conflict": True}
+        def conflict(binding):
+            raise route.envelope.TurnEnvelopeError("conflicting descriptor fixture")
+        route.envelope.assert_nonretained_context_resume = conflict
     elif fault == "foreign-machine":
         route.envelope._machine_id = lambda: "machine:foreign"
     elif fault == "terminal":
         route.state["turn_memory_terminal_receipt_id"] = "sha256:" + "f" * 64
     else:
-        def fail():
+        def fail(binding):
             raise route.envelope.TurnEnvelopeError("corrupt fixture")
-        route.envelope.load_context_resume = fail
+        route.envelope.assert_nonretained_context_resume = fail
     with pytest.raises(route.Error):
-        route.broker._same_session_mutation("integrity_append_event",
-            {"context_admission_id": route.binding["context_admission_id"]})
+        if tool == "integrity_append_event":
+            route.broker._same_session_mutation(tool,
+                {"context_admission_id": route.binding["context_admission_id"]})
+        else:
+            route.broker._standalone_turn_memory_call(tool,
+                {"registration_id": route.state["turn_memory_registration_id"]})
     assert route.calls == []
 
 
@@ -234,6 +245,93 @@ def test_ordinary_close_rechecks_owner_state_after_native_read(route):
     with pytest.raises(route.Error):
         route.broker._standalone_turn_memory_call("integrity_turn_memory_close",
             {"registration_id": route.state["turn_memory_registration_id"]})
+    assert route.calls == []
+
+
+def test_foreign_close_argument_never_sends(route):
+    with pytest.raises(route.Error):
+        route.broker._standalone_turn_memory_call("integrity_turn_memory_close",
+            {"registration_id": "sha256:" + "f" * 64})
+    assert route.calls == []
+
+
+@pytest.mark.parametrize("fault", ["external-outcome", "unknown-request", "unknown-registration"])
+def test_nonretained_close_preserves_real_original_pre_send_guards(route, fault):
+    # Exercise the real original lifecycle method through the adapter. Stop at
+    # its existing pre-send guards; no subprocess or live transport is involved.
+    source = ast.parse(broker_bundle.BROKER.read_text("utf-8"))
+    cls = next(n for n in source.body if isinstance(n, ast.ClassDef) and n.name == "TurnBroker")
+    method = next(n for n in cls.body if isinstance(n, ast.FunctionDef)
+                  and n.name == "_standalone_turn_memory_call")
+    route.envelope._owning_state_root = lambda: Path("fixture-unused")
+    def guard(*args):
+        if fault == "external-outcome":
+            raise ValueError("fixture unresolved external outcome")
+    namespace = {"BrokerError": route.Error, "turn_envelope": route.envelope,
+                 "_local_routes": SimpleNamespace(guard_close=guard)}
+    module = ast.Module(body=[ast.ImportFrom(module="__future__", names=[ast.alias(name="annotations")], level=0),
+                             method], type_ignores=[])
+    exec(compile(ast.fix_missing_locations(module), "real-original-lifecycle", "exec"), namespace)
+    Broker = type(route.broker)
+    Broker._standalone_turn_memory_call = namespace["_standalone_turn_memory_call"]
+    broker_adapter.install({"TurnBroker": Broker, "BrokerError": route.Error,
+                            "turn_envelope": route.envelope}, recovery_client, operation_ledger)
+    broker = route.broker
+    broker._check_own_lifecycle = lambda *args: None
+    broker._lifecycle_request_key = lambda *args: "fixture-key"
+    broker._uncertain_lifecycle_requests = {"fixture-key"} if fault == "unknown-request" else set()
+    registration = route.state["turn_memory_registration_id"]
+    broker._uncertain_lifecycle_registrations = {registration} if fault == "unknown-registration" else set()
+    broker._ack_pending_context_replays = lambda: None
+    with pytest.raises(route.Error):
+        broker._standalone_turn_memory_call("integrity_turn_memory_close", {"registration_id": registration})
+    assert route.calls == []
+
+
+def _stage_pending_own_close(route, request):
+    # Mirror the owning hook's dispatch-boundary marker for its first own CLOSE.
+    encoded = json.dumps(request, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+    route.state.update({
+        "turn_memory_status": "coverage-debt", "turn_memory_lease": "expired",
+        "turn_memory_queue": "recovery", "turn_memory_close_attempted": True,
+        "turn_memory_close_attempted_generation": route.binding["generation"],
+        "turn_memory_close_request": request,
+        "turn_memory_close_request_digest": "sha256:" + hashlib.sha256(
+            b"turn-memory-terminal-request-v1\0" + encoded).hexdigest(),
+        "turn_memory_failure": {"code": "own_terminal_result_pending",
+            "tool": "integrity_turn_memory_close", "outcome": "pending",
+            "request_sent": None, "failure_layer": "hook-dispatch-boundary"}})
+
+
+def test_hook_staged_pending_own_close_is_sent_once(route):
+    request = {"registration_id": route.state["turn_memory_registration_id"],
+               "outcome": "no-event", "no_event_reason": "read-only"}
+    _stage_pending_own_close(route, request)
+    route.broker._standalone_turn_memory_call("integrity_turn_memory_close", dict(request))
+    assert [name for name, _ in route.calls] == ["integrity_turn_memory_close"]
+
+
+@pytest.mark.parametrize("fault", ["other-request", "digest", "generation", "failure", "append"])
+def test_pending_marker_never_authorizes_other_requests(route, fault):
+    request = {"registration_id": route.state["turn_memory_registration_id"],
+               "outcome": "no-event", "no_event_reason": "read-only"}
+    _stage_pending_own_close(route, request)
+    sent = dict(request)
+    if fault == "other-request":
+        sent["no_event_reason"] = "repetition"
+    elif fault == "digest":
+        route.state["turn_memory_close_request_digest"] = "sha256:" + "0" * 64
+    elif fault == "generation":
+        route.state["turn_memory_close_attempted_generation"] += 1
+    elif fault == "failure":
+        route.state["turn_memory_failure"]["request_sent"] = True
+    with pytest.raises(route.Error):
+        if fault == "append":
+            route.broker._same_session_mutation("integrity_append_event",
+                {"context_admission_id": route.binding["context_admission_id"]})
+        else:
+            route.broker._standalone_turn_memory_call("integrity_turn_memory_close", sent)
     assert route.calls == []
 
 

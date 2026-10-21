@@ -75,6 +75,24 @@ def private_root(path):
         path.mkdir(mode=0o700)
 
 
+def workspace_stage_root(path, workspace_root):
+    """Create only a fresh ordinary directory inside an explicit workspace.
+
+    This is build output, never a private credential/state root or installation.
+    No chmod or Windows ACL API is used in this explicit offline mode.
+    """
+    path, workspace_root = Path(path).absolute(), Path(workspace_root).absolute()
+    if (not workspace_root.is_dir() or path == workspace_root
+            or not path.resolve().is_relative_to(workspace_root.resolve())
+            or path.exists() or path.is_symlink() or not path.parent.is_dir()):
+        raise ValueError("fresh output inside explicit workspace required")
+    for item in (path.parent, *path.parent.parents):
+        info = item.lstat()
+        if item.is_symlink() or getattr(info, "st_file_attributes", 0) & 0x400:
+            raise ValueError("workspace ancestry custody changed")
+    path.mkdir()
+
+
 def source_strings(text):
     """Inspect frozen Python sources without importing/executing any of them."""
     import base64
@@ -176,7 +194,7 @@ def required_bindings(vendor, bindings):
 
 
 def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=None,
-          state_root=None, envelope_root=None):
+          state_root=None, envelope_root=None, workspace_stage=None):
     server_name = bindings.get("mcp_server_name", "integrity_native")
     if server_name not in {"integrity_native", "integrity_client_memory"}:
         raise ValueError("Native Memory server name must be an explicit supported Memory route")
@@ -249,7 +267,10 @@ def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=Non
     required_keys = configuration_keys(selected)
     if preserved:
         required_keys |= {"path_2dbd800b4e29", "path_f51de7de1b1c"}
-    private_root(output)
+    if workspace_stage is None:
+        private_root(output)
+    else:
+        workspace_stage_root(output, workspace_stage)
     runtime = output / "runtime"
     live_runtime = logical / "runtime"
     runtime.mkdir()

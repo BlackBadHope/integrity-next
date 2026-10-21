@@ -874,6 +874,52 @@
           "type": "object"
         },
         "name": "integrity_seed_replay"
+      },
+      {
+        "name": "integrity_context_delivery_ack",
+        "description": "After current-turn admission and own OPEN, answer the one-use model_delivery_challenge from that admission. Proves one canonical event lookup in the current model-owned MCP session, not complete semantic understanding. Never repeat a failed acknowledgement.",
+        "inputSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "challenge_id": {
+              "type": "string"
+            },
+            "nonce": {
+              "type": "string"
+            },
+            "event_id": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "required": [
+            "challenge_id",
+            "nonce",
+            "event_id"
+          ]
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
+      },
+      {
+        "name": "integrity_context_delivery_status",
+        "description": "Read the process-local model delivery receipt for this own current turn and immutable snapshot. Ready transport alone remains unverified. A broker restart loses this bounded proof.",
+        "inputSchema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {}
+        },
+        "annotations": {
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false,
+          "readOnlyHint": true
+        }
       }
     ]
   }
