@@ -2663,15 +2663,14 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
             catalog_consumed = catalog_sizes.get(
                 replay_hex, 0
             ) + temporary_catalog_sizes.get(replay_hex, 0)
-            total_bytes += max(
-                0,
-                int(reservation["record_bytes"]) - record_consumed,
-            )
+            record_budget = int(reservation["record_bytes"])
             catalog_budget = int(reservation["catalog_bytes"])
-            # COMMITTED freezes the catalog before any delivery acknowledgement.
-            # Accounting releases its unused growth allowance only. The record,
-            # catalog, reservation, UNKNOWN status and TTL remain byte-identical;
-            # the full 32MiB record allowance and all restore digest guards stay.
+            # COMMITTED freezes the catalog before any delivery acknowledgement,
+            # allowing accounting to release its unused growth allowance.
+            # An exactly acknowledged record is immutable too: repeated ACKs do
+            # not write. Until then retain its full record allowance for the ACK.
+            # Record/catalog/reservation bytes, UNKNOWN status, TTL and all
+            # restore digest guards remain unchanged.
             if (not self._replay_migrations and replay_hex in record_sizes
                     and replay_hex in catalog_sizes
                     and not temporary_record_sizes.get(replay_hex, 0)
@@ -2705,10 +2704,13 @@ class MemorySynapseMcp(SessionRecoveryMixin, OperationStatusMixin):
                             and 0 < binding["bytes"] == catalog_details.st_size == catalog_consumed <= catalog_budget
                             and self._context_replay_record_identity(details_for(record_name)) == after_identity):
                         catalog_budget = catalog_consumed
+                        if record.get("delivered_response_digest") == _sha256(_tool_result(record["result"])):
+                            record_budget = record_consumed
                 except (McpFacadeError, OSError, ValueError, TypeError, KeyError):
                     # An incomplete, corrupt, racing or migrated subject retains
                     # the original conservative reservation; no repair/renewal.
                     pass
+            total_bytes += max(0, record_budget - record_consumed)
             total_bytes += max(0, catalog_budget - catalog_consumed)
             if replay_hex not in record_sizes:
                 effective_record_count += 1

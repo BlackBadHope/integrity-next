@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from copy import deepcopy
 from types import SimpleNamespace
 
 import pytest
@@ -142,6 +143,7 @@ def route():
                "hashes": {k: hashlib.sha256(arguments[k].encode()).hexdigest()
                           for k in ("machine_id", "thread_id", "turn_id")}}
     state = {"turn_memory_registration_receipt": receipt, "turn_memory_registration_id": receipt["receipt_id"],
+             "turn_memory_status": "open",
              "turn_memory_generation": 3, "turn_memory_intent_id": arguments["intent_id"],
              "model_mcp_admission_status": "ready", "model_mcp_context_admission_id": binding["context_admission_id"],
              "prompt_sha256": arguments["prompt_sha256"], "turn_ref": "opaque:fixture", "turn_id": "fixture-turn"}
@@ -221,6 +223,18 @@ def test_lost_ordinary_response_keeps_original_uncertainty(route):
             {"context_admission_id": route.binding["context_admission_id"]})
     assert captured.value is error
     assert captured.value.request_sent is True
+
+
+def test_ordinary_close_rechecks_owner_state_after_native_read(route):
+    route.envelope._resume_read_state = lambda identity: deepcopy(route.state)
+    def changed_during_read(identity):
+        route.state["model_mcp_context_admission_id"] = "foreign"
+        return {"id": "fixture-turn", "status": "inProgress"}
+    route.envelope._native_owning_head = changed_during_read
+    with pytest.raises(route.Error):
+        route.broker._standalone_turn_memory_call("integrity_turn_memory_close",
+            {"registration_id": route.state["turn_memory_registration_id"]})
+    assert route.calls == []
 
 
 def test_canonical_and_preserved_root_brokers_keep_single_shot_startup_policy():

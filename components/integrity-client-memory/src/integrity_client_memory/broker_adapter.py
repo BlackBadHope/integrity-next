@@ -106,27 +106,54 @@ def install(namespace, recovery, ledger_module):
         if (not broker.bound or proof["transport"] is not broker.upstream
                 or proof["binding"] != binding):
             raise recovery.RecoveryDenied("non-retained admission is no longer current")
+        def protected_read(phase, read):
+            try:
+                return read()
+            except (OSError, ValueError, KeyError, TypeError, envelope.TurnEnvelopeError) as error:
+                error.integrity_failure_phase = phase
+                raise
+
         # This call still validates any existing protected descriptor; a broken
         # descriptor raises and cannot be silently downgraded to ordinary mode.
-        if envelope.load_context_resume() is not None:
+        if protected_read("resume-descriptor", envelope.load_context_resume) is not None:
             raise recovery.RecoveryDenied("non-retained admission conflicts with recovery proof")
-        identity = envelope._resume_identity()
-        state = envelope._resume_read_state(identity)
-        head = envelope._native_owning_head(identity)
+        identity = protected_read("owner-identity", envelope._resume_identity)
+        state = protected_read("owner-state", lambda: envelope._resume_read_state(identity))
         hashes = binding.get("hashes", {})
-        if (not broker._own_registration_content(state, binding)
-                or hashes.get("thread_id") != hashlib.sha256(identity.encode()).hexdigest()
-                or hashes.get("turn_id") != hashlib.sha256(str(state.get("turn_id", "")).encode()).hexdigest()
-                or hashes.get("machine_id") != hashlib.sha256(envelope._machine_id().encode()).hexdigest()
-                or state.get("turn_memory_registration_receipt") != proof["receipt"]
-                or state.get("turn_memory_terminal_receipt_id") is not None
-                or state.get("turn_memory_generation") != binding.get("generation")
-                or state.get("turn_memory_intent_id") != binding.get("intent_id")
-                or state.get("model_mcp_admission_status") != "ready"
-                or state.get("model_mcp_context_admission_id") != binding.get("context_admission_id")
-                or state.get("prompt_sha256") != binding.get("prompt_sha256")
-                or envelope._ref_digest(state.get("turn_ref", "")) != binding.get("turn_ref_digest")
-                or not isinstance(head, dict) or head.get("id") != state.get("turn_id")
+
+        def owner_join(current):
+            if (not broker._own_registration_content(current, binding)
+                    or hashes.get("thread_id") != hashlib.sha256(identity.encode()).hexdigest()
+                    or hashes.get("turn_id") != hashlib.sha256(str(current.get("turn_id", "")).encode()).hexdigest()
+                    or hashes.get("machine_id") != hashlib.sha256(envelope._machine_id().encode()).hexdigest()
+                    or current.get("turn_memory_registration_receipt") != proof["receipt"]
+                    or current.get("turn_memory_terminal_receipt_id") is not None
+                    or current.get("turn_memory_status") != "open"
+                    or current.get("turn_memory_generation") != binding.get("generation")
+                    or current.get("turn_memory_intent_id") != binding.get("intent_id")
+                    or current.get("model_mcp_admission_status") != "ready"
+                    or current.get("model_mcp_context_admission_id") != binding.get("context_admission_id")
+                    or current.get("prompt_sha256") != binding.get("prompt_sha256")
+                    or envelope._ref_digest(current.get("turn_ref", "")) != binding.get("turn_ref_digest")):
+                raise recovery.RecoveryDenied("non-retained current owner proof changed")
+            # Keep the complete registration and authority-relevant join, while
+            # allowing compaction/observer diagnostics to advance independently.
+            return json.dumps({key: current.get(key) for key in (
+                "turn_id", "turn_memory_registration_id", "turn_memory_registration_receipt",
+                "turn_memory_namespace_fingerprint", "turn_memory_terminal_receipt_id",
+                "turn_memory_status", "turn_memory_generation", "turn_memory_intent_id",
+                "model_mcp_admission_status", "model_mcp_context_admission_id",
+                "prompt_sha256", "turn_ref")}, sort_keys=True, allow_nan=False)
+
+        before = owner_join(state)
+        head = protected_read("native-head", lambda: envelope._native_owning_head(identity))
+        after_identity = protected_read("owner-identity-recheck", envelope._resume_identity)
+        after = protected_read("owner-state-recheck", lambda: envelope._resume_read_state(identity))
+        if (identity != after_identity or before != owner_join(after)
+                or not broker.bound or proof["transport"] is not broker.upstream
+                or proof["binding"] != broker._own_turn_binding
+                or protected_read("resume-descriptor-recheck", envelope.load_context_resume) is not None
+                or not isinstance(head, dict) or head.get("id") != after.get("turn_id")
                 or head.get("status") != "inProgress"):
             raise recovery.RecoveryDenied("non-retained current owner proof changed")
         registration = proof["receipt"]["receipt_id"]
@@ -135,6 +162,18 @@ def install(namespace, recovery, ledger_module):
                     arguments.get("context_admission_id") != binding.get("context_admission_id"))):
             raise recovery.RecoveryDenied("non-retained operation owner mismatch")
         return True
+
+    def safe_failure(error, message, broker):
+        failure = BrokerError(message + type(error).__name__, layer="broker-safe-operation",
+            request_sent=possibly_sent(broker), retryable=False)
+        phases = {"resume-descriptor", "owner-identity", "owner-state", "native-head",
+                  "owner-identity-recheck", "owner-state-recheck", "resume-descriptor-recheck"}
+        phase = getattr(error, "integrity_failure_phase", None)
+        code = getattr(error, "integrity_failure_code", None)
+        failure.diagnostic = {"protocol": "integrity-client/safe-operation-diagnostic/v1",
+            "phase": phase if phase in phases else "safe-operation",
+            "failure_code": code if code == "native-read-unavailable" else "protected-evidence-unavailable"}
+        return failure
 
     class Connection:
         def __init__(self, broker, target, payload, registration, *, restore_required=False):
@@ -276,8 +315,7 @@ def install(namespace, recovery, ledger_module):
         except (recovery.RecoveryDenied, recovery.DeliveryPending,
                 recovery.DeliveryFault, ledger_module.LedgerError,
                 OSError, ValueError, KeyError, TypeError, envelope.TurnEnvelopeError) as error:
-            raise BrokerError("safe operation recovery incomplete: " + type(error).__name__,
-                layer="broker-safe-operation", request_sent=possibly_sent(broker), retryable=False) from None
+            raise safe_failure(error, "safe operation recovery incomplete: ", broker) from None
 
     def _lifecycle(broker, tool, arguments):
         if tool == "integrity_turn_memory_open":
@@ -314,8 +352,7 @@ def install(namespace, recovery, ledger_module):
         except (recovery.RecoveryDenied, recovery.DeliveryPending,
                 recovery.DeliveryFault, ledger_module.LedgerError,
                 OSError, ValueError, KeyError, TypeError, envelope.TurnEnvelopeError) as error:
-            raise BrokerError("safe lifecycle recovery incomplete: " + type(error).__name__,
-                layer="broker-safe-operation", request_sent=possibly_sent(broker), retryable=False) from None
+            raise safe_failure(error, "safe lifecycle recovery incomplete: ", broker) from None
 
     Broker._ensure_delivered_context_resume = resume
     Broker._standalone_turn_memory_call = lifecycle

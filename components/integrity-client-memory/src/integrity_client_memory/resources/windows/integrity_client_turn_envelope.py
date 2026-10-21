@@ -1081,19 +1081,36 @@ def _owning_codex_app_tool_pipes(reader):
     return result[:128]
 
 
+def _owning_native_rpc_retryable(error):
+    # Classify only the pinned reader's transport failures. Rejected, malformed
+    # and unavailable owner evidence must never be repaired by choosing a head.
+    message = error.args[0] if len(error.args) == 1 else None
+    return (isinstance(message, str) and
+        (message in ('codex_app_host_closed', 'codex_app_host_unavailable')
+         or re.fullmatch(r'codex_app_host_timeout:tools/(?:list|call)', message) is not None
+         or re.fullmatch(r'codex_app_host_unavailable:[A-Za-z][A-Za-z0-9_]{0,63}', message) is not None))
+
+
 def _native_owning_head(identity):
     if os.name != 'nt':
         from integrity_client_memory.owning_native import current_owning_turn
         return current_owning_turn(identity)
-    module = _load_owning_native_reader()
-    module.discover_codex_app_tool_pipes = lambda: _owning_codex_app_tool_pipes(module)
-    try:
-        return module._host_latest_turn(module.BACKENDS.get_codex_host(), identity)
-    except module.RpcError:
-        # Do not weaken the live owner check or expose native exception text.
-        raise TurnEnvelopeError('owning Native read unavailable') from None
-    finally:
-        module.BACKENDS.close()
+    # Only this read-only observation is retried. Every attempt verifies a fresh
+    # reader and closes its backend; no lifecycle mutation is replayed here.
+    for attempt in range(2):
+        module = _load_owning_native_reader()
+        module.discover_codex_app_tool_pipes = lambda: _owning_codex_app_tool_pipes(module)
+        try:
+            return module._host_latest_turn(module.BACKENDS.get_codex_host(), identity)
+        except module.RpcError as error:
+            if attempt == 0 and _owning_native_rpc_retryable(error):
+                continue
+            # Do not expose Native exception text, even inside diagnostics.
+            failure = TurnEnvelopeError('owning Native read unavailable')
+            failure.integrity_failure_code = 'native-read-unavailable'
+            raise failure from None
+        finally:
+            module.BACKENDS.close()
 
 
 def issue_owning_lifecycle(name, arguments, *, identity, state, root=None, state_root=None):
