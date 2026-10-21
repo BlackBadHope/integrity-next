@@ -2,6 +2,7 @@
 from contextlib import nullcontext
 from copy import deepcopy
 import hashlib
+import json
 import multiprocessing
 import os
 from pathlib import Path
@@ -132,3 +133,104 @@ def test_capacity_degraded_registration_remains_allowed_and_explicit(gate, reaso
     closed = f.call("integrity_turn_memory_close", {"registration_id": opened["receipt"]["receipt_id"],
         "outcome": "no-event", "no_event_reason": "read-only"})
     assert closed["receipt"]["registration_id"] == opened["receipt"]["receipt_id"]
+
+
+def retained_fixture(f, monkeypatch, *, phase="committed", delivered=True):
+    """Small private files exercise real reservation/record custody and accounting."""
+    identity = replay_id("retained-accounting")
+    monkeypatch.setattr(f, "_prospective_context_replay_catalog_budget", lambda: 8192)
+    assert f._supports_context_admission_replay(identity)
+    root = f._context_admission_replay_root
+    stem = identity.split(":", 1)[1]
+    catalog = root / (stem + ".catalog.sqlite3")
+    catalog.write_bytes(b"private accounting fixture" * 8)
+    catalog.chmod(0o600)
+    result = {"fixture": "retained response"}
+    response_digest = m._sha256(m._tool_result(result))
+    record = {"protocol": m.CONTEXT_ADMISSION_REPLAY_PROTOCOL, "phase": phase,
+        "request_id": identity, "request_digest": replay_id("retained-request"),
+        "result": result, "prepared": {}, "state": {"frozen_catalog": {
+            "protocol": "integrity-client/context-admission-frozen-catalog/v1",
+            "name": catalog.name, "sha256": "sha256:" + hashlib.sha256(catalog.read_bytes()).hexdigest(),
+            "bytes": catalog.stat().st_size}}}
+    if delivered:
+        record["delivered_response_digest"] = response_digest
+    path = root / (stem + ".json")
+    path.write_bytes(m.canonical_json(record))
+    path.chmod(0o600)
+    f._context_reattach_enabled = True
+    return identity, record, path, catalog, response_digest
+
+
+def private_file_state(root):
+    return {p.name: (p.read_bytes(), p.stat().st_mtime_ns) for p in root.iterdir()}
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Actual POSIX replay custody")
+def test_delivered_record_releases_slack_without_rewriting_or_renewing(pool, monkeypatch):
+    identity, record, path, _, response_digest = retained_fixture(pool, monkeypatch)
+    root = pool._context_admission_replay_root
+    before = private_file_state(root)
+    physical = sum(len(value[0]) for value in before.values())
+    with pool._context_replay_maintenance_lock():
+        logical, count = pool._context_replay_inventory(prune=False)
+    assert (logical, count) == (physical, 1)
+    assert pool._context_replay_unallocated_reservation_bytes == 0
+    assert pool._load_context_replay(identity, record["request_digest"]) == record
+    assert pool._ack_context_replay(identity, record["request_digest"], response_digest)
+    assert private_file_state(root) == before
+    with pytest.raises(m.McpFacadeError, match="digest mismatch"):
+        pool._ack_context_replay(identity, record["request_digest"], replay_id("foreign-response"))
+    assert private_file_state(root) == before
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Actual POSIX replay custody")
+def test_record_allowance_is_released_only_after_exact_ack(pool, monkeypatch):
+    identity, record, path, _, response_digest = retained_fixture(pool, monkeypatch, delivered=False)
+    root = pool._context_admission_replay_root
+    physical = sum(p.stat().st_size for p in root.iterdir())
+    with pool._context_replay_maintenance_lock():
+        before, _ = pool._context_replay_inventory(prune=False)
+    assert before == physical + m.MAX_CONTEXT_ADMISSION_REPLAY_BYTES - path.stat().st_size
+    assert pool._ack_context_replay(identity, record["request_digest"], response_digest)
+    acknowledged = json.loads(path.read_bytes())
+    assert acknowledged == {**record, "delivered_response_digest": response_digest}
+    retained = private_file_state(root)
+    with pool._context_replay_maintenance_lock():
+        after, _ = pool._context_replay_inventory(prune=False)
+    assert after == sum(len(value[0]) for value in retained.values())
+    assert private_file_state(root) == retained
+
+
+@pytest.mark.skipif(os.name != "posix", reason="Actual POSIX replay custody")
+@pytest.mark.parametrize("case", ["prepared", "missing-ack", "wrong-ack", "corrupt",
+    "missing-catalog", "temporary-record", "changed-record", "migrated"])
+def test_uncertain_record_keeps_conservative_allowance(pool, monkeypatch, case):
+    identity, record, path, catalog, _ = retained_fixture(pool, monkeypatch,
+        phase="prepared" if case == "prepared" else "committed", delivered=case != "missing-ack")
+    temporary_bytes = 0
+    if case == "wrong-ack":
+        record["delivered_response_digest"] = replay_id("foreign-response")
+        path.write_bytes(m.canonical_json(record))
+    elif case == "corrupt":
+        path.write_bytes(b"{")
+    elif case == "missing-catalog":
+        catalog.unlink()
+    elif case == "temporary-record":
+        temporary = path.parent / ("." + path.name + ".123.1.tmp")
+        temporary.write_bytes(b"pending replacement")
+        temporary.chmod(0o600)
+        temporary_bytes = temporary.stat().st_size
+    elif case == "changed-record":
+        changed = {**record, "result": {"fixture": "racing replacement"}}
+        monkeypatch.setattr(pool, "_load_context_replay", lambda *args: changed)
+    elif case == "migrated":
+        pool._replay_migrations = {identity: object()}
+        monkeypatch.setattr(pool, "_replay_migration", lambda _: None)
+    before = private_file_state(path.parent)
+    physical = sum(len(value[0]) for value in before.values())
+    with pool._context_replay_maintenance_lock():
+        logical, count = pool._context_replay_inventory(prune=False)
+    assert count == 1
+    assert logical - physical >= m.MAX_CONTEXT_ADMISSION_REPLAY_BYTES - path.stat().st_size - temporary_bytes
+    assert private_file_state(path.parent) == before

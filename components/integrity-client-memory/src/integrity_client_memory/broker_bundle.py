@@ -17,12 +17,13 @@ import sys
 
 ROOT = Path(__file__).resolve().parent
 BROKER = ROOT / "resources/windows/integrity-client-turn-broker.py"
-MODULES = ("operation_ledger", "recovery_client", "broker_adapter")
+MODULES = ("operation_ledger", "recovery_client", "broker_adapter", "model_delivery", "model_delivery_broker")
 NAVIGATION_MODULE = "core_delivery"
 SUPPORT = ("__init__.py", "configuration.py", "catalogue.py", "native_runtime.py",
            "native_install.py", "profile.py", "broker_bundle.py", "project_scope.py", "native_receipts.py",
            "profile_roots.py", "transport_policy.py",
            "operation_ledger.py", "recovery_client.py", "broker_adapter.py",
+           "model_delivery.py", "model_delivery_broker.py",
            "core_delivery.py",
            "data/tools-current.json")
 BEGIN = "# BEGIN CANONICAL SESSION RECOVERY\n"
@@ -88,7 +89,8 @@ def render_windows_broker():
                      f"_{name}_source = {source!r}\n"
                      f"assert hashlib.sha256(_{name}_source.encode('utf-8')).hexdigest() == {digest!r}\n"
                      f"exec(compile(_{name}_source, '<canonical-{name}>', 'exec'), _{name}.__dict__)\n")
-    embedded += "_broker_adapter.install(globals(), _recovery_client, _operation_ledger)\n" + END
+    embedded += "_broker_adapter.install(globals(), _recovery_client, _operation_ledger)\n"
+    embedded += "_model_delivery_broker.install(globals(), _model_delivery)\n" + END
     rendered = (text[:start] + embedded + text[finish:]).encode("utf-8")
     from .transport_policy import render_windows_transport
     rendered, transport_policy = render_windows_transport(rendered)
@@ -101,7 +103,7 @@ def render_windows_broker():
 
 
 def build_bundle(output, *, bindings, upstream, tools, deployment_root=None,
-                 state_root=None, envelope_root=None):
+                 state_root=None, envelope_root=None, workspace_stage=None):
     """Compile a complete source-pinned client package and Native profile.
 
     Guardian's declared distribution dependencies remain prerequisites. The
@@ -113,7 +115,8 @@ def build_bundle(output, *, bindings, upstream, tools, deployment_root=None,
     if output.is_relative_to(ROOT):
         raise ValueError("bundle output must be outside canonical package sources")
     profile = build("codex", upstream, bindings, output, tools,
-                    deployment_root=deployment_root, state_root=state_root, envelope_root=envelope_root)
+                    deployment_root=deployment_root, state_root=state_root, envelope_root=envelope_root,
+                    workspace_stage=workspace_stage)
     logical = Path(profile["root"])
     support = output / "support"
     pins = {}
@@ -162,9 +165,8 @@ def build_bundle(output, *, bindings, upstream, tools, deployment_root=None,
     write_json(folder / "hooks.json", hooks)
     profile["generated_launch_files"] = {str(p.relative_to(output).as_posix()): digest(p.read_bytes())
         for p in (folder / "config.toml", folder / "hooks.json")}
-    from .native_install import LAUNCH_FILES
     profile["launch_files"] = {name: digest((output / name).read_bytes())
-                               for name in LAUNCH_FILES[profile["vendor"]]}
+        for name in profile["launch_files"]}
     write_json(output / "profile.json", profile)
     return profile
 

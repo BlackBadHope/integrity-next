@@ -1404,7 +1404,7 @@ class TurnBroker:
             with StartupGate(self._public_cancelled):
                 gate_ms = _elapsed_ms(gate_started)
                 try:
-                    target = UpstreamFacade(command, environment, cwd, self.tools_contract,
+                    target = UpstreamFacade(command, environment, cwd, _model_delivery_broker.upstream_tools(self.tools_contract),
                         self.initialize_params, context_replay_reservation_id, self._public_cancelled,
                         context_control_only=context_control_only)
                 except BaseException:

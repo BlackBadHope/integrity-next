@@ -9,15 +9,15 @@
     "path": "src/integrity_client_memory/broker_adapter.py",
     "source": "canonical-package/broker_adapter.py",
     "source_sha256": "7178dd94ec1314c88e42bc65d4232867643fb756900530c8ed2599909624922a",
-    "sha256": "7178dd94ec1314c88e42bc65d4232867643fb756900530c8ed2599909624922a",
-    "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
+    "sha256": "a9dd257a8e52391b329977af3d9a6f70f8084f20cbb405bd767548d94c49e4ef",
+    "derivation_note": "live-sync-20261021: root-close managed source merged with CLOSE54 8a6b792 and CLOSE55 pending own close; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/broker_bundle.py",
     "source": "canonical-package/broker_bundle.py",
     "source_sha256": "2575ce35c8653c634f97cf6a8c969db26a132de0f0f198d700a48d2a75254ded",
-    "sha256": "8e979748c7f40e282a6a3cc479ea04c01e0f2532bc45002971950b3de6c63bcc",
-    "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
+    "sha256": "65739932c937bf6afd5124f127b090dd3e1c46752acfff274f166075be789b3f",
+    "derivation_note": "root-close-package-20261021 reviewed source/compiler transform; original source digest retained"
   },
   {
     "path": "src/integrity_client_memory/core_delivery.py",
@@ -30,8 +30,9 @@
     "path": "src/integrity_client_memory/data/tools-current.json",
     "source": "clients/windows/integrity-client-tools.json",
     "source_sha256": "09b70292b3b5238755741095fda74107baa2d2d1d1a5e8867c51ee09a17b7fa5",
-    "sha256": "05034eb24f14a3e8d4a773e05c02b41ffa5dc91dbee3183364be56036a4a5102",
-    "disposition": "superseded-by-canonical-memory-api-2.11-tools"
+    "sha256": "5d1664dd9701e31caf8e6ba90a82482e7f6cb029a4af8b439672085fba7087cb",
+    "disposition": "superseded-by-canonical-memory-api-2.11-tools",
+    "derivation_note": "root-close-package-20261021 explicit managed source transform; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/generation_navigation.py",
@@ -44,8 +45,8 @@
     "path": "src/integrity_client_memory/native_install.py",
     "source": "canonical-package/native_install.py",
     "source_sha256": "43ffe843f81271a9cb34ce23e2e2ed0a17d4926f5db47a54ad9e3ec550025aaa",
-    "sha256": "1c99bc43a3560c55e5a06e00918423e42f7b495e65955448f456518247ececcc",
-    "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
+    "sha256": "552840afce80048308d50955c12940eceefa2879253a0cd3bdef08546200420e",
+    "derivation_note": "root-close-package-20261021 explicit managed source transform; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/native_receipts.py",
@@ -324,15 +325,15 @@
     "path": "src/integrity_client_memory/resources/windows/integrity-client-turn-broker.py",
     "source": "clients/windows/integrity-client-turn-broker.py",
     "source_sha256": "6b02d3dc24946d20bad6fc81c1111003d58fcdff6a7a067f5880b082a04968ab",
-    "sha256": "673e55380def20c775087f17a868e3809f8587b2f33170b517039a199322366b",
-    "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
+    "sha256": "b62e3ca567a9d040cd2f6ee0428d5999de7c47a745de0f00ad523f71075952cb",
+    "derivation_note": "root-close-package-20261021 explicit managed source transform; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/resources/windows/integrity_client_turn_envelope.py",
     "source": "clients/windows/integrity_client_turn_envelope.py",
     "source_sha256": "dc5913693b24df47a1d5674b55a89dfa731c6fd1efca510a90cf672d9e0dc52e",
-    "sha256": "b380ba6a18d66af292e1f3138c639caf3c634ea6d9b9fceae49aca7c36f15bec",
-    "derivation_note": "canonical-package-source; Windows recovery cohort compiled by broker_bundle"
+    "sha256": "501bcd7b8b30a50c3d62ee9097650405613eb541260d627892101dd0a19ffc20",
+    "derivation_note": "live-sync-20261021: root-close managed source merged with CLOSE54 8a6b792 and CLOSE55 pending own close; original source_sha256 preserved"
   },
   {
     "path": "src/integrity_client_memory/resources/windows/native/delegation-native-reader.py",
@@ -422,7 +423,8 @@
     "path": "tests/test_canonical_recovery_bundle.py",
     "source": "canonical-package-tests/test_canonical_recovery_bundle.py",
     "source_sha256": "736249ab44a0e2543aeb9c94a09357145464579eb33b0036b268a2d737d329d2",
-    "sha256": "736249ab44a0e2543aeb9c94a09357145464579eb33b0036b268a2d737d329d2"
+    "sha256": "e79257320024c3b0966d63d8312ce2b80e55eacf8104541cd5bf1164c612749b",
+    "derivation_note": "live-sync-20261021: root-close managed source merged with CLOSE54 8a6b792 and CLOSE55 pending own close; original source_sha256 preserved"
   },
   {
     "path": "tests/test_core_delivery_navigation.py",
@@ -466,5 +468,17 @@
     "source": "canonical-package-tests/test_transport_policy.py",
     "source_sha256": "1ac834558eaf42a7e9b06da6a131fb5dd9822f37b4d520cccd2ce410b9fe2b90",
     "sha256": "1ac834558eaf42a7e9b06da6a131fb5dd9822f37b4d520cccd2ce410b9fe2b90"
+  },
+  {
+    "path": "src/integrity_client_memory/model_delivery.py",
+    "source": "managed-model-delivery-lifecycle-20261021/model_delivery.py",
+    "source_sha256": "ffbe9a8ae1e7a19e1e025ae53207e4dc745ab74d164857398d2439a9a7569d56",
+    "sha256": "ffbe9a8ae1e7a19e1e025ae53207e4dc745ab74d164857398d2439a9a7569d56"
+  },
+  {
+    "path": "src/integrity_client_memory/model_delivery_broker.py",
+    "source": "managed-model-delivery-lifecycle-20261021/model_delivery_broker.py",
+    "source_sha256": "1c16f40f8c0db3e9bd797c1884b04117644b77b626a907e76bbfb30aa467efeb",
+    "sha256": "1c16f40f8c0db3e9bd797c1884b04117644b77b626a907e76bbfb30aa467efeb"
   }
 ]
