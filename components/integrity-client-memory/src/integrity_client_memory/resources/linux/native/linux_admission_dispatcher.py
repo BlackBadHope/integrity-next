@@ -13,8 +13,9 @@ def dispatch(event,payload,baseline,seam,*,schedule_terminal):
     with baseline.session_state_lock(identity):
         state=baseline.load_state(identity)
         child=payload.get('agent_id')
-        if (event in {'SubagentStart','SubagentStop','Stop'} and child not in (None,'',identity)
-            and state.get('delegation_operation_id')):
+        # Child lifecycle notifications must never retire or replace the
+        # parent's admission, whether or not that parent is delegated.
+        if event in {'SubagentStart','SubagentStop','Stop'} and child not in (None,'',identity):
             return 0
         if event=='UserPromptSubmit' and is_carrier(payload):
             # Text reception is not proof and must not replace owner intent.

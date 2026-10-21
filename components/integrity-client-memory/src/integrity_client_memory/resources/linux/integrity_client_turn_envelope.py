@@ -1548,6 +1548,27 @@ def _resume_shape(payload):
     if len(_canonical(payload)) > _RESUME_LIMIT:raise TurnEnvelopeError("resume descriptor too large")
     return binding,control
 
+def _curator_owning_identity():
+    """Use only the protected producer anchor established by own admission.
+
+    Curator identity is distinct from Windows-only private snapshot resume.
+    The caller still verifies Native head, admitted hashes and current receipt.
+    """
+    anchor = _RESUME_CLAIM_OWNER
+    if (not isinstance(anchor, tuple) or len(anchor) != 3
+            or type(anchor[1]) is not int or anchor[1] < 1
+            or not isinstance(anchor[2], str)
+            or re.fullmatch(r"sha256:[a-f0-9]{64}", anchor[2]) is None):
+        raise TurnEnvelopeError("curator admitted producer anchor missing")
+    identity = anchor[0]
+    if (not isinstance(identity, str)
+            or re.fullmatch(r"[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}", identity) is None):
+        raise TurnEnvelopeError("curator admitted producer identity invalid")
+    observed = os.environ.get("CODEX_THREAD_ID")
+    if observed is not None and observed != identity:
+        raise TurnEnvelopeError("curator Native caller changed")
+    return identity
+
 def _resume_identity():
     identity = os.environ.get("CODEX_THREAD_ID")
     anchor = _RESUME_CLAIM_OWNER
@@ -1847,6 +1868,16 @@ def main(argv: list[str] | None = None) -> int:
 
 
 
+class NativeObservationError(TurnEnvelopeError):
+    """Native proof could not be observed; this does not assert supersession."""
+    pass
+
+def _observe_producer_head(reader, identity, turn_id):
+    try:
+        return reader(identity, turn_id)
+    except (OSError, ValueError, TurnEnvelopeError) as exc:
+        raise NativeObservationError("native producer observation unavailable") from exc
+
 _RESUME_CLAIM_OWNER = None
 
 def bind_resume_identity_from_claim(*, producer_turn_ref, producer_claim_id):
@@ -1896,10 +1927,10 @@ def bind_resume_identity_from_claim(*, producer_turn_ref, producer_claim_id):
     # Never inject a model-supplied identity into the process environment.
     head_reader = _original_producer_head if os.name != "nt" else _native_owning_head
     before = _resume_successor_join(public, state, identity,
-                                   head_reader(identity, native["turn_id"]), producer_turn_ref)
+                                   _observe_producer_head(head_reader, identity, native["turn_id"]), producer_turn_ref)
     final_state = _resume_read_state(identity)
-    after = _resume_successor_join(public, final_state, identity,
-                                  head_reader(identity, native["turn_id"]), producer_turn_ref)
+    final_head = _observe_producer_head(head_reader, identity, native["turn_id"])
+    after = _resume_successor_join(public, final_state, identity, final_head, producer_turn_ref)
     if before != after:
         raise TurnEnvelopeError("original hook Native identity changed during binding")
     with _exclusive_root_lock(target):
@@ -1909,7 +1940,11 @@ def bind_resume_identity_from_claim(*, producer_turn_ref, producer_claim_id):
                 or current["expires_epoch"] <= time.time()):
             raise TurnEnvelopeError("original hook private claim changed during binding")
         _require_claim(current, producer_claim_id)
-        if _resume_read_state(identity) != final_state:
+        # Recheck the protected owner subject against the last verified Native head,
+        # not unrelated cadence counters. No Native proof is synthesized.
+        current_state = _resume_read_state(identity)
+        current_join = _resume_successor_join(public, current_state, identity, final_head, producer_turn_ref)
+        if current_join != after:
             raise TurnEnvelopeError("original hook Native state changed during binding")
         _RESUME_CLAIM_OWNER = (identity, original["generation"], public["turn_ref_digest"])
 

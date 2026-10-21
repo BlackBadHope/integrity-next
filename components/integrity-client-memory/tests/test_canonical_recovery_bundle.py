@@ -49,7 +49,7 @@ def test_codex_native_uses_resume_capable_canonical_envelope():
 
 def test_other_platform_families_remain_distinct():
     expected = {
-        "linux/integrity-client-turn-broker.py": "d5d0fdc504eb39af01f704ac00f532206f2f37303f7cedd8be08209719d31a9b",
+        "linux/integrity-client-turn-broker.py": "fcc79bb33d20c0ee62c9ff732bb4b01ebc5b56908bbed6a872f9423d460277fb",
         "windows-remote/integrity-client-turn-broker.py": "c5a15c2f91e5034dac17325ef77335678f2f27620b1fd1a12c26259a3dc578c5",
         "claude-native/integrity-client-turn-broker.py": "f1023580d3541ddc473534640f2674f2f55e4e41fe381ad9f504b3fa3a66bde2",
         "antigravity/turn_broker_core.py": "711378f5d574cad03a535059349d343c7551afb88f797bd268e9417ee3a194cf"}

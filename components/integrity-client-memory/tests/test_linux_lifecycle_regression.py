@@ -28,8 +28,9 @@ FUNCTIONS = {
     "_sha256_bytes", "_sha256_text", "_ref_digest", "_identity_hash", "_claim_digest",
     "_require_claim", "_validate_common", "_public", "_resume_successor_join",
     "consume_owning_lifecycle", "revalidate_consumed_own_lifecycle",
-    "bind_resume_identity_from_claim",
+    "bind_resume_identity_from_claim", "_observe_producer_head",
 }
+CLASSES = {"NativeObservationError"}
 
 
 class FixtureEnvelopeError(RuntimeError):
@@ -40,8 +41,8 @@ def load_functions(source=SOURCE):
     """Do not execute imports, configured paths, module startup or CLI code."""
     tree = ast.parse(Path(source).read_text(encoding="utf-8"))
     selected = [node for node in tree.body
-                if isinstance(node, ast.FunctionDef) and node.name in FUNCTIONS]
-    assert {node.name for node in selected} == FUNCTIONS
+                if isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in FUNCTIONS | CLASSES]
+    assert {node.name for node in selected} == FUNCTIONS | CLASSES
     namespace = dict(
         Any=Any, hashlib=hashlib, json=json, math=math, re=re, secrets=secrets,
         TurnEnvelopeError=FixtureEnvelopeError,
@@ -269,6 +270,35 @@ def test_bind_rejects_change_during_unlocked_native_proof(tmp_path, change):
     fixture.on_native = mutate
     with pytest.raises((FixtureEnvelopeError, FileNotFoundError)):
         fixture.bind()
+    assert fixture.ns["_RESUME_CLAIM_OWNER"] is None
+
+
+def test_bind_ignores_unrelated_cadence_change_during_native_proof(tmp_path):
+    # The final recheck compares the protected owner subject, not cadence counters.
+    fixture = LifecycleFixture(tmp_path)
+
+    def mutate(call):
+        if call == 2:
+            fixture.state["semantic_cadence_actions"] = 7
+        return None
+
+    fixture.on_native = mutate
+    fixture.bind()
+    assert fixture.ns["_RESUME_CLAIM_OWNER"] == (
+        fixture.thread, 3, fixture.ns["_ref_digest"](fixture.ref))
+
+
+@pytest.mark.parametrize("failure", [OSError("socket"), ValueError("frame"), "envelope"])
+def test_bind_classifies_native_observation_failure(tmp_path, failure):
+    fixture = LifecycleFixture(tmp_path)
+
+    def fail(_call):
+        raise FixtureEnvelopeError("reader") if failure == "envelope" else failure
+
+    fixture.on_native = fail
+    with pytest.raises(fixture.ns["NativeObservationError"]) as raised:
+        fixture.bind()
+    assert isinstance(raised.value, FixtureEnvelopeError)
     assert fixture.ns["_RESUME_CLAIM_OWNER"] is None
 
 

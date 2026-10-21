@@ -7,6 +7,8 @@ from __future__ import annotations
 from integrity_client_memory.configuration import value as _integrity_value, require_config as _integrity_require_config
 from integrity_client_memory.catalogue import load_owner_catalogue as _load_owner_catalogue
 
+BROKER_TARGET_HOST = 'owner-host'
+BROKER_TARGET_PLATFORM = 'linux'
 
 import argparse
 import hashlib
@@ -58,10 +60,10 @@ exec(compile('# SPDX-License-Identifier: Apache-2.0\n"""Native-owned cwd witness
 _native_task_route = _route_types.ModuleType('_native_task_route')
 exec(compile('# SPDX-License-Identifier: Apache-2.0\n"""Navigation-only projection of an authenticated Native delegation source.\n\nThe admitted carrier is never decrypted, replaced, or relabelled as user text.\nOnly the exact successful originating collaboration call is projected for\nnavigation, after current child identity, lineage and product custody checks.\n"""\n\nfrom integrity_client_memory.configuration import value as _integrity_value, require_config as _integrity_require_config\nimport datetime,hashlib,json,os,re,stat\nfrom pathlib import Path\n\nUUID=re.compile(r\'[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}\\Z\')\nMAX_FILE=128*1024*1024;MAX_LINE=8*1024*1024;MAX_PROMPT=261888\nclass ProjectionError(ValueError):pass\ndef need(ok,code):\n    if not ok:raise ProjectionError(code)\ndef sha(text):return hashlib.sha256(text.encode()).hexdigest()\ndef plain_product(raw,identity):\n    need(isinstance(raw,str),\'native-task-path-missing\')\n    if raw.startswith(\'\\\\\\\\?\\\\\'):\n        need(re.match(r\'^\\\\\\\\\\?\\\\[A-Za-z]:\\\\\',raw) is not None,\'native-task-device-path\');raw=raw[4:]\n    p=Path(raw);home=Path(os.environ.get(\'CODEX_HOME\',str(Path.home()/\'.codex\')))\n    need(p.is_absolute() and p.is_relative_to(home/\'sessions\') and p.name.endswith(\'-\'+identity+\'.jsonl\'),\'native-task-product-subject\')\n    for part in (p,*p.parents):\n        d=part.lstat();need(not part.is_symlink() and not getattr(d,\'st_file_attributes\',0)&1024,\'native-task-reparse\')\n    need(stat.S_ISREG(p.stat().st_mode) and 0<p.stat().st_size<=MAX_FILE,\'native-task-product-bound\')\n    return p\ndef records(path):\n    with path.open(encoding=\'utf-8\') as stream:\n        for ordinal,line in enumerate(stream,1):\n            need(len(line.encode())<=MAX_LINE,\'native-task-line-bound\')\n            yield ordinal,json.loads(line)\ndef timestamp(raw):\n    need(isinstance(raw,str),\'native-task-time-missing\')\n    value=datetime.datetime.fromisoformat(raw.replace(\'Z\',\'+00:00\'))\n    need(value.tzinfo is not None,\'native-task-time-naive\');return value\n\ndef delivery_window(rows,carrier,agent_path):\n    head=None;turn=None;found=[];previous=None\n    for ordinal,row in rows:\n        p=row.get(\'payload\') or {}\n        if row.get(\'type\')==\'session_meta\' and head is None:head=p\n        if row.get(\'type\')==\'turn_context\':turn=p.get(\'turn_id\')\n        if row.get(\'type\')==\'response_item\' and p.get(\'type\')==\'agent_message\' and p.get(\'recipient\')==agent_path:\n            stamp=timestamp(row.get(\'timestamp\'))\n            if p==carrier[\'native_delivery\']:\n                need(turn==carrier[\'native_turn_id\'],\'native-task-delivery-turn\')\n                found.append((previous,stamp,ordinal))\n            previous=stamp\n    need(head is not None and head.get(\'id\')==carrier[\'native_thread_id\'],\'native-task-child-header\')\n    need(len(found)==1,\'native-task-delivery-ambiguous\');return found[0]\n\ndef select_parent_task(rows,*,parent,agent_path,child,window):\n    previous,delivered,_=window;header=None;calls={};matches=[];parent_turn=None\n    parent_path=agent_path.rsplit(\'/\',1)[0]\n    for ordinal,row in rows:\n        p=row.get(\'payload\') or {}\n        if row.get(\'type\')==\'session_meta\' and header is None:header=p\n        if row.get(\'type\')==\'turn_context\':parent_turn=p.get(\'turn_id\')\n        if row.get(\'type\')!=\'response_item\':continue\n        if p.get(\'type\')==\'function_call\' and p.get(\'namespace\')==\'collaboration\' and p.get(\'name\') in [\'spawn_agent\',\'followup_task\']:\n            started=timestamp(row.get(\'timestamp\'))\n            if started>delivered or previous is not None and started<=previous:continue\n            try:a=json.loads(p[\'arguments\'])\n            except (ValueError,KeyError):continue\n            if p[\'name\']==\'spawn_agent\':\n                target=parent_path+\'/\'+str(a.get(\'task_name\',\'\'))\n            else:\n                target=a.get(\'target\')\n                if isinstance(target,str) and not target.startswith(\'/\') and target!=child:target=parent_path+\'/\'+target\n            if target not in (agent_path,child):continue\n            message=a.get(\'message\')\n            need(isinstance(message,str) and 0<len(message.encode())<=MAX_PROMPT,\'native-task-message-bound\')\n            need(\'turnref:\' not in message,\'native-task-ref-not-navigation\')\n            calls[p.get(\'call_id\')]={\'message\':message,\'call_id\':p[\'call_id\'],\'ordinal\':ordinal,\'tool\':p[\'name\'],\'parent_turn_id\':parent_turn}\n        if p.get(\'type\')==\'function_call_output\' and p.get(\'call_id\') in calls:\n            call=calls[p[\'call_id\']];output=p.get(\'output\')\n            if call[\'tool\']==\'spawn_agent\':\n                try:reply=json.loads(output)\n                except (ValueError,TypeError):continue\n                if not isinstance(reply,dict) or set(reply)!={\'task_name\'} or reply[\'task_name\']!=agent_path:continue\n            else:\n                # A triggering authenticated child carrier proves delivery;\n                # still require the Native successful call output, not a request.\n                if output not in (\'\',None):\n                    try:reply=json.loads(output)\n                    except (ValueError,TypeError):continue\n                    if not isinstance(reply,dict) or reply.get(\'isError\') or reply.get(\'error\'):continue\n            matches.append(call)\n    need(header is not None and header.get(\'id\')==parent,\'native-task-parent-header\')\n    need(len(matches)==1,\'native-task-origin-ambiguous\');return matches[0]\n\ndef project(envelope,prompt,binding):\n    try:carrier=json.loads(prompt)\n    except (ValueError,TypeError):return prompt,{\'kind\':\'own-plaintext\',\'external_action_authority\':False}\n    if not isinstance(carrier,dict) or carrier.get(\'input_kind\')!=\'native-agent-task-envelope\':\n        return prompt,{\'kind\':\'own-plaintext\',\'external_action_authority\':False}\n    need(sha(prompt)==binding.get(\'prompt_sha256\'),\'native-task-carrier-binding\')\n    child=carrier.get(\'native_thread_id\');turn=carrier.get(\'native_turn_id\');parent=carrier.get(\'parent_thread_id\')\n    need(all(isinstance(x,str) and UUID.fullmatch(x) for x in (child,turn,parent)),\'native-task-identity\')\n    hashes=binding.get(\'hashes\') or {}\n    need(hashes.get(\'thread_id\')==sha(child) and hashes.get(\'turn_id\')==sha(turn),\'native-task-own-binding\')\n    need(envelope._resume_identity()==child,\'native-task-current-caller\')\n    reader=envelope._load_owning_native_reader()\n    reader.discover_codex_app_tool_pipes=lambda:envelope._owning_codex_app_tool_pipes(reader)\n    try:\n        host=reader.BACKENDS.get_codex_host();head=reader._host_latest_turn(host,child)\n        need(head.get(\'id\')==turn and head.get(\'status\')==\'inProgress\',\'native-task-current-head\')\n        backend=reader.BACKENDS.get_codex()\n        cm=backend.request(\'thread/read\',{\'threadId\':child,\'includeTurns\':False},15)[\'thread\']\n        pm=backend.request(\'thread/read\',{\'threadId\':parent,\'includeTurns\':False},15)[\'thread\']\n        branch=((cm.get(\'source\') or {}).get(\'subAgent\') or {}).get(\'thread_spawn\') or {}\n        need(cm.get(\'id\')==child and pm.get(\'id\')==parent and branch.get(\'parent_thread_id\')==parent,\'native-task-lineage\')\n        agent_path=branch.get(\'agent_path\')\n        need(isinstance(agent_path,str) and agent_path.startswith(\'/root/\') and len(agent_path)<256,\'native-task-agent-path\')\n        delivery=carrier.get(\'native_delivery\') or {}\n        need(delivery.get(\'recipient\')==agent_path and delivery.get(\'author\')==agent_path.rsplit(\'/\',1)[0],\'native-task-carrier-route\')\n        window=delivery_window(records(plain_product(cm.get(\'path\'),child)),carrier,agent_path)\n        source=select_parent_task(records(plain_product(pm.get(\'path\'),parent)),parent=parent,child=child,agent_path=agent_path,window=window)\n        again=reader._host_latest_turn(host,child)\n        need(again.get(\'id\')==turn and again.get(\'status\')==\'inProgress\',\'native-task-head-changed\')\n        opaque=bool(re.fullmatch(r\'gAAAA[A-Za-z0-9_-]{80,}={0,2}\',source[\'message\']))\n        return (\'\' if opaque else source[\'message\']),{\'kind\':\'authenticated-native-delegation-navigation\',\'protocol\':\'integrity-native-task-navigation/v1\',\n            \'navigation_text_available\':not opaque,\'navigation_text_reason\':\'Native-originating-message-encrypted\' if opaque else \'plaintext-originating-message\',\n            \'native_thread_id\':child,\'native_turn_id\':turn,\'parent_thread_id\':parent,\'agent_path\':agent_path,\n            \'parent_turn_id\':source[\'parent_turn_id\'],\n            \'source_call_id\':source[\'call_id\'],\'source_ordinal\':source[\'ordinal\'],\'task_sha256\':sha(source[\'message\']),\n            \'carrier_sha256\':sha(prompt),\'admitted_prompt_replaced\':False,\'canonical_prompt_plaintext_recovered\':False,\n            \'external_action_authority\':False}\n    finally:reader.BACKENDS.close()\n', '<managed-native_task_route.py>', "exec"), _native_task_route.__dict__)
 _automatic_Core = _route_types.ModuleType('_automatic_Core')
-exec(compile('# SPDX-License-Identifier: Apache-2.0\n"""Automatic same-session Core delivery; no model-supplied runbook content."""\n\nfrom integrity_client_memory.configuration import value as _integrity_value, require_config as _integrity_require_config\nimport copy,hashlib,json,time\nfrom pathlib import Path\n\ndef delivery(upstream,local,source,experiment,expected_catalog_digest):\n    local=copy.deepcopy(local);local[\'task_source\']=source\n    # A narrowly scoped owner-configured context ablation, independent from all\n    # authentication, admission, SCOPE and actuator permissions.\n    in_experiment=(source.get(\'parent_thread_id\')==experiment[\'parent_thread_id\']\n        and source.get(\'parent_turn_id\')==experiment[\'parent_turn_id\']\n        and time.time()<experiment[\'expires_epoch\'])\n    if in_experiment and source.get(\'agent_path\') in experiment[\'control_agent_paths\']:\n        return {\'status\':\'task-route-withheld-for-control\',\'scope_source\':local.get(\'scope_source\'),\n                \'task_source\':source,\'entities\':local.get(\'entities\'),\n                \'core_delivery\':{\'status\':\'withheld-by-frozen-experiment\',\'calls\':0},\n                \'external_action_authority\':False,\'automatic_execution\':False}\n    if local.get(\'status\')!=\'navigation-ready\':\n        if source.get(\'navigation_text_available\') is False:\n            local[\'status\']=\'task-route-query-required\'\n            local[\'task_query\']={\'tool\':\'integrity_memory_ttt_autofill\',\'goal\':\'Use only current task identifiers: BDCOM OLT IPv4, GPON interface and ONU serial. No procedure or prior context.\',\n                \'last_hop\':\'identify-switch-ip\',\'snapshot_id\':local.get(\'snapshot_id\'),\n                \'note\':\'First identity read is still mandatory. Opaque Native carrier and its binding remain unchanged. This query is navigation, never authority.\'}\n        return local\n    started=time.monotonic()\n    try:\n        result=upstream.call_tool(\'integrity_memory_ttt_autofill\',{\'goal\':\'bdcom-onu-service-vlan\',\n            \'last_hop\':\'example-operation-0001\',\'snapshot_id\':local[\'snapshot_id\']})\n    except Exception:\n        return {\'status\':\'core-not-delivered\',\'task_source\':source,\'core_delivery\':{\'status\':\'not-delivered\',\'reason\':\'canonical-Core-upstream-unavailable\',\'calls\':1},\'external_action_authority\':False}\n    elapsed=time.monotonic()-started\n    try:value=json.loads(result[\'content\'][0][\'text\'])\n    except (KeyError,IndexError,TypeError,ValueError):value={}\n    binding=value.get(\'snapshot_binding\') or {}\n    valid=(not result.get(\'isError\') and value.get(\'result\')==\'REMAINING\'\n        and value.get(\'path_catalog_digest\')==expected_catalog_digest\n        and binding.get(\'snapshot_id\')==local[\'snapshot_id\']\n        and binding.get(\'ttt_receipt_id\')==value.get(\'receipt_id\')\n        and len(value.get(\'remaining_path\',[]))==6)\n    # Never silently replace missing Core with a locally invented procedure.\n    if not valid:return {\'status\':\'core-not-delivered\',\'task_source\':source,\n        \'core_delivery\':{\'status\':\'not-delivered\',\'reason\':\'canonical-core-response-or-binding-mismatch\',\'calls\':1,\'elapsed_seconds\':elapsed},\n        \'external_action_authority\':False,\'automatic_execution\':False}\n    local[\'hops\']=value[\'remaining_path\'];local.pop(\'evidence\',None)\n    local[\'source\']=\'same-model-owned-upstream-Core-response\'\n    local[\'core_delivery\']={\'status\':\'delivered\',\'calls\':1,\'elapsed_seconds\':elapsed,\n        \'receipt_id\':value[\'receipt_id\'],\'snapshot_binding_receipt_id\':binding[\'receipt_id\'],\n        \'path_catalog_digest\':value[\'path_catalog_digest\'],\'snapshot_id\':local[\'snapshot_id\'],\n        \'snapshot_event_id\':binding.get(\'snapshot_event_id\'),\'remaining_count\':6,\n        \'first_identity_read_still_required\':True,\'completed_hop_assertion_verified\':False,\n        \'response_sha256\':hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False).encode()).hexdigest()}\n    return local\n\ndef query(navigator,upstream,args,binding,scope,source,experiment,catalog):\n    """The admitted model supplies task entities, never the Core procedure."""\n    if not source or source.get(\'navigation_text_available\') is not False:return None\n    if args.get(\'snapshot_id\')!=binding.get(\'snapshot_id\'):raise ValueError(\'task query snapshot mismatch\')\n    local=navigator.admit(args.get(\'goal\',\'\'),scope,args[\'snapshot_id\'])\n    local[\'snapshot_id\']=args[\'snapshot_id\'];local[\'scope_source\']=scope.get(\'project_scope_source\')\n    source=copy.deepcopy(source);source[\'task_selector_source\']=\'current-admitted-model-tool-query\'\n    source[\'task_selector_sha256\']=hashlib.sha256(args.get(\'goal\',\'\').encode()).hexdigest()\n    value=delivery(upstream,local,source,experiment,catalog)\n    journal(value,binding[\'context_admission_id\'],phase=\'query\')\n    if value.get(\'status\') not in (\'navigation-ready\',\'task-route-withheld-for-control\'):\n        return {\'content\':[{\'type\':\'text\',\'text\':json.dumps({\'operational_context\':value})}],\'isError\':True}\n    return {\'content\':[{\'type\':\'text\',\'text\':json.dumps({\'operational_context\':value})}]}\n\ndef guard_curator(envelope,binding,args):\n    """Administrative accounting still requires the current own actor slot."""\n    identity=envelope._resume_identity();head=envelope._native_owning_head(identity)\n    hashes=binding.get(\'hashes\') or {}\n    sha=lambda s:hashlib.sha256(s.encode()).hexdigest()\n    if not (binding.get(\'admitted\') is True and hashes.get(\'thread_id\')==sha(identity)\n            and head.get(\'status\')==\'inProgress\' and hashes.get(\'turn_id\')==sha(head.get(\'id\',\'\'))):\n        raise ValueError(\'curator current own Native binding missing\')\n    path=Path.home()/\'.codex/integrity-memory/state\'/(sha(identity)+\'.json\')\n    if path.is_symlink() or not path.is_file():raise ValueError(\'curator own receipt state missing\')\n    state=json.loads(path.read_bytes())\n    if not (args.get(\'curator_registration_id\')==state.get(\'turn_memory_registration_id\')\n            and args.get(\'context_admission_id\')==binding.get(\'context_admission_id\')==state.get(\'model_mcp_context_admission_id\')\n            and binding.get(\'intent_id\')==state.get(\'turn_memory_intent_id\')\n            and state.get(\'turn_memory_terminal_receipt_id\') in (None,\'\')):\n        raise ValueError(\'curator actor must be the current own open registration\')\n\ndef journal(local,context_admission_id,phase=\'admission\'):\n    # Diagnostics only, never an alternate canonical memory source.\n    value={\'protocol\':\'integrity-client/automatic-Core-delivery/v1\',\'context_admission_id\':context_admission_id,\n        \'status\':local.get(\'status\'),\'task_source\':local.get(\'task_source\'),\'core_delivery\':local.get(\'core_delivery\'),\n        \'external_action_authority\':False}\n    path=Path.home()/\'.codex/integrity-memory/state\'/(\'core-delivery-\'+(\'query-\' if phase==\'query\' else \'\')+hashlib.sha256(context_admission_id.encode()).hexdigest()+\'.json\')\n    if path.exists():\n        previous=json.loads(path.read_bytes())\n        if previous.get(\'context_admission_id\')!=context_admission_id:raise ValueError(\'Core journal binding drift\')\n        return\n    with path.open(\'x\',encoding=\'utf-8\') as out:json.dump(value,out,ensure_ascii=False)\n', '<managed-core_delivery.py>', "exec"), _automatic_Core.__dict__)
+exec(compile('# SPDX-License-Identifier: Apache-2.0\n"""Automatic same-session Core delivery; no model-supplied runbook content."""\n\nfrom integrity_client_memory.configuration import value as _integrity_value, require_config as _integrity_require_config\nimport copy,hashlib,json,time\nfrom pathlib import Path\n\ndef delivery(upstream,local,source,experiment,expected_catalog_digest):\n    local=copy.deepcopy(local);local[\'task_source\']=source\n    # A narrowly scoped owner-configured context ablation, independent from all\n    # authentication, admission, SCOPE and actuator permissions.\n    in_experiment=(source.get(\'parent_thread_id\')==experiment[\'parent_thread_id\']\n        and source.get(\'parent_turn_id\')==experiment[\'parent_turn_id\']\n        and time.time()<experiment[\'expires_epoch\'])\n    if in_experiment and source.get(\'agent_path\') in experiment[\'control_agent_paths\']:\n        return {\'status\':\'task-route-withheld-for-control\',\'scope_source\':local.get(\'scope_source\'),\n                \'task_source\':source,\'entities\':local.get(\'entities\'),\n                \'core_delivery\':{\'status\':\'withheld-by-frozen-experiment\',\'calls\':0},\n                \'external_action_authority\':False,\'automatic_execution\':False}\n    if local.get(\'status\')!=\'navigation-ready\':\n        if source.get(\'navigation_text_available\') is False:\n            local[\'status\']=\'task-route-query-required\'\n            local[\'task_query\']={\'tool\':\'integrity_memory_ttt_autofill\',\'goal\':\'Use only current task identifiers: BDCOM OLT IPv4, GPON interface and ONU serial. No procedure or prior context.\',\n                \'last_hop\':\'identify-switch-ip\',\'snapshot_id\':local.get(\'snapshot_id\'),\n                \'note\':\'First identity read is still mandatory. Opaque Native carrier and its binding remain unchanged. This query is navigation, never authority.\'}\n        return local\n    started=time.monotonic()\n    try:\n        result=upstream.call_tool(\'integrity_memory_ttt_autofill\',{\'goal\':\'bdcom-onu-service-vlan\',\n            \'last_hop\':\'example-operation-0001\',\'snapshot_id\':local[\'snapshot_id\']})\n    except Exception:\n        return {\'status\':\'core-not-delivered\',\'task_source\':source,\'core_delivery\':{\'status\':\'not-delivered\',\'reason\':\'canonical-Core-upstream-unavailable\',\'calls\':1},\'external_action_authority\':False}\n    elapsed=time.monotonic()-started\n    try:value=json.loads(result[\'content\'][0][\'text\'])\n    except (KeyError,IndexError,TypeError,ValueError):value={}\n    binding=value.get(\'snapshot_binding\') or {}\n    valid=(not result.get(\'isError\') and value.get(\'result\')==\'REMAINING\'\n        and value.get(\'path_catalog_digest\')==expected_catalog_digest\n        and binding.get(\'snapshot_id\')==local[\'snapshot_id\']\n        and binding.get(\'ttt_receipt_id\')==value.get(\'receipt_id\')\n        and len(value.get(\'remaining_path\',[]))==6)\n    # Never silently replace missing Core with a locally invented procedure.\n    if not valid:return {\'status\':\'core-not-delivered\',\'task_source\':source,\n        \'core_delivery\':{\'status\':\'not-delivered\',\'reason\':\'canonical-core-response-or-binding-mismatch\',\'calls\':1,\'elapsed_seconds\':elapsed},\n        \'external_action_authority\':False,\'automatic_execution\':False}\n    local[\'hops\']=value[\'remaining_path\'];local.pop(\'evidence\',None)\n    local[\'source\']=\'same-model-owned-upstream-Core-response\'\n    local[\'core_delivery\']={\'status\':\'delivered\',\'calls\':1,\'elapsed_seconds\':elapsed,\n        \'receipt_id\':value[\'receipt_id\'],\'snapshot_binding_receipt_id\':binding[\'receipt_id\'],\n        \'path_catalog_digest\':value[\'path_catalog_digest\'],\'snapshot_id\':local[\'snapshot_id\'],\n        \'snapshot_event_id\':binding.get(\'snapshot_event_id\'),\'remaining_count\':6,\n        \'first_identity_read_still_required\':True,\'completed_hop_assertion_verified\':False,\n        \'response_sha256\':hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=False).encode()).hexdigest()}\n    return local\n\ndef query(navigator,upstream,args,binding,scope,source,experiment,catalog):\n    """The admitted model supplies task entities, never the Core procedure."""\n    if not source or source.get(\'navigation_text_available\') is not False:return None\n    if args.get(\'snapshot_id\')!=binding.get(\'snapshot_id\'):raise ValueError(\'task query snapshot mismatch\')\n    local=navigator.admit(args.get(\'goal\',\'\'),scope,args[\'snapshot_id\'])\n    local[\'snapshot_id\']=args[\'snapshot_id\'];local[\'scope_source\']=scope.get(\'project_scope_source\')\n    source=copy.deepcopy(source);source[\'task_selector_source\']=\'current-admitted-model-tool-query\'\n    source[\'task_selector_sha256\']=hashlib.sha256(args.get(\'goal\',\'\').encode()).hexdigest()\n    value=delivery(upstream,local,source,experiment,catalog)\n    journal(value,binding[\'context_admission_id\'],phase=\'query\')\n    if value.get(\'status\') not in (\'navigation-ready\',\'task-route-withheld-for-control\'):\n        return {\'content\':[{\'type\':\'text\',\'text\':json.dumps({\'operational_context\':value})}],\'isError\':True}\n    return {\'content\':[{\'type\':\'text\',\'text\':json.dumps({\'operational_context\':value})}]}\n\ndef guard_curator(envelope,binding,args):\n    """Bind a protected admitted producer to the exact live Native turn.\n\n    A shared MCP process has no per-thread environment. The protected anchor,\n    admitted hashes and current receipt select the caller; the pinned Native\n    reader still verifies the daemon, socket, thread and expected turn.\n    """\n    identity=envelope._curator_owning_identity()\n    hashes=binding.get(\'hashes\') or {}\n    sha=lambda s:hashlib.sha256(s.encode()).hexdigest()\n    if not (binding.get(\'admitted\') is True and hashes.get(\'thread_id\')==sha(identity)):\n        raise ValueError(\'curator current own Native binding missing\')\n    path=Path.home()/\'.codex/integrity-memory/state\'/(sha(identity)+\'.json\')\n    if path.is_symlink() or not path.is_file():raise ValueError(\'curator own receipt state missing\')\n    state=json.loads(path.read_bytes());turn=state.get(\'turn_id\')\n    if not (isinstance(turn,str) and hashes.get(\'turn_id\')==sha(turn)\n            and args.get(\'curator_registration_id\')==state.get(\'turn_memory_registration_id\')\n            and args.get(\'context_admission_id\')==binding.get(\'context_admission_id\')==state.get(\'model_mcp_context_admission_id\')\n            and binding.get(\'intent_id\')==state.get(\'turn_memory_intent_id\')\n            and state.get(\'turn_memory_terminal_receipt_id\') in (None,\'\')):\n        raise ValueError(\'curator actor must be the current own open registration\')\n    head=envelope._original_producer_head(identity,turn)\n    if not (head.get(\'status\')==\'inProgress\' and head.get(\'id\')==turn):\n        raise ValueError(\'curator current own Native binding missing\')\n\ndef journal(local,context_admission_id,phase=\'admission\'):\n    # Diagnostics only, never an alternate canonical memory source.\n    value={\'protocol\':\'integrity-client/automatic-Core-delivery/v1\',\'context_admission_id\':context_admission_id,\n        \'status\':local.get(\'status\'),\'task_source\':local.get(\'task_source\'),\'core_delivery\':local.get(\'core_delivery\'),\n        \'external_action_authority\':False}\n    path=Path.home()/\'.codex/integrity-memory/state\'/(\'core-delivery-\'+(\'query-\' if phase==\'query\' else \'\')+hashlib.sha256(context_admission_id.encode()).hexdigest()+\'.json\')\n    if path.exists():\n        previous=json.loads(path.read_bytes())\n        if previous.get(\'context_admission_id\')!=context_admission_id:raise ValueError(\'Core journal binding drift\')\n        return\n    with path.open(\'x\',encoding=\'utf-8\') as out:json.dump(value,out,ensure_ascii=False)\n', '<managed-core_delivery.py>', "exec"), _automatic_Core.__dict__)
 _TASK_CONTEXT_EXPERIMENT = {'protocol': 'integrity-optional-task-context-ablation/v1', 'parent_thread_id': '', 'parent_turn_id': '', 'control_agent_paths': [], 'expires_epoch': 0, 'effect': 'disabled-in-clean-distribution'}
 _CORE_CATALOG_DIGEST = _integrity_value('pin_fd1c0d5a8471')
-BROKER_VERSION = "1.6.1-linux.1"
+BROKER_VERSION = '1.6.1-linux.7'
 PRIVATE_CONTEXT_RESUME = False
 LINUX_ATTACHMENT_ROOT = Path.home()/".codex/attachments"
 DEFAULT_MCP_VERSION = "2025-06-18"
@@ -91,7 +93,8 @@ STANDALONE_TURN_MEMORY_TOOLS = {
 }
 CURRENT_TURN_CONTEXT_TOOL = "integrity_context_admission_current_turn"
 ARCHIVE_TOOLS = {"integrity_archive_import", "integrity_archive_read"}
-UPSTREAM_INITIALIZE_TIMEOUT_SECONDS = 20
+# Cold Seed verification measured 39.289s; keep a bounded startup allowance.
+UPSTREAM_INITIALIZE_TIMEOUT_SECONDS = 60
 UPSTREAM_TOOL_TIMEOUT_SECONDS = 90
 UPSTREAM_CONTEXT_ADMISSION_TIMEOUT_SECONDS = 180
 SERVER_INSTRUCTIONS = (
@@ -1143,13 +1146,14 @@ class UpstreamFacade:
             self.process = None
 
 
-"""owner-host transport-start slots, no shared memory/admission state.
-
-File locks are released by the OS after owner death. No PID guessing, expiration
-deletion, helper process, persisted request, or wall-clock expiry is involved.
-Embedded verbatim in the broker generation.
-"""
+"""Linux transport-start slots. No request replay or canonical state changes."""
 import errno
+import fcntl
+import os
+import secrets
+import stat
+import time
+from pathlib import Path
 
 STARTUP_GATE_DIRECTORY = Path(_integrity_value('path_6417ae8b427b'))
 STARTUP_GATE_SLOTS = 2
@@ -1162,66 +1166,67 @@ class StartupGate:
         self.stream = None
 
     @staticmethod
-    def _custody(path):
-        for member in (path, *path.parents):
-            info = member.lstat()
-            if member.is_symlink() or getattr(info, 'st_file_attributes', 0) & 0x400:
-                raise OSError('transport start gate reparse point')
+    def _custody(path, *, directory):
+        info = path.lstat()
+        valid_type = stat.S_ISDIR(info.st_mode) if directory else stat.S_ISREG(info.st_mode)
+        if (stat.S_ISLNK(info.st_mode) or not valid_type or info.st_uid != os.geteuid()
+                or stat.S_IMODE(info.st_mode) & 0o077):
+            raise OSError("transport start gate custody invalid")
 
     def __enter__(self):
-        if os.name != 'nt':
-            raise BrokerError('owner-host start gate platform unavailable', layer='broker-upstream', retryable=False)
-        import msvcrt
+        if os.name != "posix" or __import__("sys").platform != "linux":
+            raise BrokerError("Linux start gate platform unavailable", layer="broker-upstream", retryable=False)
         root = STARTUP_GATE_DIRECTORY
-        self._custody(root.parent)
-        root.mkdir(exist_ok=True)
-        self._custody(root)
-        if not root.is_dir():raise OSError('transport start gate is not a directory')
+        self._custody(root.parent, directory=True)
+        root.mkdir(mode=0o700, exist_ok=True)
+        self._custody(root, directory=True)
         streams = []
         try:
             for slot in range(STARTUP_GATE_SLOTS):
-                path = root/('slot-'+str(slot)+'.lock')
-                if path.exists():self._custody(path)
-                fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_BINARY, 0o600)
-                stream = os.fdopen(fd, 'r+b', buffering=0);streams.append(stream)
+                path = root / ("slot-" + str(slot) + ".lock")
+                fd = os.open(path, os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+                stream = os.fdopen(fd, "r+b", buffering=0)
+                streams.append(stream)
+                info = os.fstat(fd)
+                self._custody(path, directory=False)
+                if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.geteuid()
+                        or stat.S_IMODE(info.st_mode) != 0o600
+                        or (info.st_dev, info.st_ino) != (path.lstat().st_dev, path.lstat().st_ino)):
+                    raise OSError("transport start slot custody invalid")
                 os.set_inheritable(fd, False)
-                self._custody(path)
-                if os.fstat(fd).st_size == 0:
-                    stream.write(b'\0');stream.flush()
-            deadline = time.monotonic()+STARTUP_GATE_WAIT_SECONDS
-            # Shuffle starting slot without changing the two-position bound.
+            deadline = time.monotonic() + STARTUP_GATE_WAIT_SECONDS
             offset = secrets.randbelow(STARTUP_GATE_SLOTS)
             while True:
                 if self.cancelled.is_set():
-                    raise BrokerError('public input transport closed', layer='broker-upstream', retryable=False)
+                    raise BrokerError("public input transport closed", layer="broker-upstream", request_sent=False, retryable=False)
                 for index in range(STARTUP_GATE_SLOTS):
-                    stream = streams[(index+offset)%STARTUP_GATE_SLOTS];stream.seek(0)
+                    stream = streams[(index + offset) % STARTUP_GATE_SLOTS]
                     try:
-                        msvcrt.locking(stream.fileno(), msvcrt.LK_NBLCK, 1)
+                        fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                     except OSError as exc:
-                        if exc.errno not in (errno.EACCES, errno.EAGAIN, errno.EDEADLK):raise
+                        if exc.errno not in (errno.EACCES, errno.EAGAIN):
+                            raise
                         continue
                     self.stream = stream
                     for other in streams:
-                        if other is not stream:other.close()
+                        if other is not stream:
+                            other.close()
                     return self
-                remaining = deadline-time.monotonic()
+                remaining = deadline - time.monotonic()
                 if remaining <= 0:
-                    raise BrokerError('transport start capacity wait expired', layer='broker-upstream',
-                                      request_sent=False, retryable=False)
-                self.cancelled.wait(min(.1,remaining))
+                    raise BrokerError("transport start capacity wait expired", layer="broker-upstream", request_sent=False, retryable=False)
+                self.cancelled.wait(min(0.1, remaining))
         except BaseException:
             for stream in streams:
-                if not stream.closed:stream.close()
+                if not stream.closed:
+                    stream.close()
             raise
 
     def __exit__(self, *unused):
-        import msvcrt
-        stream = self.stream
-        self.stream = None
+        stream, self.stream = self.stream, None
         if stream is not None:
             try:
-                stream.seek(0);msvcrt.locking(stream.fileno(), msvcrt.LK_UNLCK, 1)
+                fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
             finally:
                 stream.close()
 
@@ -1650,8 +1655,14 @@ class TurnBroker:
                         turn_envelope.bind_resume_identity_from_claim(
                             producer_turn_ref=owning_producer[0],
                             producer_claim_id=owning_producer[1])
-                    except (OSError, ValueError, KeyError, TypeError, AttributeError, turn_envelope.TurnEnvelopeError):
-                        raise BrokerError("own producer superseded before admission",
+                    except turn_envelope.NativeObservationError:
+                        raise BrokerError("native producer observation unavailable",
+                                          layer="broker-native-reader", request_sent=False, retryable=False) from None
+                    except (OSError, KeyError, TypeError, AttributeError):
+                        raise BrokerError("own producer verification unavailable",
+                                          layer="broker-envelope", request_sent=False, retryable=False) from None
+                    except (ValueError, turn_envelope.TurnEnvelopeError):
+                        raise BrokerError("own producer superseded or binding invalid before admission",
                                           layer="broker-envelope", request_sent=False, retryable=False) from None
                 admission_call_started = True
                 result = self.upstream.call_tool(
@@ -1835,7 +1846,88 @@ class TurnBroker:
             pending.add(self._lifecycle_request_key(name, arguments))
             self._uncertain_lifecycle_requests = pending
 
-    def _begin_lifecycle_dispatch(self, name, arguments):
+    def _read_existing_lifecycle(self, target, name, arguments):
+        """Resolve a previous dispatch from canonical MCP, never from absence.
+
+        The dispatch journal is a send guard, not a pending/uncertain flag. A
+        journal remains after success too. A positive, exact receipt readback
+        can satisfy the call without sending OPEN/CLOSE/GAP again.
+        """
+        query = {"limit": 100}
+        if name == "integrity_turn_memory_open":
+            query.update(thread_id=arguments["thread_id"], machine_id=arguments["machine_id"])
+        result = target.call_tool("integrity_turn_memory_coverage", query)
+        if not isinstance(result, dict) or result.get("isError"):
+            return None
+        value = result.get("structuredContent")
+        if value is None:
+            parts = [p.get("text") for p in result.get("content", [])
+                     if isinstance(p, dict) and p.get("type") == "text"]
+            try:
+                value = json.loads(parts[0]) if len(parts) == 1 else None
+            except (ValueError, TypeError):
+                return None
+        if not isinstance(value, dict) or value.get("protocol") != "integrity-guardian/turn-memory-coverage/v2":
+            return None
+        sample = value.get("receipt_sample", {})
+        rows = sample.get("receipts", []) if isinstance(sample, dict) else []
+        if not isinstance(rows, list):
+            return None
+        def signed(receipt, protocol):
+            return (isinstance(receipt, dict) and receipt.get("protocol") == protocol
+                    and receipt.get("production_authority") is False
+                    and isinstance(receipt.get("signature"), dict)
+                    and receipt["signature"].get("algorithm") == "ed25519"
+                    and isinstance(receipt["signature"].get("value"), str)
+                    and re.fullmatch(r"sha256:[a-f0-9]{64}", str(receipt.get("receipt_id"))))
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            registration = row.get("registration_receipt")
+            if not signed(registration, "integrity-guardian/turn-memory-registration/v1"):
+                continue
+            registration_id = registration["receipt_id"]
+            if row.get("registration_id") != registration_id:
+                continue
+            if name == "integrity_turn_memory_open":
+                identity = {k: arguments[k] for k in ("machine_id", "thread_id", "turn_id", "intent_id")}
+                if (registration.get("identity") == identity
+                        and registration.get("prompt_sha256") == arguments["prompt_sha256"]
+                        and row.get("status") == "open" and row.get("terminal_receipt") is None):
+                    payload = {"receipt": registration}
+                else:
+                    continue
+            else:
+                if registration_id != arguments.get("registration_id"):
+                    continue
+                terminal = row.get("terminal_receipt")
+                valid_terminal = (signed(terminal, "integrity-guardian/turn-memory-terminal-receipt/v1")
+                                  and terminal.get("registration_id") == registration_id)
+                if valid_terminal and name == "integrity_turn_memory_gap":
+                    payload = {"terminal_receipt": terminal}
+                elif valid_terminal and name == "integrity_turn_memory_close":
+                    if (terminal.get("outcome") != arguments.get("outcome")
+                            or any(terminal.get(k) != arguments.get(k)
+                                   for k in ("events", "no_event_reason") if k in arguments)):
+                        continue
+                    payload = {"receipt": terminal}
+                elif name == "integrity_turn_memory_gap":
+                    gap = row.get("gap_receipt")
+                    if not (signed(gap, "integrity-guardian/turn-memory-gap-receipt/v1")
+                            and gap.get("registration_id") == registration_id
+                            and gap.get("stage") == arguments.get("stage")
+                            and gap.get("terminal") is False):
+                        continue
+                    payload = {"receipt": gap}
+                else:
+                    continue
+            return {"content": [{"type": "text", "text": _json_bytes(payload).decode("utf-8")}],
+                    "_meta": {"integrityLifecycleResolution": "canonical-positive-readback-no-replay"}}
+        # Even a complete empty sample is not retry authority.
+        return None
+
+
+    def _begin_lifecycle_dispatch(self, name, arguments, target):
         if name == 'integrity_turn_memory_coverage':
             return
         # OPEN is one owning identity; CLOSE/GAP are each one registration.
@@ -1861,6 +1953,9 @@ class TurnBroker:
             with path.open('xb') as stream:
                 stream.write(payload);stream.flush();os.fsync(stream.fileno())
         except FileExistsError:
+            resolved = self._read_existing_lifecycle(target, name, arguments)
+            if resolved is not None:
+                return resolved
             raise BrokerError('prior lifecycle dispatch requires canonical readback; no replay',
                 layer='broker-lifecycle-uncertain',request_sent=False,retryable=False) from None
         except OSError:
@@ -1998,7 +2093,9 @@ class TurnBroker:
             try:
                 if name == "integrity_turn_memory_open" and claims is None:
                     self._validate_current_open(arguments)
-                self._begin_lifecycle_dispatch(name, arguments)
+                resolved = self._begin_lifecycle_dispatch(name, arguments, self.upstream)
+                if resolved is not None:
+                    return resolved
                 result = self.upstream.call_tool(name, arguments)
             except BrokerError as error:
                 self._remember_uncertain_lifecycle(name, arguments, error)
@@ -2038,7 +2135,9 @@ class TurnBroker:
                             layer='broker-owning-lifecycle',request_sent=False,retryable=False) from None
                 if name == "integrity_turn_memory_open" and claims is None:
                     self._validate_current_open(arguments)
-                self._begin_lifecycle_dispatch(name, arguments)
+                resolved = self._begin_lifecycle_dispatch(name, arguments, target)
+                if resolved is not None:
+                    return resolved
                 lifecycle_call_started = True
                 return target.call_tool(name, arguments)
             except BrokerError as exc:
@@ -2770,7 +2869,7 @@ class TurnBroker:
                 if name == 'integrity_turn_memory_reconcile':
                     try:
                         _automatic_Core.guard_curator(turn_envelope, self._own_turn_binding or {}, arguments)
-                    except (OSError, ValueError, KeyError, TypeError) as error:
+                    except (OSError, ValueError, KeyError, TypeError, turn_envelope.TurnEnvelopeError) as error:
                         raise BrokerError(str(error), layer='broker-curator-actor', request_sent=False) from None
                 result = self.upstream.call_tool(name, arguments)
                 self._observe_late_append(result)
@@ -2966,6 +3065,8 @@ def serve(broker: TurnBroker) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    if sys.platform != BROKER_TARGET_PLATFORM:
+        raise BrokerError('broker target platform mismatch', layer='broker-config')
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, required=True)
     parser.add_argument("--upstream-server", required=True)
