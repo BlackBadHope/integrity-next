@@ -1,5 +1,5 @@
 {
-  "file_count": 945,
+  "file_count": 946,
   "files": [
     {
       "bytes": 19,
@@ -1491,6 +1491,13 @@
       "path": "components/integrity-client-memory/tests/test_linux_lifecycle_regression.py",
       "sanitization_edits": 0,
       "sha256": "bbf6741c309272e70301a5028e7115ec6ee7b83a756a7ca2bce619ba38f053f4"
+    },
+    {
+      "bytes": 3895,
+      "mode": "0o644",
+      "path": "components/integrity-client-memory/tests/test_native_head_retry.py",
+      "sanitization_edits": 0,
+      "sha256": "83f63c951b68cb85a0183ad2003be488cdaeecdfce65446130988957c01a93a8"
     },
     {
       "bytes": 4838,
@@ -6886,7 +6893,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:685849ce70983c8ba28ecf7251364ef60e31d4fd366c5d0e3e4583df036f61e8",
+  "projection_digest": "sha256:fa0e1497c85b28d2900f2fedee8d61adf058a95e45420a13c7ab5f1550b38c19",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
