@@ -68,7 +68,7 @@ def retained(gate):
     return g
 
 
-@pytest.mark.parametrize("value", [None, {"a": [1, False, None, "РџСЂРёРІС–С‚"]},
+@pytest.mark.parametrize("value", [None, {"a": [1, False, None, "Привіт"]},
     {"nested": {"count": 3}, "unicode": "e\u0301"}])
 def test_float_free_existing_commitments_remain_identical(value):
     assert replay_json_digest(value) == digest(value)

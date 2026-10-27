@@ -38,7 +38,7 @@ All notable public changes are recorded here.
   Regenerate older profiles into new directories; retain their old runtime and
   settings for rollback.
 
-## 6.1.1 вЂ” 2026-10-17
+## 6.1.1 — 2026-10-17
 
 - Fixed the clean bootstrap example to use an absolute private architecture
   directory outside the source checkout; added the PowerShell equivalent and
@@ -48,7 +48,7 @@ All notable public changes are recorded here.
   source binding. Adapter SDK 2.0.0rc3 and Claude executor 0.1.0rc3 carry the
   matching dependencies; historical receipt/profile pins are unchanged.
 
-## 6.1.0 вЂ” 2026-10-17
+## 6.1.0 — 2026-10-17
 
 - Consolidated the canonical Guardian implementation and independently versioned
   optional distributions. Removed repeated runtime source trees while retaining
@@ -105,7 +105,7 @@ All notable public changes are recorded here.
   `transformations`. In text, `Authorization: <scheme> <credential>` (also
   `=` and `Proxy-Authorization`) keeps the scheme word and masks the whole
   credential: a token, or a comma-separated parameter list with quoted values
-  such as Digest `username="вЂ¦", response="вЂ¦"`. A value without a scheme is
+  such as Digest `username="…", response="…"`. A value without a scheme is
   masked as one token or one parameter list. A value whose end cannot be
   found (an unterminated quote, text glued to it, or an unparsed `name=`
   right after it) is refused with `400 authorization_value_unbounded`; the
@@ -146,7 +146,7 @@ All notable public changes are recorded here.
 - Marked the package as Beta: local primitives are verified, distributed
   operation is not.
 
-## 6.0.0 вЂ” 2026-09-25
+## 6.0.0 — 2026-09-25
 
 - First fresh-history public source release.
 - Added Guardian Core, portable schemas, Seed memory protocol and portable
