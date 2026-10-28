@@ -6757,7 +6757,7 @@
       "mode": "0o644",
       "path": "README.md",
       "sanitization_edits": 0,
-      "sha256": "62d4567390c6d431e14c2d5fb74f26db35a1f91c5362b6ce5c9c92cf30d85fbb"
+      "sha256": "d62578a56dbdfd2c2208d94c093bc9f832314d9515b706b57080c65fdd57860e"
     },
     {
       "bytes": 1132,
@@ -6900,7 +6900,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:39eeb755a3ac897e89a69628618e866b4c4c23cb1425f5e57d05b312ca9c95c7",
+  "projection_digest": "sha256:6c92f296d63f3d26270845d03945fa7aabe0f57d87aabcdaf7d3c9cd1d67a401",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",

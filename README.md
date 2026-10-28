@@ -141,7 +141,7 @@ different interfaces and deliberately do not all match the Guardian version.
 | [`integrity-resource-advisor`](components/integrity-resource-advisor/README.md) | 0.1.0rc6 | Local resource and usage projections |
 | [`integrity-action-log`](components/integrity-action-log/README.md) | 2.10.0 | Action Log HTTP service and read-session evidence |
 | [`integrity-memory-plane`](components/integrity-memory-plane/README.md) | 1.0.0 | Catalog synchronization, retention and storage tools |
-| [`integrity-client-memory`](components/integrity-client-memory/README.md) | 1.8.0 | Codex, Claude and Antigravity hook/broker profiles |
+| [`integrity-client-memory`](components/integrity-client-memory/README.md) | 1.9.4 | Codex, Claude and Antigravity hook/broker profiles |
 | [`integrity-home`](components/integrity-home/README.md) | 0.2.0a1 | Home archive and Chronicle projections |
 | [`integrity-space`](components/integrity-space/README.md) | 0.2.0 | Read-only MCP Apps lab and workbench UI |
 | [`integrity-claude-code`](components/integrity-claude-code/README.md) | 0.1.0rc3 | Separately guarded Windows CLI executor |
