@@ -6,6 +6,11 @@ All notable public changes are recorded here.
 
 ### Client Memory 1.9.4 / Guardian recovery source acceptance
 
+- Define the Claude Native envelope's own custody reader (`_checked_owning_bytes`),
+  which `_claude_profile_reader` and `_native_owning_head` called without a
+  definition. The real owning-head read raised `NameError` on the claude-native
+  profile; tests had stubbed the head. The reader is the same double-stat,
+  junction-rejecting read as the Windows Native envelope, with a regression test.
 - Compile one shared Windows recovery implementation for Native and preserved-root
   profiles, with the 1.9.3 45-second startup deadline and single-shot model admission
   policy retained for both Windows broker families. Pin all vendor launch files.

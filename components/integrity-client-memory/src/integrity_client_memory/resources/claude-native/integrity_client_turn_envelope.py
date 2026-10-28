@@ -770,6 +770,35 @@ def _owning_registration_matches(state, identity):
     except (KeyError, TypeError, ValueError, AttributeError):
         return False
 
+def _checked_owning_bytes(path, maximum):
+    """Read a plain fixed source once, rejecting Windows junction ancestry."""
+    path = Path(path)
+    def stamp(details):
+        return (details.st_dev, details.st_ino, details.st_size, details.st_mtime_ns,
+                int(getattr(details, 'st_file_attributes', 0)))
+    def plain():
+        for member in (path, *path.parents):
+            details = member.lstat()
+            if stat.S_ISLNK(details.st_mode) or int(getattr(details, 'st_file_attributes', 0)) & 1024:
+                raise TurnEnvelopeError('owning source custody invalid')
+        if path.resolve(strict=True) != path.absolute():
+            raise TurnEnvelopeError('owning source resolved path changed')
+        details = path.lstat()
+        if not stat.S_ISREG(details.st_mode) or not 0 < details.st_size <= maximum:
+            raise TurnEnvelopeError('owning source size or type invalid')
+        return details
+    before = plain()
+    with path.open('rb') as stream:
+        opened = os.fstat(stream.fileno())
+        if stamp(opened) != stamp(before):
+            raise TurnEnvelopeError('owning source replaced before read')
+        raw = stream.read(maximum + 1)
+        after = os.fstat(stream.fileno())
+    linked = plain()
+    if stamp(after) != stamp(before) or stamp(linked) != stamp(before) or len(raw) != before.st_size:
+        raise TurnEnvelopeError('owning source changed during read')
+    return raw
+
 def _claude_profile_reader():
     import types
     path = Path(__file__).with_name('claude_owning_native.py')

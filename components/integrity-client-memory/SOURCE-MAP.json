@@ -164,7 +164,7 @@
     "path": "src/integrity_client_memory/resources/claude-native/integrity_client_turn_envelope.py",
     "source": "clients/claude-native/integrity_client_turn_envelope.py",
     "source_sha256": "0327154121e7d2b12482f1d5a8c6d1e869566d866215ecff8e691de1ddbebaac",
-    "sha256": "7d66c01930da194e2feaed598209bdc4f28c4e0f738142754563df3bb1bd1a2f",
+    "sha256": "3f019a9ca872ce146d83cd8cd61807bd57da94d4a7007bc7cf47fdb724166b1c",
     "projection": "Code-only Native CLI profile; publisher/session bindings become owner configuration. No owner data or enrollment."
   },
   {

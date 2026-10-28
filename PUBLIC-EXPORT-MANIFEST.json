@@ -1,5 +1,5 @@
 {
-  "file_count": 947,
+  "file_count": 948,
   "files": [
     {
       "bytes": 19,
@@ -895,7 +895,7 @@
       "mode": "0o644",
       "path": "components/integrity-client-memory/SOURCE-MAP.json",
       "sanitization_edits": 0,
-      "sha256": "f121f6ea3e16941e701849a89d3027f6541fbbec6cacaa90fb7a5a5b8c9f9899"
+      "sha256": "953d64506a09ebff14e3bb9324dbf7556505d0486eefa3df74b22f07cd1cdcf2"
     },
     {
       "bytes": 2714,
@@ -1143,11 +1143,11 @@
       "sha256": "f1023580d3541ddc473534640f2674f2f55e4e41fe381ad9f504b3fa3a66bde2"
     },
     {
-      "bytes": 51822,
+      "bytes": 53264,
       "mode": "0o644",
       "path": "components/integrity-client-memory/src/integrity_client_memory/resources/claude-native/integrity_client_turn_envelope.py",
       "sanitization_edits": 0,
-      "sha256": "7d66c01930da194e2feaed598209bdc4f28c4e0f738142754563df3bb1bd1a2f"
+      "sha256": "3f019a9ca872ce146d83cd8cd61807bd57da94d4a7007bc7cf47fdb724166b1c"
     },
     {
       "bytes": 121197,
@@ -1449,6 +1449,13 @@
       "path": "components/integrity-client-memory/tests/test_catalogue.py",
       "sanitization_edits": 0,
       "sha256": "f71e05745a55e36b07e33313c44827d576a5d64b7c2015e192932f161a467f08"
+    },
+    {
+      "bytes": 3654,
+      "mode": "0o644",
+      "path": "components/integrity-client-memory/tests/test_claude_native_reader.py",
+      "sanitization_edits": 0,
+      "sha256": "8581d55ecd6b107489cb381dccb8859159bb8ca56e6ad05951da9f1cb5cd85bf"
     },
     {
       "bytes": 1655,
@@ -6711,11 +6718,11 @@
       "sha256": "d31b26065b15e17b8971c0b278ac30d69906ac7cd0a1b6086a2cd438b853373f"
     },
     {
-      "bytes": 9702,
+      "bytes": 10099,
       "mode": "0o644",
       "path": "CHANGELOG.md",
       "sanitization_edits": 0,
-      "sha256": "0882311a9cecb24af73be0f25612cc8937dc50f7cdc23960a2137064022138e6"
+      "sha256": "bdec48c5a5c6752cba6afea67d913398a3bfafacdd2a1dc4cc14f9bd4fcf98eb"
     },
     {
       "bytes": 775,
@@ -6900,7 +6907,7 @@
       "sha256": "b22d5878d1220f40540bf81f68545083ffba82a4fcce808e8d855902fc149a1d"
     }
   ],
-  "projection_digest": "sha256:6c92f296d63f3d26270845d03945fa7aabe0f57d87aabcdaf7d3c9cd1d67a401",
+  "projection_digest": "sha256:cb68f8fe0b83b701cf7cf8d60eade3d3d12d17bc9ab889fb7233d9c6821df986",
   "publication_mode": "fresh-history-export-only",
   "sanitization_edit_count": 150,
   "schema": "integrity.public-export-manifest/v3",
