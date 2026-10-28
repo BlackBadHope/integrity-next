@@ -11,6 +11,9 @@ All notable public changes are recorded here.
   definition. The real owning-head read raised `NameError` on the claude-native
   profile; tests had stubbed the head. The reader is the same double-stat,
   junction-rejecting read as the Windows Native envelope, with a regression test.
+- Add a static name-closure guard over every shipped client-memory resource:
+  `symtable` must resolve each module-level name a resource uses, with the
+  bundle-injected broker names allow-listed and verified against `broker_bundle`.
 - Compile one shared Windows recovery implementation for Native and preserved-root
   profiles, with the 1.9.3 45-second startup deadline and single-shot model admission
   policy retained for both Windows broker families. Pin all vendor launch files.
