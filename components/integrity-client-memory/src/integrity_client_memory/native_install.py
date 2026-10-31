@@ -350,6 +350,7 @@ def build(vendor, upstream, bindings, output, tools=None, *, deployment_root=Non
                    "pin_dd9fa64be3f2": bindings["namespace_fingerprint"],
                    "path_5164c4d20152": str(live_runtime / "delegation-native-reader.py"),
                    "pin_8355e401d593": source_pins.get("delegation-native-reader.py", "disabled"),
+                   "upstream_mcp_command": subprocess.list2cmdline([upstream["command"], *upstream.get("args", [])]),
                    "command_b734f1f83ce5": subprocess.list2cmdline([upstream["command"], *upstream.get("args", [])]),
                    "path_6417ae8b427b": str(logical / "startup-gates"),
                    "path_0b4608844dcc": str(logical / "optional-bus/agents-registry.json"),

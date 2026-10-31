@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from integrity_bridges.configuration import value as _integrity_value, require_config as _integrity_require_config
+from integrity_bridges.transports import open_peer
 
 import base64
 import json
@@ -48,8 +49,11 @@ class Hub:
     def __init__(self, config):
         self.config = config
         self.local = Node(config["local_host"], config["ledger"])
-        self.peers = {host: PeerClient(host, entry) for host, entry in config["hosts"].items()
-                      if entry.get("transport") == "ssh_reverse_loopback"}
+        self.peers = {}
+        for host, entry in config["hosts"].items():
+            peer = open_peer(host, entry, PeerClient)
+            if peer is not None and entry.get("transport") != "local":
+                self.peers[host] = peer
 
     def definitions(self):
         tools = BASE_TOOLS()
@@ -131,7 +135,16 @@ class Hub:
             # Node uses the original dispatcher, not the hub wrapper.
             result = self.local.call({"host_id": host, "name": name, "arguments": forwarded, "request_id": request_id})
         else:
-            result = self.peers[host].call(name, forwarded, request_id)
+            peer = self.peers.get(host)
+            if peer is None:
+                raise core.RpcError("host_transport_unavailable:" + str(entry.get("transport")))
+            try:
+                result = peer.call(name, forwarded, request_id)
+            except Exception as exc:
+                payload = getattr(exc, "payload", None)
+                if isinstance(payload, dict):
+                    raise core.RpcError(payload["error"] + ":" + str(payload.get("transport"))) from exc
+                raise
         payload = result.get("structuredContent")
         if not isinstance(payload, dict):
             raise core.RpcError("invalid_host_result")

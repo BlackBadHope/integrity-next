@@ -44,3 +44,15 @@ def value(name):
     if not isinstance(result, str) or not result.strip() or "\x00" in result:
         raise ConfigurationError(COMPONENT + ": own configuration value required: " + name)
     return result
+
+def configured_command(preferred, legacy):
+    import warnings
+    values = read_config().get("values", {})
+    current = values.get(preferred)
+    if isinstance(current, str) and current.strip() and "\x00" not in current:
+        return current
+    previous = values.get(legacy)
+    if isinstance(previous, str) and previous.strip() and "\x00" not in previous:
+        warnings.warn(legacy + " is deprecated; use " + preferred, DeprecationWarning, stacklevel=2)
+        return previous
+    raise ConfigurationError(COMPONENT + ": own configuration value required: " + preferred)
