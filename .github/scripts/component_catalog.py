@@ -135,7 +135,7 @@ def verify_dependencies(value: dict) -> None:
 
 
 def verify_hook_template(root: Path, value: dict) -> None:
-    profile = json.loads((root / "plugins/integrity-memory/profile.json").read_text(encoding="utf-8"))
+    profile = json.loads((root / "plugins/integrity-seats/profile.json").read_text(encoding="utf-8"))
     client = next(c for c in value["components"] if c["distribution"] == "integrity-client-memory")
     if (profile.get("version") != client["version"]
             or profile.get("distribution") != client["distribution"]
@@ -143,7 +143,7 @@ def verify_hook_template(root: Path, value: dict) -> None:
             or profile.get("configured") is not False):
         raise ValueError("stale or activated public hook profile")
     resources = json.loads((root / client["path"] / "src/integrity_client_memory/resources.json").read_text(encoding="utf-8"))
-    hooks = json.loads((root / "plugins/integrity-memory/hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
+    hooks = json.loads((root / "plugins/integrity-seats/hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
     for event, groups in hooks.items():
         for group in groups:
             for hook in group["hooks"]:

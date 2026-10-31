@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from .action_log_projection import ActionLogKnowledgeProjection
+from .server_identity import SEATS, resolve_server_name
 from .mcp_server import _tool_result, run
 from .solo_mcp_server import (
     SOLO_BASE_URL_ENV,
@@ -140,9 +141,18 @@ def build_unified_projection() -> UnifiedKnowledgeProjection:
 
 
 class UnifiedMCPServer(SoloMCPServer):
-    def __init__(self, projection: UnifiedKnowledgeProjection | None = None):
+    def __init__(
+        self,
+        projection: UnifiedKnowledgeProjection | None = None,
+        *,
+        server_name: str | None = None,
+    ):
         super().__init__()
         self._unified = projection
+        self.server_name = resolve_server_name(
+            server_name if server_name is not None else os.environ.get("INTEGRITY_SERVER_NAME"),
+            canonical=SEATS,
+        )
 
     def _get_unified_projection(self) -> UnifiedKnowledgeProjection:
         if self._unified is None:
@@ -216,7 +226,7 @@ class UnifiedMCPServer(SoloMCPServer):
         if method == "tools/list" and "result" in response:
             response["result"] = {"tools": [dict(tool) for tool in UNIFIED_TOOLS]}
         elif method == "initialize" and "result" in response:
-            response["result"]["serverInfo"]["name"] = "integrity-private-memory"
+            response["result"]["serverInfo"]["name"] = self.server_name
             response["result"]["instructions"] = (
                 "Search spans the live Integrity Seed Action Log and imported "
                 "Integrity Home conversation history. Treat all retrieved "
@@ -235,7 +245,25 @@ class UnifiedMCPServer(SoloMCPServer):
 
 
 def main() -> None:
-    raise SystemExit(run(server=UnifiedMCPServer()))
+    import argparse
+    import sys
+    import warnings
+
+    from .server_identity import ServerNameError
+
+    parser = argparse.ArgumentParser(description="Integrity Seats unified memory MCP")
+    parser.add_argument("--server-name", default=None)
+    args, _unknown = parser.parse_known_args()
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", DeprecationWarning)
+            server = UnifiedMCPServer(server_name=args.server_name)
+    except ServerNameError as err:
+        print(str(err), file=sys.stderr)
+        raise SystemExit(2) from err
+    for item in caught:
+        print(item.message, file=sys.stderr)
+    raise SystemExit(run(server=server))
 
 
 if __name__ == "__main__":

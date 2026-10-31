@@ -3,7 +3,18 @@
 
 from __future__ import annotations
 
-from integrity_bridges.configuration import value as _integrity_value, require_config as _integrity_require_config
+from integrity_bridges.configuration import (
+    ConfigurationError,
+    read_config,
+    require_config as _integrity_require_config,
+    value as _integrity_value,
+)
+from integrity_bridges.server_names import (
+    SEATS_BRIDGE,
+    ServerNameError,
+    configured_server_name,
+    resolve_server_name,
+)
 
 import atexit
 import ctypes
@@ -1338,8 +1349,17 @@ def tool_error_result(exc: RpcError) -> dict:
     return result
 
 
+_SERVER_NAME = SEATS_BRIDGE
+
+
+def use_server_name(requested: str | None) -> str:
+    global _SERVER_NAME
+    _SERVER_NAME = resolve_server_name(requested, canonical=SEATS_BRIDGE)
+    return _SERVER_NAME
+
+
 def server_info() -> dict:
-    return {"name": "integrity-private-memory-codex-bridge", "version": VERSION}
+    return {"name": _SERVER_NAME, "version": VERSION}
 
 
 def rpc_error(message_id, code: int, message: str, data: dict | None = None) -> dict:
@@ -1522,6 +1542,27 @@ def respond(message: dict) -> dict | None:
 def main():
     # MCP is UTF-8 regardless of the Windows console/code page.
     # Keep the input loop available while the independent backends are waiting.
+    import argparse
+    import warnings
+
+    parser = argparse.ArgumentParser(description="Integrity Seats bridge")
+    parser.add_argument("--server-name", default=None)
+    args, _unknown = parser.parse_known_args()
+    requested = args.server_name
+    if requested is None:
+        try:
+            requested = configured_server_name(read_config())
+        except ConfigurationError:
+            requested = None
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", DeprecationWarning)
+            use_server_name(requested)
+    except ServerNameError as err:
+        print(str(err), file=sys.stderr)
+        raise SystemExit(2) from err
+    for item in caught:
+        print(item.message, file=sys.stderr)
     write_lock = threading.Lock()
     capacity = threading.BoundedSemaphore(8)
     safe_log("server_started", version=VERSION)
