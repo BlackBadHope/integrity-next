@@ -17,6 +17,7 @@ integrity-home = "integrity_home.cli:main"
 integrity-chronicle = "integrity_chronicle.cli:main"
 integrity-home-mcp = "integrity_home.mcp_server:main"
 integrity-home-unified-mcp = "integrity_home.unified_mcp_server:main"
+integrity-seats = "integrity_home.seats_cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/integrity_home", "src/integrity_chronicle"]

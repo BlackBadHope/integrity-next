@@ -11,6 +11,7 @@ from integrity_action_log.read_session import accept as accept_read_session, val
 
 import atexit
 import base64
+import contextvars
 import datetime as dt
 import hashlib
 import hmac
@@ -31,6 +32,91 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, urlencode, urlparse
+
+class SeatAccessError(PermissionError):
+    """Server-derived seat or namespace check failed. status is 401 or 403."""
+
+    def __init__(self, code: str, status: int = 403) -> None:
+        super().__init__(code)
+        self.code = code
+        self.status = status
+
+
+class SeatView:
+    def __init__(
+        self,
+        seat_id: str,
+        host_id: str,
+        roles: frozenset[str] | set[str],
+        namespaces: tuple[str, ...],
+        auth_principal_sha256: str = "",
+    ) -> None:
+        self.seat_id = seat_id
+        self.host_id = host_id
+        self.roles = frozenset(roles)
+        self.namespaces = tuple(namespaces)
+        self.auth_principal_sha256 = auth_principal_sha256
+
+
+_SEAT_VIEW: contextvars.ContextVar[SeatView | None] = contextvars.ContextVar(
+    "integrity_seat_view", default=None
+)
+_LEGACY_VIEW = SeatView(
+    "seat_owner",
+    "local",
+    frozenset({"read", "write", "admin", "go_approver"}),
+    ("team/*", "seat/seat_owner/*"),
+    "",
+)
+
+
+def namespace_visible(patterns: tuple[str, ...], namespace: str) -> bool:
+    parts = namespace.split("/")
+    if not namespace or any(not part or part == "*" for part in parts):
+        return False
+    for pattern in patterns:
+        pattern_parts = pattern.split("/")
+        if len(pattern_parts) != len(parts):
+            continue
+        if all(item == "*" or item == part for item, part in zip(pattern_parts, parts)):
+            return True
+    return False
+
+
+def active_seat_view() -> SeatView:
+    current = _SEAT_VIEW.get()
+    mode = os.environ.get("INTEGRITY_ISOLATION_MODE", "single-user")
+    if mode == "shared-core":
+        if current is None:
+            raise SeatAccessError("seat required", 401)
+        return current
+    return current or _LEGACY_VIEW
+
+
+@contextmanager
+def seat_view(view: SeatView):
+    token = _SEAT_VIEW.set(view)
+    try:
+        yield view
+    finally:
+        _SEAT_VIEW.reset(token)
+
+
+def _namespace_sql(patterns: tuple[str, ...]) -> tuple[str, list[str]]:
+    clauses: list[str] = []
+    params: list[str] = []
+    for pattern in patterns:
+        if pattern.endswith("/*"):
+            prefix = pattern[:-1]
+            clauses.append("(namespace LIKE ? AND namespace NOT LIKE ?)")
+            params.extend((prefix + "%", prefix + "%/%"))
+        else:
+            clauses.append("namespace = ?")
+            params.append(pattern)
+    if not clauses:
+        return "0", []
+    return "(" + " OR ".join(clauses) + ")", params
+
 
 SOURCE_PATH = Path(__file__).resolve()
 APP_DIR = SOURCE_PATH.parent
@@ -615,6 +701,14 @@ def ensure_db() -> None:
         columns = {str(row[1]) for row in conn.execute("PRAGMA table_info(events)")}
         if "event_uid" not in columns:
             conn.execute("ALTER TABLE events ADD COLUMN event_uid TEXT NOT NULL DEFAULT ''")
+        for name, declaration in (
+            ("seat_id", "TEXT NOT NULL DEFAULT 'seat_owner'"),
+            ("host_id", "TEXT NOT NULL DEFAULT 'local'"),
+            ("namespace", "TEXT NOT NULL DEFAULT 'team/default'"),
+            ("auth_principal_sha256", "TEXT NOT NULL DEFAULT ''"),
+        ):
+            if name not in columns:
+                conn.execute(f"ALTER TABLE events ADD COLUMN {name} {declaration}")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_events_ts ON events(ts_utc)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_events_actor ON events(actor)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_events_action ON events(action)")
@@ -623,6 +717,8 @@ def ensure_db() -> None:
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_events_event_uid "
             "ON events(event_uid) WHERE event_uid <> ''"
         )
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_events_namespace ON events(namespace)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_events_seat ON events(seat_id)")
         conn.execute(
             """
             CREATE TRIGGER IF NOT EXISTS events_append_only_no_update
@@ -796,6 +892,22 @@ def normalize_event(raw: dict[str, Any]) -> dict[str, str]:
         "event_uid": redact_text(str(raw.get("event_uid") or ""))[:160],
         "created_utc": utc_now(),
     }
+    view = active_seat_view()
+    requested = raw.get("namespace")
+    if requested is None:
+        namespace = "team/default" if namespace_visible(view.namespaces, "team/default") else f"seat/{view.seat_id}/default"
+    elif isinstance(requested, str):
+        namespace = requested
+    else:
+        raise SeatAccessError("namespace invalid", 403)
+    if not namespace_visible(view.namespaces, namespace):
+        raise SeatAccessError("namespace forbidden", 403)
+    if view.roles.isdisjoint({"write", "admin"}):
+        raise SeatAccessError("write forbidden", 403)
+    event["seat_id"] = view.seat_id
+    event["host_id"] = view.host_id
+    event["namespace"] = namespace
+    event["auth_principal_sha256"] = view.auth_principal_sha256
     if not event["summary"]:
         event["summary"] = "(no summary)"
     return event
@@ -825,14 +937,18 @@ def insert_event(raw: dict[str, Any]) -> dict[str, Any]:
                 [event["event_uid"]],
             ).fetchone()
             if existing is not None:
+                if not namespace_visible(active_seat_view().namespaces, str(existing["namespace"])):
+                    raise SeatAccessError("namespace forbidden", 403)
                 return existing_reply(existing)
         try:
             cur = conn.execute(
                 """
                 INSERT INTO events
-                  (ts_utc, actor, session_id, level, action, summary, details, tags, event_uid, created_utc)
+                  (ts_utc, actor, session_id, level, action, summary, details, tags, event_uid, created_utc,
+                   seat_id, host_id, namespace, auth_principal_sha256)
                 VALUES
-                  (:ts_utc, :actor, :session_id, :level, :action, :summary, :details, :tags, :event_uid, :created_utc)
+                  (:ts_utc, :actor, :session_id, :level, :action, :summary, :details, :tags, :event_uid, :created_utc,
+                   :seat_id, :host_id, :namespace, :auth_principal_sha256)
                 """,
                 event,
             )
@@ -846,6 +962,8 @@ def insert_event(raw: dict[str, Any]) -> dict[str, Any]:
             ).fetchone()
             if existing is None:
                 raise
+            if not namespace_visible(active_seat_view().namespaces, str(existing["namespace"])):
+                raise SeatAccessError("namespace forbidden", 403)
             return existing_reply(existing)
     invalidate_event_cache()
     try:
@@ -1008,8 +1126,12 @@ def query_events(params: dict[str, list[str]]) -> list[dict[str, Any]]:
     action = (first(params, "action") or "").strip()
     level = (first(params, "level") or "").strip().lower()
     order_sql = "ASC" if order == "asc" else "DESC"
-    query = "SELECT * FROM events WHERE 1=1"
-    values: list[Any] = []
+    view = active_seat_view()
+    scope_sql, scope_params = _namespace_sql(view.namespaces)
+    if view.roles.isdisjoint({"read", "write", "admin", "go_approver"}):
+        raise SeatAccessError("read forbidden", 403)
+    query = "SELECT * FROM events WHERE " + scope_sql
+    values: list[Any] = list(scope_params)
     if event_id > 0:
         query += " AND id = ?"
         values.append(event_id)
@@ -1075,8 +1197,13 @@ def query_events(params: dict[str, list[str]]) -> list[dict[str, Any]]:
 
 
 def event_store_signature() -> tuple[int, int]:
+    view = active_seat_view()
+    scope_sql, scope_params = _namespace_sql(view.namespaces)
     with open_db() as conn:
-        count, maximum = conn.execute("SELECT COUNT(*), COALESCE(MAX(id), 0) FROM events").fetchone()
+        count, maximum = conn.execute(
+            "SELECT COUNT(*), COALESCE(MAX(id), 0) FROM events WHERE " + scope_sql,
+            scope_params,
+        ).fetchone()
     return int(count), int(maximum)
 
 
@@ -1147,7 +1274,11 @@ def query_all_events_snapshot() -> tuple[list[dict[str, Any]], tuple[int, int]]:
 
 
 def query_all_events() -> list[dict[str, Any]]:
-    return query_all_events_snapshot()[0]
+    view = active_seat_view()
+    return [
+        event for event in query_all_events_snapshot()[0]
+        if namespace_visible(view.namespaces, str(event.get("namespace") or ""))
+    ]
 
 
 def string_list(value: Any) -> list[str]:
@@ -2319,10 +2450,17 @@ def build_locks(
 def projection_snapshot() -> dict[str, Any]:
     """Return one rebuildable projection snapshot shared by Mind/bootstrap callers."""
     global _PROJECTION_CACHE_SIGNATURE, _PROJECTION_CACHE
-    events, (count, maximum) = query_all_events_snapshot()
+    view = active_seat_view()
+    events, _stored = query_all_events_snapshot()
+    events = [
+        event for event in events
+        if namespace_visible(view.namespaces, str(event.get("namespace") or ""))
+    ]
+    count = len(events)
+    maximum = max((int(event["id"]) for event in events), default=0)
     observed_at = dt.datetime.now(dt.UTC)
     minute_bucket = int(observed_at.timestamp() // 60)
-    signature = (count, maximum, minute_bucket)
+    signature = (view.seat_id, count, maximum, minute_bucket)
     with _PROJECTION_CACHE_LOCK:
         if signature == _PROJECTION_CACHE_SIGNATURE:
             return _PROJECTION_CACHE
@@ -4984,8 +5122,12 @@ def first(params: dict[str, list[str]], name: str) -> str | None:
 
 
 def event_count() -> int:
+    view = active_seat_view()
+    scope_sql, scope_params = _namespace_sql(view.namespaces)
     with open_db() as conn:
-        return int(conn.execute("SELECT COUNT(*) FROM events").fetchone()[0])
+        return int(conn.execute(
+            "SELECT COUNT(*) FROM events WHERE " + scope_sql, scope_params
+        ).fetchone()[0])
 
 
 def html_event(event: dict[str, Any]) -> str:
@@ -5434,6 +5576,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.OK, result)
                 return
             event = accept_task(payload) if parsed.path == "/api/tasks/accept" else insert_event(payload)
+        except SeatAccessError as exc:
+            status = HTTPStatus.UNAUTHORIZED if exc.status == 401 else HTTPStatus.FORBIDDEN
+            self.send_json(status, {"ok": False, "error": exc.code})
+            return
         except Exception as exc:  # noqa: BLE001 - keep API self-contained and explicit.
             self.send_json(HTTPStatus.BAD_REQUEST, {"ok": False, "error": str(exc)})
             return
