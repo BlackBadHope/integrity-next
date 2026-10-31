@@ -1,7 +1,7 @@
 {
   "distribution": "integrity-adapter-sdk",
   "facade_target_distribution": "integrity-guardian",
-  "facade_target_version": "6.1.1",
+  "facade_target_version": "7.0.0",
   "forbidden_wheel_prefixes": [
     "integrity_guardian/"
   ],

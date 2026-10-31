@@ -25,7 +25,7 @@
       },
       "path": ".",
       "python": ">=3.11",
-      "version": "6.1.1"
+      "version": "7.0.0"
     },
     {
       "dependencies": [],
@@ -63,7 +63,7 @@
     },
     {
       "dependencies": [
-        "integrity-guardian==6.1.1"
+        "integrity-guardian==7.0.0"
       ],
       "distribution": "integrity-adapter-sdk",
       "entry_points": {},
@@ -136,7 +136,7 @@
     {
       "dependencies": [
         "integrity-action-log>=2.10.0,<3",
-        "integrity-guardian>=6.1.0,<7"
+        "integrity-guardian>=7.0.0,<8"
       ],
       "distribution": "integrity-client-memory",
       "entry_points": {
@@ -256,7 +256,7 @@
     },
     {
       "dependencies": [
-        "integrity-guardian>=6.1.0,<7"
+        "integrity-guardian>=7.0.0,<8"
       ],
       "distribution": "integrity-memory-plane",
       "entry_points": {
@@ -304,7 +304,7 @@
     },
     {
       "dependencies": [
-        "integrity-guardian>=6.1.0,<6.2",
+        "integrity-guardian>=7.0.0,<8",
         "mcp==2.2.0",
         "openai-mcp-extensions==0.1.0",
         "anyio>=4,<5",
@@ -338,7 +338,7 @@
   ],
   "configured": false,
   "memory_facade_api": "2.11.0",
-  "release_version": "6.1.1",
+  "release_version": "7.0.0",
   "runtime_data_included": false,
   "schema": "integrity.public-component-catalog/v1",
   "source_components": [

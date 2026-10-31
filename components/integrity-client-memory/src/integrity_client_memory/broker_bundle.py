@@ -144,7 +144,7 @@ def build_bundle(output, *, bindings, upstream, tools, deployment_root=None,
     (output / "run-native-profile.py").write_text(bootstrap, encoding="utf-8", newline="\n")
     profile["support_files"] = pins
     profile["support_bootstrap_sha256"] = digest((output / "run-native-profile.py").read_bytes())
-    profile["support_prerequisites"] = ["integrity-guardian>=6.1.0,<7", "integrity-action-log>=2.10.0,<3"]
+    profile["support_prerequisites"] = ["integrity-guardian>=7.0.0,<8", "integrity-action-log>=2.10.0,<3"]
     args = [str(logical / "run-native-profile.py"), "--profile", str(logical / "profile.json")]
     transport = read_json(output / "transport.json")
     transport["transport"]["env"]["PYTHONPATH"] = str(logical / "support")
