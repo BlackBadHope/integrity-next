@@ -3,6 +3,6 @@
   "file_count": 352,
   "package_root": "integrity_guardian",
   "protocol": "integrity-adapter-sdk/guardian-origin-manifest/v1",
-  "tree_sha256": "sha256:1ee1235e59b7efdf80cf8d07a92caa21db74899e2e4f3dc7db989b781507922d",
+  "tree_sha256": "sha256:1939df54b212a784a6d8a9352a0c3f83164bc15bdd7fb5f64536640eec11e36c",
   "version": "6.1.1"
 }
