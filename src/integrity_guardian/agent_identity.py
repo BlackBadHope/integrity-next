@@ -34,6 +34,21 @@ KNOWN_PROFILES: dict[tuple[str, str], dict[str, str]] = {
         "runtime": "codex",
         "product": "codex",
     },
+    ("anthropic", "claude-code"): {
+        "kind": "coding-agent",
+        "runtime": "claude-code",
+        "product": "claude-code",
+    },
+    ("google", "antigravity"): {
+        "kind": "coding-agent",
+        "runtime": "antigravity",
+        "product": "antigravity",
+    },
+    ("openai", "chatgpt-web"): {
+        "kind": "coding-agent",
+        "runtime": "chatgpt-web",
+        "product": "chatgpt-web",
+    },
 }
 
 CAPABILITY_CLASSES = frozenset(
@@ -82,6 +97,7 @@ def declare_agent(
     instance_id: str,
     runtime: str | None = None,
     kind: AgentKind | None = None,
+    seat_id: str | None = None,
 ) -> dict[str, Any]:
     """Build one digest-bound identity. Unknown vendors stay first-class."""
 
@@ -101,6 +117,15 @@ def declare_agent(
         "runtime": runtime_slug,
         "instance_id": _instance_id(instance_id),
     }
+    if seat_id is not None:
+        if not isinstance(seat_id, str) or not seat_id or len(seat_id) > 64:
+            raise AgentIdentityError("seat_id is invalid")
+        if not seat_id[0].islower() or any(
+            not (character.islower() or character.isdigit() or character in "_-")
+            for character in seat_id
+        ):
+            raise AgentIdentityError("seat_id is invalid")
+        unsigned["seat_id"] = seat_id
     digest = digest_object(unsigned, domain="agent-identity-v1").split(":", 1)[1]
     unsigned["agent_id"] = f"agent:{digest}"
     validate("agent-identity", unsigned)
