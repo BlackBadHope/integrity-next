@@ -54,6 +54,42 @@ class StaleFenceError(WorkClaimError):
     """Raised when a writer no longer holds the claim it is writing under."""
 
 
+class StaleFencingTokenError(StaleFenceError):
+    """Shared-core name for a stale or expired fencing token."""
+
+
+def open_claims(path: Path, *, backend: str = "local", core_factory=None):
+    """Select the local registry or an explicit core backend. Default is local."""
+
+    if backend == "local":
+        return WorkClaimRegistry(Path(path))
+    if backend == "core":
+        if core_factory is None:
+            raise WorkClaimError("core claims backend requires an explicit core factory")
+        return core_factory()
+    raise WorkClaimError("unknown claims backend")
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    import sys
+
+    parser = argparse.ArgumentParser(prog="integrity-work-claims")
+    parser.add_argument("--claims-backend", choices=("local", "core"), default="local")
+    parser.add_argument("--db", type=Path, required=True)
+    args = parser.parse_args(argv)
+    if args.claims_backend == "core" and not args.db:
+        print("core claims backend requires a configured core", file=sys.stderr)
+        return 2
+    if args.claims_backend == "core":
+        print("core claims backend requires an explicit core factory", file=sys.stderr)
+        return 2
+    registry = open_claims(args.db, backend="local")
+    registry.close()
+    print('{"ok": true, "backend": "local"}')
+    return 0
+
+
 class ClaimStatus(StrEnum):
     ACQUIRED = "acquired"
     WAITING = "waiting"

@@ -234,7 +234,9 @@
       "version": "0.2.0a1"
     },
     {
-      "dependencies": [],
+      "dependencies": [
+        "cryptography>=50.0.0,<51"
+      ],
       "distribution": "integrity-llm-bus",
       "entry_points": {
         "integrity-llm-bus": "integrity_llm_bus.launcher:main"
