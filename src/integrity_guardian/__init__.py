@@ -1885,4 +1885,4 @@ __all__ = [
     "write_zero_day_final_witness",
 ]
 
-__version__ = "6.1.1"
+__version__ = "7.0.0"

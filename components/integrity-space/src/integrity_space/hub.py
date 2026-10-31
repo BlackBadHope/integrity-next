@@ -23,6 +23,7 @@ from mcp.server.mcpserver import MCPServer
 from mcp.types import CallToolResult, Tool
 
 from .backend import Backend, private_path
+from .seat_hub import SeatHubError, dispatch_seat_tool, tool_definitions as seat_tool_definitions
 from .server import create_server, http_app
 
 UI_NAMES = frozenset({"integrity_projects", "integrity_project", "integrity_task",
@@ -42,6 +43,7 @@ class HubServer(MCPServer):
         self._definition_lock = threading.Lock()
         self._write_lock = threading.Lock()
         self._capacity = threading.BoundedSemaphore(8)
+        self.seat_context = kwargs.pop("seat_context", None)
         super().__init__(*args, **kwargs)
 
     def old_definitions(self):
@@ -56,9 +58,23 @@ class HubServer(MCPServer):
 
     async def list_tools(self):
         definitions = await anyio.to_thread.run_sync(self.old_definitions)
-        return [Tool.model_validate(item) for item in definitions] + await super().list_tools()
+        seat_tools = [Tool.model_validate(item) for item in seat_tool_definitions()]
+        return [Tool.model_validate(item) for item in definitions] + seat_tools + await super().list_tools()
 
     async def call_tool(self, name, arguments, context=None):
+        if name in {item["name"] for item in seat_tool_definitions()}:
+            try:
+                payload = dispatch_seat_tool(name, arguments or {}, self.seat_context)
+                return CallToolResult.model_validate({
+                    "content": [{"type": "text", "text": json.dumps(payload)}],
+                    "structuredContent": payload,
+                })
+            except SeatHubError as exc:
+                return CallToolResult.model_validate({
+                    "content": [{"type": "text", "text": exc.code}],
+                    "structuredContent": {"error": exc.code, "status": exc.status},
+                    "isError": True,
+                })
         if name in UI_NAMES:
             return await super().call_tool(name, arguments, context)
         definitions = await anyio.to_thread.run_sync(self.old_definitions)

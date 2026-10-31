@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE", "THIRD-PARTY-NOTICES.txt"]
-dependencies = ["integrity-guardian>=6.1.0,<6.2", "mcp==2.2.0", "openai-mcp-extensions==0.1.0", "anyio>=4,<5", "starlette>=1,<2", "uvicorn>=0.54,<1"]
+dependencies = ["integrity-guardian>=7.0.0,<8", "mcp==2.2.0", "openai-mcp-extensions==0.1.0", "anyio>=4,<5", "starlette>=1,<2", "uvicorn>=0.54,<1"]
 
 [project.optional-dependencies]
 hub = ["integrity-bridges==0.7.0"]

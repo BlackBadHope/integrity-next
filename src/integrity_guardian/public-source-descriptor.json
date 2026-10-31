@@ -4,7 +4,7 @@
   "maintainer_infrastructure_authority_inherited": false,
   "memory_grants_authority": false,
   "private_release_evidence_included": false,
-  "product_version": "6.1.1",
+  "product_version": "7.0.0",
   "protocol": "integrity-guardian/public-source-descriptor/v2",
   "publication_ready": true,
   "user_managed_production_supported": true,

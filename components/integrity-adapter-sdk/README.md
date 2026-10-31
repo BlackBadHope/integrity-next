@@ -2,7 +2,7 @@
 
 `integrity-adapter-sdk` is the separately versioned distribution boundary for
 the Integrity Adapter Execution SDK. Source candidate `2.0.0rc3` is deliberately a
-transitional facade over the exact `integrity-guardian==6.1.1` implementation.
+transitional facade over the exact `integrity-guardian==7.0.0` implementation.
 It does not copy files into the `integrity_guardian` import tree and does not
 fork Seed, Synapse, authority, outcome, custody or project memory.
 
@@ -78,7 +78,7 @@ Member names and bytes are unchanged.
 Both verifiers operate without extracting the archive. They reject unsafe or
 duplicate paths, links and special files, excessive archive expansion,
 unowned paths and every `integrity_guardian/**` member. They also require exact
-package metadata, the exact `integrity-guardian==6.1.1` dependency, the
+package metadata, the exact `integrity-guardian==7.0.0` dependency, the
 ownership/LTS contracts and complete content hashes in wheel `RECORD`.
 The wheel and sdist must also carry the exact Guardian origin manifest used by
 the runtime facade; artifact verification rejects any drift in its protocol,

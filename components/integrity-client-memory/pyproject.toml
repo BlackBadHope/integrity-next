@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "Integrity Project contributors" }]
-dependencies = ["integrity-action-log>=2.10.0,<3", "integrity-guardian>=6.1.0,<7"]
+dependencies = ["integrity-action-log>=2.10.0,<3", "integrity-guardian>=7.0.0,<8"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.2,<10"]

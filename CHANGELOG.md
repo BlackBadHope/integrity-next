@@ -4,6 +4,13 @@ All notable public changes are recorded here.
 
 ## Unreleased
 
+### Integrity Seats 7.0.0 (proposed, not tagged)
+
+- Shared-core seats, namespace isolation, a seat-scoped bus, fenced mesh claims,
+  one-time GO checks, host transports, and enrollment. Existing single-user and
+  silo installs keep their isolation until an explicit migration. This source
+  version is not a release tag.
+
 ### Client Memory 1.9.4 / Guardian recovery source acceptance
 
 - Compile one shared Windows recovery implementation for Native and preserved-root

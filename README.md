@@ -1,6 +1,8 @@
 # Integrity Guardian
 
-This source release is Guardian **6.1.1**, with memory MCP facade API **2.11.0**.
+This source release is Guardian **7.0.0**, with memory MCP facade API **2.11.0**.
+Integrity Seats lets each person use their own model account against one shared core.
+The 7.0.0 number is a proposed source version and is not a tagged release.
 
 Integrity Guardian is a local-first integrity layer for humans, automation and
 AI agents. It keeps four questions separate:
@@ -131,7 +133,7 @@ different interfaces and deliberately do not all match the Guardian version.
 
 | Distribution | Version | Purpose |
 | --- | --- | --- |
-| `integrity-guardian` | 6.1.1 | Canonical protocol, evidence, authorization and memory core |
+| `integrity-guardian` | 7.0.0 | Canonical protocol, evidence, authorization and memory core |
 | [`integrity-adapter-sdk`](components/integrity-adapter-sdk/README.md) | 2.0.0rc3 | Guardian-bound adapter facade |
 | [`integrity-execution-bridge`](components/integrity-execution-bridge/README.md) | 0.1.0rc5 | Verified execution and observation boundaries |
 | [`integrity-agents-api`](components/integrity-agents-api/README.md) | 0.1.0rc2 | Agent API integration |

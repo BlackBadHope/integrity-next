@@ -19,7 +19,7 @@
   "forbidden_wheel_prefixes": [
     "integrity_guardian/"
   ],
-  "guardian_dependency": "integrity-guardian==6.1.1",
+  "guardian_dependency": "integrity-guardian==7.0.0",
   "implementation_boundary": "transitional-guardian-facade",
   "implementation_extraction": "later-major-boundary",
   "invariants": [

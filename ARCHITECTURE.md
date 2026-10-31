@@ -10,7 +10,7 @@ authorized, what changed, and whether an independent observer can verify the
 outcome. This page maps the package onto those questions and states which
 guarantees the public test suite actually exercises.
 
-The current product version is Guardian **6.1.0**. The memory MCP facade API is
+The proposed source version is Guardian **7.0.0** (not a tagged release). Seats, the shared bus, and host enrollment are described in [docs/QUICKSTART_TEAM.md](docs/QUICKSTART_TEAM.md). The memory MCP facade API is
 **2.11.0**; optional distributions have independent versions recorded in
 [COMPONENTS.json](COMPONENTS.json). These numbers identify separate contracts.
 
