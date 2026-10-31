@@ -123,6 +123,11 @@ def main(*, workbench: bool = True):
     parser.add_argument("--transport", choices=["stdio", "http"], default="stdio")
     parser.add_argument("--port", type=int, default=8791)
     parser.add_argument("--token-file", type=Path)
+    parser.add_argument(
+        "--server-name",
+        default=None,
+        help="advertised MCP server name; deprecated aliases are accepted",
+    )
     args = parser.parse_args()
     if args.hosts_config is None:
         parser.error("existing owner hosts config required")
@@ -133,8 +138,28 @@ def main(*, workbench: bool = True):
     if workbench:
         from .workspace_backend import WorkspaceBackend
         backend = WorkspaceBackend(backend, hub)
+    import warnings
+
+    from integrity_bridges.server_names import SEATS_BRIDGE, ServerNameError, resolve_server_name
+
+    requested = args.server_name
+    if requested is None and args.hosts_config is not None:
+        try:
+            hosts_document = json.loads(args.hosts_config.read_text(encoding="utf-8"))
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            hosts_document = None
+        if isinstance(hosts_document, dict) and isinstance(hosts_document.get("server_name"), str):
+            requested = hosts_document["server_name"]
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", DeprecationWarning)
+            server_name = resolve_server_name(requested, canonical=SEATS_BRIDGE)
+    except ServerNameError as err:
+        parser.error(str(err))
+    for item in caught:
+        print(item.message, file=sys.stderr)
     server = create_server(backend, server_factory=partial(HubServer, hub=hub, core=core),
-        name="integrity-private-memory-codex-bridge", version="0.2.0",
+        name=server_name, version="0.2.0",
         ui_mode="workbench" if workbench else "lab",
         instructions=("Existing owner memory and host routes retain their permissions and exact request IDs. "
             "Host writes require the owner's explicit instruction; reconcile unknown outcomes before any new send. "

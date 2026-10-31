@@ -1,21 +1,22 @@
 {
-  "name": "integrity-memory",
+  "name": "integrity-seats",
   "version": "1.9.4",
-  "description": "Mandatory client-only Integrity admission, coordination and closure hooks for Codex.",
+  "description": "Integrity Seats client hooks for Codex admission, coordination and closure. Each seat uses its own model account; this plugin does not pool provider credentials.",
   "author": {
     "name": "Integrity Project"
   },
-  "license": "Proprietary",
+  "license": "Apache-2.0",
   "keywords": [
     "integrity",
+    "seats",
     "memory",
     "mind-graph",
     "coordination",
     "client"
   ],
   "interface": {
-    "displayName": "Integrity client Mind",
-    "shortDescription": "Mandatory receipt-bound memory admission for client Codex",
+    "displayName": "Integrity Seats",
+    "shortDescription": "Seat-scoped receipt-bound memory admission for client Codex",
     "longDescription": "Binds each client Codex intent to exactly one model-owned canonical Integrity admission; keeps prompt state local and provisional until that admission validates, then registers the admitted machine/thread/turn in a signed coverage ledger, requires one terminal Seed-events or no-event receipt, archives never-admitted provisional generations without creating coverage debt, preserves cross-turn semantic checkpoint debt until a verified canonical event, preflights append arguments before consuming the one-shot attempt, keeps read-only memory usable when Seed append admission is unavailable, and keeps Memory provider authority separate from target-specific action authority.",
     "developerName": "Integrity Project",
     "category": "Developer Tools",

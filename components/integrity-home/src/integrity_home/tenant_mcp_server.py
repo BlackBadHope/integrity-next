@@ -82,11 +82,12 @@ class TenantMemoryMCPServer(UnifiedMCPServer):
         principal: VerifiedOAuthPrincipal,
         projection: UnifiedKnowledgeProjection,
         imports: WorkImportCoordinator,
+        server_name: str | None = None,
     ):
         if not isinstance(principal, VerifiedOAuthPrincipal):
             raise TenantIsolationError("verified OAuth principal is required")
         principal.require("memory:read")
-        super().__init__(projection)
+        super().__init__(projection, server_name=server_name)
         self._principal = principal
         self._imports = imports
 
@@ -159,9 +160,7 @@ class TenantMemoryMCPServer(UnifiedMCPServer):
         if request.get("method") == "tools/list" and "result" in response:
             response["result"] = {"tools": [dict(tool) for tool in TENANT_TOOLS]}
         elif request.get("method") == "initialize" and "result" in response:
-            response["result"]["serverInfo"]["name"] = (
-                "integrity-private-memory-tenant"
-            )
+            response["result"]["serverInfo"]["name"] = self.server_name
             response["result"]["instructions"] = (
                 "This runtime is bound to one verified OAuth user. Tenant "
                 "selection cannot be changed by tool arguments. Imported "
