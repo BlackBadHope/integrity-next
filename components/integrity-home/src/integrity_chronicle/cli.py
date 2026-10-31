@@ -416,6 +416,11 @@ def _build_parser() -> ArgumentParser:
         required=True,
         help="new content-free receipt JSON path",
     )
+    concepts_parser.add_argument(
+        "--domain-keywords",
+        default=None,
+        help="optional JSON file of operator domain keywords; default is empty",
+    )
     concepts_parser.set_defaults(func=_run_concepts_build)
 
     corpus_build_parser = sub.add_parser(
@@ -1540,6 +1545,7 @@ def _run_concepts_build(args: Namespace) -> int:
             str(args.output_inventory),
             str(args.output_receipt),
             replace=False,
+            domain_keywords_path=args.domain_keywords,
         )
     except (OSError, TypeError, ValueError, RuntimeError, json.JSONDecodeError):
         # Recall paths, source identifiers, and evidence text are private. The

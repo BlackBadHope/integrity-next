@@ -20,6 +20,7 @@ from integrity_chronicle.json_integrity import (
 )
 
 from .mcp_server import MCP_PROTOCOL_VERSION, MCP_SERVER_VERSION
+from .server_identity import SEATS, ServerNameError, resolve_server_name
 from .oauth_resource import (
     OAuthResourceConfig,
     OAuthTokenVerifier,
@@ -122,7 +123,9 @@ def _tool_auth_error(request: Mapping[str, Any], challenge: str) -> dict[str, An
     }
 
 
-def _public_dispatch(request: Mapping[str, Any]) -> dict[str, Any] | None:
+def _public_dispatch(
+    request: Mapping[str, Any], *, server_name: str = SEATS
+) -> dict[str, Any] | None:
     request_id = _request_id(request)
     method = request.get("method")
     if method.startswith("notifications/"):
@@ -146,7 +149,7 @@ def _public_dispatch(request: Mapping[str, Any]) -> dict[str, Any] | None:
                 "protocolVersion": version,
                 "capabilities": {"tools": {"listChanged": False}},
                 "serverInfo": {
-                    "name": "integrity-private-memory",
+                    "name": server_name,
                     "version": MCP_SERVER_VERSION,
                 },
                 "instructions": (
@@ -181,6 +184,7 @@ class RemoteGateway:
         oauth: OAuthTokenVerifier,
         runtimes: AuthenticatedTenantRuntimeFactory,
         mcp_path: str = "/mcp",
+        server_name: str | None = None,
     ):
         if not isinstance(oauth, OAuthTokenVerifier):
             raise ValueError("OAuth verifier is required")
@@ -197,6 +201,10 @@ class RemoteGateway:
         self._oauth = oauth
         self._runtimes = runtimes
         self._mcp_path = mcp_path
+        try:
+            self.server_name = resolve_server_name(server_name, canonical=SEATS)
+        except ServerNameError as err:
+            raise ValueError(str(err)) from err
         self._metadata_path = urlsplit(
             oauth.config.protected_resource_metadata_url
         ).path
@@ -294,7 +302,7 @@ class RemoteGateway:
             return self._response(400, _rpc_error(request, -32600, "Invalid Request"))
         method_name = request["method"]
         if method_name in _PUBLIC_METHODS or method_name.startswith("notifications/"):
-            response = _public_dispatch(request)
+            response = _public_dispatch(request, server_name=self.server_name)
             return self._response(202 if response is None else 200, response)
         if method_name != "tools/call":
             return self._response(200, _rpc_error(request, -32601, "Method not found"))
@@ -440,11 +448,37 @@ def build_gateway_from_environment() -> RemoteGateway:
         router,
         canonical_base_url=config.resource,
     )
-    return RemoteGateway(oauth=OAuthTokenVerifier(config), runtimes=runtimes)
+    return RemoteGateway(
+        oauth=OAuthTokenVerifier(config),
+        runtimes=runtimes,
+        server_name=os.environ.get("INTEGRITY_SERVER_NAME"),
+    )
 
 
 def main() -> None:
-    gateway = build_gateway_from_environment()
+    import argparse
+    import sys
+
+    import warnings
+
+    parser = argparse.ArgumentParser(description="Integrity Seats remote gateway")
+    parser.add_argument(
+        "--server-name",
+        default=None,
+        help="advertised MCP server name; deprecated aliases are accepted",
+    )
+    args, _unknown = parser.parse_known_args()
+    if args.server_name:
+        os.environ["INTEGRITY_SERVER_NAME"] = args.server_name
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", DeprecationWarning)
+            gateway = build_gateway_from_environment()
+    except (ServerNameError, ValueError) as err:
+        print(str(err), file=sys.stderr)
+        raise SystemExit(2) from err
+    for item in caught:
+        print(item.message, file=sys.stderr)
     bind = os.environ.get("INTEGRITY_REMOTE_BIND", "127.0.0.1")
     if bind not in {"127.0.0.1", "::1", "localhost"} and os.environ.get(
         "INTEGRITY_REMOTE_ALLOW_NONLOOPBACK"

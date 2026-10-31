@@ -134,7 +134,13 @@ _KINDS = {
     "quarantined",
     "unknown",
 }
-_SCOPES = {"personal_project", "direct_job_subnet", "unknown"}
+_SCOPES = {"personal_project", "domain_operations", "unknown"}
+# Historical concept inventories stored one retired scope name. Validation
+# reads that stored value as domain_operations. Public-export hygiene
+# allowlists this assignment only.
+LEGACY_DOMAIN_SCOPE_ALIAS = "direct_job_subnet"
+DOMAIN_SCOPE = "domain_operations"
+DOMAIN_KEYWORDS_SCHEMA = "integrity-home-domain-keywords/1"
 _EVIDENCE_DISPOSITIONS = {
     "user_authored",
     "assistant_recap",
@@ -179,6 +185,69 @@ class InventoryLimits:
     max_comparisons: int = 2_000_000
     max_excerpt_chars: int = 800
     possible_duplicate_threshold_millionths: int = 820_000
+
+
+@dataclass(frozen=True)
+class DomainKeywordConfig:
+    """Operator-supplied domain keywords. The shipped default is empty.
+
+    Infrastructure-specific terms are not part of the public source. A user
+    loads them from a JSON file (``INTEGRITY_DOMAIN_KEYWORDS`` or an explicit
+    path) with schema ``integrity-home-domain-keywords/1``.
+    """
+
+    keywords: Tuple[str, ...] = ()
+
+    def matches(self, text: str) -> bool:
+        if not self.keywords:
+            return False
+        return _has_any(text, self.keywords)
+
+
+def canonical_scope(scope: str) -> str:
+    """Map the historical scope alias onto ``domain_operations``."""
+
+    if scope == LEGACY_DOMAIN_SCOPE_ALIAS:
+        return DOMAIN_SCOPE
+    return scope
+
+
+def load_domain_keywords(path: os.PathLike[str] | str | None = None) -> DomainKeywordConfig:
+    """Load domain keywords. A missing path and unset environment yield ``()``."""
+
+    source = path if path is not None else os.environ.get("INTEGRITY_DOMAIN_KEYWORDS")
+    if source is None or source == "":
+        return DomainKeywordConfig()
+    file_path = Path(os.fspath(source))
+    try:
+        raw = file_path.read_text(encoding="utf-8")
+    except OSError as err:
+        raise ConceptInventoryError("domain_keywords_unreadable") from err
+    if len(raw.encode("utf-8")) > 64 * 1024:
+        raise ConceptInventoryError("domain_keywords_too_large")
+    try:
+        document = loads_json_strict(raw)
+    except (json.JSONDecodeError, DuplicateJsonKeyError, RecursionError) as err:
+        raise ConceptInventoryError("domain_keywords_invalid") from err
+    if not isinstance(document, dict):
+        raise ConceptInventoryError("domain_keywords_invalid")
+    if document.get("schema") != DOMAIN_KEYWORDS_SCHEMA:
+        raise ConceptInventoryError("domain_keywords_schema_invalid")
+    keywords = document.get("keywords")
+    if not isinstance(keywords, list) or len(keywords) > 64:
+        raise ConceptInventoryError("domain_keywords_invalid")
+    cleaned: List[str] = []
+    for keyword in keywords:
+        if (
+            not isinstance(keyword, str)
+            or not keyword
+            or keyword != keyword.strip()
+            or len(keyword) > 64
+            or any(ord(char) < 32 for char in keyword)
+        ):
+            raise ConceptInventoryError("domain_keywords_invalid")
+        cleaned.append(keyword.casefold())
+    return DomainKeywordConfig(keywords=tuple(cleaned))
 
 
 def _stable_json(value: Any) -> str:
@@ -710,7 +779,9 @@ def _ownership_evidence(normalized: str) -> str:
 
 
 def _classify_user(
-    message: Mapping[str, Any]
+    message: Mapping[str, Any],
+    *,
+    domain_keywords: Optional[DomainKeywordConfig] = None,
 ) -> Tuple[Dict[str, Any], str, Tuple[str, ...], str]:
     original = message["content"]
     owned = _strip_non_owned_text(original)
@@ -844,15 +915,13 @@ def _classify_user(
             signals.append("ownership.no_positive_signal")
             disposition = "reference_only"
     scope_text = normalized
-    subnet_domain = _has_any(
-        scope_text,
-        ("subnet", "сабнет", "vlan", "абонент", "radius", "mikrotik", "olt", "isp", "коммутатор"),
-    )
+    keywords = domain_keywords if domain_keywords is not None else DomainKeywordConfig()
+    subnet_domain = keywords.matches(scope_text)
     explicit_work = _has_any(
         scope_text,
         (
             "для работы", "рабочая задача", "в эксплуатации", "операционная задача",
-            "авария", "абоненты", "production operations", "work task", "direct job",
+            "production operations", "work task",
         ),
     )
     hosting_context = _has_any(
@@ -860,7 +929,7 @@ def _classify_user(
         ("разместить", "хостить", "тестовый стенд", "test bed", "host on"),
     )
     if subnet_domain and explicit_work and not hosting_context:
-        scope = "direct_job_subnet"
+        scope = DOMAIN_SCOPE
         signals.extend(("scope.subnet_domain", "scope.explicit_work"))
     elif _has_any(scope_text, ("мой проект", "личный проект", "personal project", "integrity home")):
         scope = "personal_project"
@@ -923,6 +992,7 @@ def _build_inventory(
     *,
     semantic_input_sha256: str,
     input_matched_records: int,
+    domain_keywords: Optional[DomainKeywordConfig] = None,
 ) -> Dict[str, Any]:
     first = records[0]
     candidates: Dict[str, Dict[str, Any]] = {}
@@ -995,7 +1065,9 @@ def _build_inventory(
         for anchor_record_id in sorted(potential_anchors):
             anchor_info = potential_anchors[anchor_record_id]
             message = anchor_info["message"]
-            classification, reason, tokens, disposition = _classify_user(message)
+            classification, reason, tokens, disposition = _classify_user(
+                message, domain_keywords=domain_keywords
+            )
             candidate_id = _candidate_id(message["locator"])
             if reason == "candidate" and len(tokens) > limits.max_tokens_per_candidate:
                 # Preserve evidence for a likely pasted/bulk payload without
@@ -1165,6 +1237,8 @@ def _parse_json_payload(payload: Any, code: str) -> Dict[str, Any]:
 def _validate_classification(value: Any) -> Dict[str, Any]:
     item = _require_dict(value, "classification_invalid")
     _exact_keys(item, {"kind", "scope", "status", "authoritative", "signals"}, "classification_fields_invalid")
+    if item.get("scope") == LEGACY_DOMAIN_SCOPE_ALIAS:
+        item["scope"] = DOMAIN_SCOPE
     if item.get("kind") not in _KINDS or item.get("scope") not in _SCOPES or item.get("status") != "pending" or item.get("authoritative") is not False:
         raise ConceptInventoryError("classification_invalid")
     signals = item.get("signals")
@@ -1642,6 +1716,8 @@ def compile_concept_inventory(
     *,
     replace: bool = False,
     limits: Optional[InventoryLimits | Mapping[str, Any]] = None,
+    domain_keywords: Optional[DomainKeywordConfig] = None,
+    domain_keywords_path: os.PathLike[str] | str | None = None,
 ) -> Dict[str, Any]:
     """Compile one validated recall JSONL into a private inventory and receipt."""
 
@@ -1659,11 +1735,14 @@ def compile_concept_inventory(
     if recall in {inventory_target, receipt_target}:
         raise ConceptInventoryError("input_output_overlap")
     records, input_digest, input_matched_records = _read_recall(recall, bounded)
+    if domain_keywords is None:
+        domain_keywords = load_domain_keywords(domain_keywords_path)
     inventory = _build_inventory(
         records,
         bounded,
         semantic_input_sha256=input_digest,
         input_matched_records=input_matched_records,
+        domain_keywords=domain_keywords,
     )
     validate_concept_inventory(inventory)
     inventory_bytes = _stable_bytes(inventory)
@@ -1695,7 +1774,12 @@ __all__ = [
     "InventoryLimits",
     "INVENTORY_SCHEMA_VERSION",
     "RECEIPT_SCHEMA_VERSION",
+    "DOMAIN_SCOPE",
+    "DomainKeywordConfig",
+    "LEGACY_DOMAIN_SCOPE_ALIAS",
+    "canonical_scope",
     "compile_concept_inventory",
+    "load_domain_keywords",
     "validate_concept_inventory",
     "validate_concept_receipt",
 ]

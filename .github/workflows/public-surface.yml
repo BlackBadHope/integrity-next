@@ -39,6 +39,11 @@ jobs:
           python .github/scripts/component_catalog.py --root .
           python components/integrity-installed-runtime/verify_sources.py
           python -B components/integrity-seed/verify_public_surface.py
+      - name: Public export hygiene
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+          PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+        run: python -B -m pytest -q -p no:cacheprovider tests/hygiene/test_public_export_hygiene.py
       - name: Build and install all public distributions
         run: |
           python .github/scripts/build_components.py --root . --output "$RUNNER_TEMP/integrity-dist"

@@ -44,7 +44,7 @@ complete configuration generation, an independent protocol check, and a measured
 configuration-recall example with a plain-note control. Native lifecycle hooks
 remain a separate deployment.
 
-Open **Code РІвЂ вЂ™ Local РІвЂ вЂ™ HTTPS** on this repository and copy its URL. Install the
+Open **Code → Local → HTTPS** on this repository and copy its URL. Install the
 current `main` source by replacing `<copied-url>` below. Record the checked-out
 commit when reporting a result:
 
@@ -96,7 +96,7 @@ local instance.
 Linux, macOS and Windows users need Python 3.11 or newer:
 
 ```bash
-git clone <URL copied from Code РІвЂ вЂ™ Local РІвЂ вЂ™ HTTPS>
+git clone <URL copied from Code → Local → HTTPS>
 cd integrity-next
 python -m venv .venv
 ```
@@ -149,19 +149,53 @@ different interfaces and deliberately do not all match the Guardian version.
 | [`integrity-bridges`](components/integrity-bridges/README.md) | 0.7.0 | Hub, delegation and native peer transports |
 
 `components/integrity-seed` and `plugins/` also retain their specific plugin
-interfaces; they are not extra Python distributions. Historical source-profile
-metadata is documented in the [source layout](components/integrity-installed-runtime/README.md).
+interfaces; they are not extra Python distributions. The Codex registration
+template is [Integrity Seats](plugins/integrity-seats/README.md). Historical
+source-profile metadata is documented in the
+[source layout](components/integrity-installed-runtime/README.md).
 
 ## Run the test suite
 
+Public CI (`.github/workflows/public-surface.yml`) runs these checks on Ubuntu
+and Windows with Python 3.12. Linux CI also installs `bubblewrap`. Reproduce
+them from the repository root. Use a new disposable directory for build output;
+the examples below use `$TMPDIR` or `/tmp` and do not read retained state.
+
 ```bash
-python -m pip install ".[dev]"
-python -m pytest -q
+python -m pip install "build>=1.2,<2" "packaging>=24,<27" "pytest>=8.2,<10"
+python .github/scripts/public_surface_check.py --root .
+python .github/scripts/component_catalog.py --root .
+python components/integrity-installed-runtime/verify_sources.py
+python -B components/integrity-seed/verify_public_surface.py
+OUT="${TMPDIR:-/tmp}/integrity-dist"
+python .github/scripts/build_components.py --root . --output "$OUT"
+python .github/scripts/verify_wheels.py --root . --wheels "$OUT"
+python .github/scripts/install_components.py --wheels "$OUT" --venv "${TMPDIR:-/tmp}/integrity-check"
 ```
 
-Public release checks verify the closed export manifest, component metadata,
-canonical source layout, package builds and dependency compatibility, CLI smoke
-commands and synthetic functional tests. See
+Activate that virtual environment (CI appends its `bin` directory to `PATH`),
+then run the installed profile, the public tests, the local MCP walkthrough,
+component tests, and the shipped UI models:
+
+```bash
+guardian version --all
+guardian capabilities
+guardian lts-contracts
+python -B -m pytest -q -p no:cacheprovider
+CASE="${TMPDIR:-/tmp}/local-memory-case"
+CLIENTS="${TMPDIR:-/tmp}/local-memory-clients"
+python -B examples/local-memory/create_case.py --output "$CASE"
+python -B examples/local-memory/setup.py --catalog "$CASE/private/catalog.sqlite" --output "$CLIENTS"
+python -B examples/local-memory/verify_connection.py "$CLIENTS/codex.config.toml" "$CLIENTS/claude.mcp.json" "$CLIENTS/antigravity.mcp.json"
+python -B -m pytest -q -p no:cacheprovider --import-mode=importlib components/*/tests
+```
+
+From `components/integrity-space`, run `npm test`. Root pytest includes
+`tests/hygiene/test_public_export_hygiene.py`.
+
+These checks verify the closed export manifest, component metadata, canonical
+source layout, package builds and dependency compatibility, CLI smoke commands
+and synthetic functional tests. See
 [architecture and verification boundaries](ARCHITECTURE.md#what-the-public-suite-verifies).
 
 ## How it fits together
@@ -209,7 +243,7 @@ that host binding, credentials or production actions are configured.
 - [Changelog](CHANGELOG.md)
 - [Public export boundary](PUBLIC-EXPORT-NOTICE.md)
 
-Security-sensitive reports should use **Security РІвЂ вЂ™ Advisories РІвЂ вЂ™ Report a
+Security-sensitive reports should use **Security → Advisories → Report a
 vulnerability** in this repository, not a public issue.
 
 Questions, use-case proposals and first-user feedback are welcome in

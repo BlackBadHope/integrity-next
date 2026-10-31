@@ -1,4 +1,4 @@
-# Integrity memory hook registration template
+# Integrity Seats hook registration template
 
 The canonical implementation is the independently packaged
 [integrity-client-memory](../../components/integrity-client-memory/README.md)

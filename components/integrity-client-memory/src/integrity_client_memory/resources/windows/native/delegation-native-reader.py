@@ -3,7 +3,12 @@
 
 from __future__ import annotations
 
-from integrity_client_memory.configuration import value as _integrity_value, require_config as _integrity_require_config
+from integrity_client_memory.configuration import (
+    ConfigurationError,
+    read_config,
+    require_config as _integrity_require_config,
+    value as _integrity_value,
+)
 
 import atexit
 import ctypes
@@ -1440,8 +1445,32 @@ def call_tool(name: str, args: dict) -> dict:
     return {"content": [{"type": "text", "text": encoded}], "structuredContent": payload}
 
 
+_SEATS_BRIDGE = "integrity-seats-bridge"
+_DEPRECATED_BRIDGE_NAME = "integrity-private-memory-codex-bridge"
+_SERVER_NAME = _SEATS_BRIDGE
+
+
+def resolve_bridge_server_name(requested: str | None) -> str:
+    """Advertise Integrity Seats. The retired bridge name remains a deprecated alias."""
+
+    if requested is None or requested == "":
+        return _SEATS_BRIDGE
+    if requested == _SEATS_BRIDGE:
+        return requested
+    if requested == _DEPRECATED_BRIDGE_NAME:
+        import warnings
+
+        warnings.warn(
+            f"{_DEPRECATED_BRIDGE_NAME} is a deprecated alias of {_SEATS_BRIDGE}",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return requested
+    raise ValueError("unknown server name")
+
+
 def server_info() -> dict:
-    return {"name": "integrity-private-memory-codex-bridge", "version": VERSION}
+    return {"name": _SERVER_NAME, "version": VERSION}
 
 
 def rpc_error(message_id, code: int, message: str, data: dict | None = None) -> dict:
@@ -1624,6 +1653,30 @@ def respond(message: dict) -> dict | None:
 def main():
     # MCP is UTF-8 regardless of the Windows console/code page.
     # Keep the input loop available while the independent backends are waiting.
+    import argparse
+    import warnings
+
+    global _SERVER_NAME
+    parser = argparse.ArgumentParser(description="Integrity Seats bridge")
+    parser.add_argument("--server-name", default=None)
+    args, _unknown = parser.parse_known_args()
+    requested = args.server_name if args.server_name is not None else os.environ.get("INTEGRITY_SERVER_NAME")
+    if requested is None:
+        try:
+            raw = read_config().get("values", {}).get("server_name")
+        except ConfigurationError:
+            raw = None
+        if isinstance(raw, str):
+            requested = raw
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", DeprecationWarning)
+            _SERVER_NAME = resolve_bridge_server_name(requested)
+    except ValueError as err:
+        print(str(err), file=sys.stderr)
+        raise SystemExit(2) from err
+    for item in caught:
+        print(item.message, file=sys.stderr)
     write_lock = threading.Lock()
     capacity = threading.BoundedSemaphore(8)
     safe_log("server_started", version=VERSION)
