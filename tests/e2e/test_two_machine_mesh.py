@@ -1,5 +1,6 @@
 """Two processes enroll, claim one work item, drop a link, and reject a stale fence."""
 import json
+import os
 import subprocess
 import sys
 import textwrap
@@ -56,8 +57,11 @@ def test_two_machines_enroll_claim_drop_and_reject_stale_fence(tmp_path):
     bob_token = directory.create_token("bob", "host-b", "webhook", future)
     alice = directory.join(alice_token, tmp_path / "alice-keys", ttl_seconds=30)
     bob = directory.join(bob_token, tmp_path / "bob-keys", ttl_seconds=30)
-    assert (tmp_path / "alice-keys" / "host.key").stat().st_mode & 0o077 == 0
-    assert (tmp_path / "bob-keys" / "peer.key").stat().st_mode & 0o077 == 0
+    assert (tmp_path / "alice-keys" / "host.key").is_file()
+    assert (tmp_path / "bob-keys" / "peer.key").is_file()
+    if os.name != "nt":
+        assert (tmp_path / "alice-keys" / "host.key").stat().st_mode & 0o077 == 0
+        assert (tmp_path / "bob-keys" / "peer.key").stat().st_mode & 0o077 == 0
     assert {item["host_id"] for item in directory.active()} == {"host-a", "host-b"}
     with pytest.raises(SeatRegistryError):
         directory.join(alice_token, tmp_path / "replay")

@@ -187,7 +187,23 @@ def _write_secret(path: Path, text: str) -> None:
         os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)
     except OSError:
         pass
-    if os.name != "nt":
-        mode = stat.S_IMODE(path.stat().st_mode)
-        if mode & 0o077:
-            raise SeatRegistryError("host key mode invalid", 500)
+    if os.name == "nt":
+        _windows_user_only(path)
+        return
+    mode = stat.S_IMODE(path.stat().st_mode)
+    if mode & 0o077:
+        raise SeatRegistryError("host key mode invalid", 500)
+
+
+def _windows_user_only(path: Path) -> None:
+    """Best-effort user-only ACL. Windows does not report POSIX 0600 in st_mode."""
+
+    import subprocess
+    user = os.environ.get("USERNAME") or os.environ.get("USER")
+    if not user:
+        return
+    subprocess.run(
+        ["icacls", str(path), "/inheritance:r", "/grant:r", user + ":(R,W)"],
+        check=False,
+        capture_output=True,
+    )
