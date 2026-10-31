@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from integrity_client_memory.configuration import (
     ConfigurationError,
+    configured_command,
     read_config,
     require_config as _integrity_require_config,
     value as _integrity_value,
@@ -62,7 +63,7 @@ CODEX = os.environ.get(
 )
 MEMORY_COMMAND = os.environ.get(
     "INTEGRITY_MEMORY_COMMAND",
-    _integrity_value('command_b734f1f83ce5'),
+    configured_command('upstream_mcp_command', 'command_b734f1f83ce5'),
 )
 
 

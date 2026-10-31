@@ -26,6 +26,8 @@
     "path_04d9ee0e8d07": null,
     "path_70ff966bc499": null,
     "command_b734f1f83ce5": null,
-    "command_7f5a55cf3f88": null
+    "command_7f5a55cf3f88": null,
+    "upstream_mcp_command": null,
+    "ssh_command": null
   }
 }

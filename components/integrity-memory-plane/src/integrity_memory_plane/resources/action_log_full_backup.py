@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from integrity_memory_plane.configuration import value as _integrity_value, require_config as _integrity_require_config
+from integrity_memory_plane.configuration import configured_command, value as _integrity_value, require_config as _integrity_require_config
 
 import argparse
 import datetime as dt
@@ -221,9 +221,9 @@ def offhost_copy(args: argparse.Namespace, source: Path, expected_digest: str) -
     if args.ssh_known_hosts is not None:
         common.extend(["-o", f"UserKnownHostsFile={args.ssh_known_hosts}", "-o", "StrictHostKeyChecking=yes"])
     try:
-        subprocess.run([_integrity_value('command_7f5a55cf3f88'), *common, args.offhost_host, "mkdir", "-p", "--", args.offhost_root], check=True, timeout=15, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        subprocess.run([configured_command('ssh_command', 'command_7f5a55cf3f88'), *common, args.offhost_host, "mkdir", "-p", "--", args.offhost_root], check=True, timeout=15, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         subprocess.run(["scp", "-q", *common, str(source), f"{args.offhost_host}:{remote_path}"], check=True, timeout=120, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        readback = subprocess.run([_integrity_value('command_7f5a55cf3f88'), *common, args.offhost_host, "sha256sum", "--", remote_path], check=True, timeout=20, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        readback = subprocess.run([configured_command('ssh_command', 'command_7f5a55cf3f88'), *common, args.offhost_host, "sha256sum", "--", remote_path], check=True, timeout=20, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         digest = readback.stdout.split()[0].strip()
         return {"configured": True, "ok": digest == expected_digest, "path": remote_path, "sha256": digest}
     except (subprocess.SubprocessError, OSError) as exc:

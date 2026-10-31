@@ -2,7 +2,7 @@
 """Hidden Windows host node and outgoing SSH forward, supervised as one task."""
 from __future__ import annotations
 
-from integrity_bridges.configuration import value as _integrity_value, require_config as _integrity_require_config
+from integrity_bridges.configuration import configured_command, require_config as _integrity_require_config
 
 import json
 import subprocess
@@ -21,7 +21,7 @@ def main():
         forward = None
         try:
             while node.poll() is None:
-                forward = subprocess.Popen(config[_integrity_value('command_7f5a55cf3f88')], stdin=subprocess.DEVNULL, stdout=log, stderr=log, creationflags=flags)
+                forward = subprocess.Popen(config[configured_command('ssh_command', 'command_7f5a55cf3f88')], stdin=subprocess.DEVNULL, stdout=log, stderr=log, creationflags=flags)
                 while forward.poll() is None and node.poll() is None:
                     time.sleep(1)
                 if forward.poll() is None:

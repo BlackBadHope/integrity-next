@@ -117,6 +117,19 @@
       "bridges/hub/integrity_delegation_prepare_mcp.py:28"
     ]
   },
+  "upstream_mcp_command": {
+    "kind": "command",
+    "used_by": [
+      "bridges/hub/unified_mcp.py",
+      "bridges/private-memory/unified_mcp.py"
+    ]
+  },
+  "ssh_command": {
+    "kind": "command",
+    "used_by": [
+      "bridges/private-memory/host_link.py"
+    ]
+  },
   "command_b734f1f83ce5": {
     "kind": "command",
     "used_by": [
