@@ -9,6 +9,7 @@ from pathlib import Path
 import sqlite3
 import sys
 
+from .host_enrollment import HostDirectory
 from .seat_policy import SeatAccessError, write_isolation_mode
 from .seat_registry import SeatRegistry, SeatRegistryError
 
@@ -94,6 +95,23 @@ def main(argv: list[str] | None = None) -> int:
     init = sub.add_parser("init")
     init.add_argument("--root", type=Path, required=True)
 
+    host = sub.add_parser("host")
+    host_sub = host.add_subparsers(dest="action", required=True)
+    enroll = host_sub.add_parser("enroll-token")
+    enroll_sub = enroll.add_subparsers(dest="step", required=True)
+    create_enroll = enroll_sub.add_parser("create")
+    create_enroll.add_argument("--seat-id", required=True)
+    create_enroll.add_argument("--host-id", required=True)
+    create_enroll.add_argument("--transport", required=True)
+    create_enroll.add_argument("--ttl", type=int, default=600)
+
+    node = sub.add_parser("node")
+    node_sub = node.add_subparsers(dest="action", required=True)
+    join = node_sub.add_parser("join")
+    join.add_argument("--core", required=True)
+    join.add_argument("--enroll-token", required=True)
+    join.add_argument("--key-dir", type=Path, required=True)
+
     args = parser.parse_args(argv)
     try:
         if args.group == "init":
@@ -153,6 +171,21 @@ def main(argv: list[str] | None = None) -> int:
         if args.group == "token" and args.action == "revoke":
             registry.revoke_token(args.token)
             print(json.dumps({"ok": True, "revoked": True}))
+            return 0
+        if args.group == "host" and args.action == "enroll-token" and args.step == "create":
+            if not 60 <= args.ttl <= 86400:
+                raise SeatRegistryError("ttl invalid", 400)
+            directory = HostDirectory(args.registry)
+            token = directory.create_token(args.seat_id, args.host_id, args.transport, _utc(args.ttl))
+            print(json.dumps({"ok": True, "token": token, "host_id": args.host_id, "transport": args.transport}))
+            return 0
+        if args.group == "node" and args.action == "join":
+            if not str(args.core).startswith(("https://", "http://127.0.0.1", "http://localhost")):
+                raise SeatRegistryError("core url invalid", 400)
+            directory = HostDirectory(args.registry)
+            result = directory.join(args.enroll_token, args.key_dir)
+            result["core"] = args.core
+            print(json.dumps(result))
             return 0
     except (SeatRegistryError, SeatAccessError) as err:
         print(json.dumps({"ok": False, "error": err.code, "status": err.status}), file=sys.stderr)

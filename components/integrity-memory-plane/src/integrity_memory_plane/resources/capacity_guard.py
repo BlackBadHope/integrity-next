@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from integrity_memory_plane.configuration import value as _integrity_value, require_config as _integrity_require_config
+from integrity_memory_plane.configuration import configured_command, value as _integrity_value, require_config as _integrity_require_config
 
 import argparse
 import datetime as dt
@@ -309,7 +309,7 @@ def classify_remote(label: str, total: int, free: int, min_free_gib: float) -> d
 def remote_usage(args: argparse.Namespace) -> tuple[list[dict[str, Any]], str]:
     if not args.hypervisor_host:
         return [], "not-configured"
-    command = [_integrity_value('command_7f5a55cf3f88'), "-F", str(args.ssh_config), "-n", "-T", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8"]
+    command = [configured_command('ssh_command', 'command_7f5a55cf3f88'), "-F", str(args.ssh_config), "-n", "-T", "-o", "BatchMode=yes", "-o", "ConnectTimeout=8"]
     if args.ssh_identity is not None:
         command.extend(["-i", str(args.ssh_identity)])
     if args.ssh_known_hosts is not None:
