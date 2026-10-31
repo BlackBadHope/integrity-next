@@ -1002,8 +1002,10 @@ from .work_claims import (
     ClaimDecision,
     ClaimStatus,
     StaleFenceError,
+    StaleFencingTokenError,
     WorkClaimError,
     WorkClaimRegistry,
+    open_claims,
 )
 from .workspace_patch_adapter import (
     WorkspacePatchAdapter,
@@ -1301,6 +1303,7 @@ __all__ = [
     "SourceTrust",
     "StaleAgentFenceError",
     "StaleFenceError",
+    "StaleFencingTokenError",
     "SynapseContext",
     "SynapseError",
     "SynapseEvidence",
@@ -1401,6 +1404,7 @@ __all__ = [
     "WitnessAdapter",
     "WorkClaimError",
     "WorkClaimRegistry",
+    "open_claims",
     "WorkspacePatchAdapter",
     "WorkspacePatchError",
     "ZeroDaySeedError",
